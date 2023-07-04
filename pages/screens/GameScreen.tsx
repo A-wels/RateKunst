@@ -39,7 +39,7 @@ const GameScreen = ({ navigation, route }) => {
                 [
                     {
                         text: 'OK',
-                        onPress: () => navigation.navigate('Start'),
+                        onPress: () => navigation.navigate('Startmenü'),
                     },
                 ],
                 { cancelable: false }
@@ -49,10 +49,9 @@ const GameScreen = ({ navigation, route }) => {
 
     // load next question. For now: Random words
     const loadNextQuestion = () => {
-        const questions = questionSet[0].questions;
+        const questions = questionSet[route.params.setID].questions;
         const index = Math.floor(Math.random() * questions.length);
         setQuestion(questions[index]);
-        console.log(letters)
         setLetter(letters[index]);
     };
 

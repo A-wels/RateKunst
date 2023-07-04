@@ -39,10 +39,11 @@ function App(): JSX.Element {
       />
       <Stack.Navigator>
         <Stack.Screen
-          name="Start"
+          name="Startmenü"
           component={StartScreen}
           options= {{ 
             headerTintColor: 'white',
+            headerTitleStyle: { fontSize: 24, fontWeight: 'bold' },
             headerStyle: { backgroundColor: 'tomato' },
           }}
         />

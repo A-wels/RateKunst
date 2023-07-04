@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } 
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { questionSet } from '../../constants/questions';
+import { Picker } from '@react-native-picker/picker';
 
 const StartScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -64,7 +65,23 @@ const StartScreen = ({ navigation }) => {
   };
 
   return (
+
     <View style={[styles.container]}>
+
+      { /* Picker for question set */}
+      <Text style={styles.title}>Frageset</Text>
+      <Picker
+        style={styles.picker}
+        selectedValue={setID}
+        onValueChange={(itemValue, itemIndex) =>
+          setSetID(itemValue)
+        }>
+        {questionSet.map((item, index) => (
+          <Picker.Item key={index} label={item.title} value={index} />
+        ))}
+      </Picker>
+
+      { /* List of names */}
       <Text style={styles.title}>Namen</Text>
       <FlatList
         data={names}
@@ -89,6 +106,8 @@ const StartScreen = ({ navigation }) => {
           <AntDesign name="plussquareo" size={24} color="black" />
         </TouchableOpacity>
       </View>
+
+      {/* Button to start the game */}
       <TouchableOpacity style={styles.startButton} onPress={() => handleStartButton()}>
         <Text style={styles.startButtonText}>Start</Text>
       </TouchableOpacity>
@@ -150,6 +169,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  picker: {
+    marginBottom: 10,
+  }
 });
 
 export default StartScreen;
