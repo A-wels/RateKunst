@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { questionSet } from '../../constants/questions';
 
 const StartScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [names, setNames] = useState([]);
+  const [setID, setSetID] = useState(0);
 
   useEffect(() => {
     // Load the saved names when the component mounts
@@ -52,7 +54,7 @@ const StartScreen = ({ navigation }) => {
     if (names.length == 0) {
       Alert.alert('Keine Spieler', 'Bitte mindestens einen Namen eingeben!');
     }
-    navigation.navigate('Ratepfosten', { names: names });
+    navigation.navigate('Ratepfosten', { names: names, setID: setID });
   }
 
   const handleRemoveName = (index: number) => {

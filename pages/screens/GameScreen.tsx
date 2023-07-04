@@ -4,6 +4,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import letters from '../../constants/letters';
+import { questionSet } from '../../constants/questions';
 
 const GameScreen = ({ navigation, route }) => {
     // players in rote.params.names
@@ -48,7 +49,7 @@ const GameScreen = ({ navigation, route }) => {
 
     // load next question. For now: Random words
     const loadNextQuestion = () => {
-        const questions = ['Wer bin ich?', 'Wieso bin ich hier?', 'Was lädt hier nicht?'];
+        const questions = questionSet[0].questions;
         const index = Math.floor(Math.random() * questions.length);
         setQuestion(questions[index]);
         console.log(letters)
@@ -59,7 +60,7 @@ const GameScreen = ({ navigation, route }) => {
 
     return (
         <SafeAreaView style={[styles.container]}>
-            <Text style={styles.title}>Ratepfosten</Text>
+            <Text style={styles.title}>Ratepfosten: {questionSet[route.params.setID].title}</Text>
 
             <View style={styles.gamefield}>
                 <View style={styles.questionBox}>

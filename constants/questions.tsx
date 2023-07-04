@@ -1,14 +1,14 @@
 // list of questions for the quiz. Dictionary with multiple sets of questions
 
-export const questions = [
+export const questionSet = [
     {
-        questionSetTitle: 'Standard',
+        title: 'Standard',
         questions: ['Ein Auto', 'Ein Haus', 'Ein Baum', 'Ein Hund'],
 
     },
     {
-        questionSetTitle: 'Oh no',
-        questions: ['Ein Auto', 'Ein Haus', 'Ein Baum', 'Ein Hund'],
+        title: 'Oh no',
+        questions: ['Kein Auto', 'Kein Haus', 'Kein Baum', 'Kein Hund'],
 
     },
 ]
