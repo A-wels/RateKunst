@@ -44,15 +44,18 @@ const GameScreen = ({ navigation, route }) => {
                 ],
                 { cancelable: false }
             );
+        }else {
+            loadNextQuestion();
         }
     };
 
     // load next question. For now: Random words
     const loadNextQuestion = () => {
         const questions = questionSet[route.params.setID].questions;
-        const index = Math.floor(Math.random() * questions.length);
-        setQuestion(questions[index]);
-        setLetter(letters[index]);
+        const indexQuestion = Math.floor(Math.random() * questions.length);
+        const indexLetters = Math.floor(Math.random() * letters.length);
+        setQuestion(questions[indexQuestion]);
+        setLetter(letters[indexLetters]);
     };
 
 
