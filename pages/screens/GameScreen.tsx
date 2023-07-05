@@ -13,6 +13,7 @@ const GameScreen = ({ navigation, route }) => {
     const [playerScores, setPlayerScores] = React.useState({});
     const [question, setQuestion] = React.useState('');
     const [letter, setLetter] = React.useState('');
+    const [canLoadNextQuestion, setCanLoadNextQuestion] = React.useState(true);
 
     React.useEffect(() => {
         // initialize player scores
@@ -50,13 +51,29 @@ const GameScreen = ({ navigation, route }) => {
     };
 
     // load next question. For now: Random words
-    const loadNextQuestion = () => {
+    async function loadNextQuestion() {
+        if (!canLoadNextQuestion) {
+            return;
+        }
+        setCanLoadNextQuestion(false);
         const questions = questionSet[route.params.setID].questions;
         const indexQuestion = Math.floor(Math.random() * questions.length);
         const indexLetters = Math.floor(Math.random() * letters.length);
+        // clear letter field
+        setLetter('');
+        // count down from 3 in the question field
+        setQuestion('3');
+        await new Promise((r) => setTimeout(r, 1000));
+        setQuestion('2');
+        await new Promise((r) => setTimeout(r, 1000));
+        setQuestion('1');
+        await new Promise((r) => setTimeout(r, 1000));
+
+        // set new question and letter
         setQuestion(questions[indexQuestion]);
         setLetter(letters[indexLetters]);
-    };
+        setCanLoadNextQuestion(true);
+    }
 
 
 
