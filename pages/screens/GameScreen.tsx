@@ -4,16 +4,42 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import letters from '../../constants/letters';
-import { questionSet } from '../../constants/questions';
+import { questionSet as initialSet } from '../../constants/questions';
+import getQuestions from '../../utils/questionloader';
 
 const GameScreen = ({ navigation, route }) => {
     // players in rote.params.names
     // keep track of player scores
+    const [firstLoad, setFirstLoad] = React.useState(true);
 
     const [playerScores, setPlayerScores] = React.useState({});
     const [question, setQuestion] = React.useState('');
+    const [questionSet, setQuestionsSets] = React.useState(initialSet);
     const [letter, setLetter] = React.useState('');
     const [canLoadNextQuestion, setCanLoadNextQuestion] = React.useState(true);
+    const [title, setTitle] = React.useState('');
+
+    // when questionSet changes, load first question and set title
+    React.useEffect(() => {
+        if (!firstLoad) {
+            setTitle(questionSet[route.params.setID].title);
+            loadNextQuestion();
+        }
+
+    }, [questionSet]);
+
+    // Load the question set specified in route.params.id. First use the sets from constants/questions.ts, then use the custom sets from AsyncStorage
+    React.useEffect(() => {
+        // copy the initial set from constants/questions.ts
+
+        const getCustomSet = async () => {
+
+            setQuestionsSets(await getQuestions());
+        }
+        getCustomSet();
+        setFirstLoad(false);
+
+    }, []);
 
     React.useEffect(() => {
         // initialize player scores
@@ -24,7 +50,7 @@ const GameScreen = ({ navigation, route }) => {
         setPlayerScores(scores);
 
         // load first question
-        loadNextQuestion();
+        //loadNextQuestion();
     }, []);
 
     // increment score for player
@@ -45,7 +71,7 @@ const GameScreen = ({ navigation, route }) => {
                 ],
                 { cancelable: false }
             );
-        }else {
+        } else {
             loadNextQuestion();
         }
     };
@@ -56,6 +82,7 @@ const GameScreen = ({ navigation, route }) => {
             return;
         }
         setCanLoadNextQuestion(false);
+        console.log("Loading question for set " + route.params.setID + "...")
         const questions = questionSet[route.params.setID].questions;
         const indexQuestion = Math.floor(Math.random() * questions.length);
         const indexLetters = Math.floor(Math.random() * letters.length);
@@ -75,11 +102,9 @@ const GameScreen = ({ navigation, route }) => {
         setCanLoadNextQuestion(true);
     }
 
-
-
     return (
         <SafeAreaView style={[styles.container]}>
-            <Text style={styles.title}>RateDepp: {questionSet[route.params.setID].title}</Text>
+            <Text style={styles.title}>RateDepp: {title}</Text>
 
             <View style={styles.gamefield}>
                 <View style={styles.questionBox}>
@@ -198,7 +223,6 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         marginHorizontal: 5,
     },
-
 });
 
 export default GameScreen;

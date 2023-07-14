@@ -2,18 +2,48 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { questionSet } from '../../constants/questions';
+import { questionSet as initialQuestions } from '../../constants/questions';
 import { Picker } from '@react-native-picker/picker';
+import getQuestions from '../../utils/questionloader';
 
 const StartScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [names, setNames] = useState([]);
   const [setID, setSetID] = useState(0);
+  const [questionsSets, setQuestionsSets] = useState(initialQuestions);
 
   useEffect(() => {
     // Load the saved names when the component mounts
     loadNames();
   }, []);
+
+  // Load the question set specified in route.params.id. First use the sets from constants/questions.ts, then use the custom sets from AsyncStorage
+  useEffect(() => {
+    // copy the initial set from constants/questions.ts
+    const unsubscribe = navigation.addListener('focus', () => {
+
+      const getCustomSet = async () => {
+
+        setQuestionsSets(await getQuestions());
+      }
+      getCustomSet();
+    });
+  }, []);
+
+
+  useEffect(() => {
+    // set navigation header button
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Eigene Sets')}
+        >
+          <AntDesign name="edit" size={24} color="black" />
+        </TouchableOpacity>
+      ),
+    });
+
+  }, [navigation]);
 
   useEffect(() => {
     // Save the names whenever the names state changes
@@ -54,8 +84,10 @@ const StartScreen = ({ navigation }) => {
   const handleStartButton = () => {
     if (names.length == 0) {
       Alert.alert('Keine Spieler', 'Bitte mindestens einen Namen eingeben!');
+    } else {
+      console.log(" " + names + " " + setID)
+      navigation.navigate('RateDepp', { names: names, setID: setID });
     }
-    navigation.navigate('RateDepp', { names: names, setID: setID });
   }
 
   const handleRemoveName = (index: number) => {
@@ -76,9 +108,10 @@ const StartScreen = ({ navigation }) => {
         onValueChange={(itemValue, itemIndex) =>
           setSetID(itemValue)
         }>
-        {questionSet.map((item, index) => (
+        {questionsSets.map((item, index) => (
           <Picker.Item key={index} label={item.title} value={index} />
-        ))}
+        ))
+        }
       </Picker>
 
       { /* List of names */}
@@ -127,7 +160,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     color: 'white',
-    
+
   },
   names: {
     fontSize: 18,
