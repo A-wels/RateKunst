@@ -1,4 +1,4 @@
-package com.RateDepp;
+package com.RateKunst;
 
 import android.app.Application;
 import com.facebook.react.PackageList;

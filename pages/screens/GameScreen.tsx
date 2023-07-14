@@ -90,11 +90,11 @@ const GameScreen = ({ navigation, route }) => {
         setLetter('');
         // count down from 3 in the question field
         setQuestion('3');
-        await new Promise((r) => setTimeout(r, 1000));
+        await new Promise((r) => setTimeout(r, 750));
         setQuestion('2');
-        await new Promise((r) => setTimeout(r, 1000));
+        await new Promise((r) => setTimeout(r, 750));
         setQuestion('1');
-        await new Promise((r) => setTimeout(r, 1000));
+        await new Promise((r) => setTimeout(r, 750));
 
         // set new question and letter
         setQuestion(questions[indexQuestion]);
@@ -104,7 +104,7 @@ const GameScreen = ({ navigation, route }) => {
 
     return (
         <SafeAreaView style={[styles.container]}>
-            <Text style={styles.title}>RateDepp: {title}</Text>
+            <Text style={styles.title}>RateKunst: {title}</Text>
 
             <View style={styles.gamefield}>
                 <View style={styles.questionBox}>

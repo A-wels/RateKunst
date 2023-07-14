@@ -56,7 +56,7 @@ function App(): JSX.Element {
             ),
           }}
         />
-        <Stack.Screen name="RateDepp"
+        <Stack.Screen name="RateKunst"
           component={GameScreen}
           options = {{
           headerShown: false,

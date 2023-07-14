@@ -198,6 +198,9 @@ export const questionSet = [
             'Kompliment',
             'Das würde ich gerne erfinden',
             'Auf dem Wasser',
+            'Die Person links von mir ist...',
+            'Die Person rechts von mir ist...',
+            'Ich bin...',
         ],
     },
     {

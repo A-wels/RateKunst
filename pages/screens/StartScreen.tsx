@@ -86,7 +86,7 @@ const StartScreen = ({ navigation }) => {
       Alert.alert('Keine Spieler', 'Bitte mindestens einen Namen eingeben!');
     } else {
       console.log(" " + names + " " + setID)
-      navigation.navigate('RateDepp', { names: names, setID: setID });
+      navigation.navigate('RateKunst', { names: names, setID: setID });
     }
   }
 
