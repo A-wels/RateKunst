@@ -1,4 +1,4 @@
-package com.ratepfosten;
+package com.RateDepp;
 
 import android.app.Application;
 import com.facebook.react.PackageList;

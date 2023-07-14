@@ -26,16 +26,14 @@ import GameScreen from './pages/screens/GameScreen';
 const Stack = createNativeStackNavigator();
 function App(): JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
+  const navBarStyle = {
     backgroundColor: isDarkMode ? '#1f1f23' : '#fafafa',
   };
-
   return (
     <NavigationContainer>
       <StatusBar
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+        backgroundColor={navBarStyle.backgroundColor}
       />
       <Stack.Navigator>
         <Stack.Screen
@@ -47,7 +45,7 @@ function App(): JSX.Element {
             headerStyle: { backgroundColor: 'tomato' },
           }}
         />
-        <Stack.Screen name="Ratepfosten"
+        <Stack.Screen name="RateDepp"
           component={GameScreen}
           options = {{
           headerShown: false,
@@ -76,6 +74,9 @@ const styles = StyleSheet.create({
   },
   highlight: {
     fontWeight: '700',
+  },
+  backgroundStyle: {
+    backgroundColor: '#1f1f23',
   },
 });
 

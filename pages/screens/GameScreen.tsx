@@ -79,7 +79,7 @@ const GameScreen = ({ navigation, route }) => {
 
     return (
         <SafeAreaView style={[styles.container]}>
-            <Text style={styles.title}>Ratepfosten: {questionSet[route.params.setID].title}</Text>
+            <Text style={styles.title}>RateDepp: {questionSet[route.params.setID].title}</Text>
 
             <View style={styles.gamefield}>
                 <View style={styles.questionBox}>

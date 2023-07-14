@@ -55,7 +55,7 @@ const StartScreen = ({ navigation }) => {
     if (names.length == 0) {
       Alert.alert('Keine Spieler', 'Bitte mindestens einen Namen eingeben!');
     }
-    navigation.navigate('Ratepfosten', { names: names, setID: setID });
+    navigation.navigate('RateDepp', { names: names, setID: setID });
   }
 
   const handleRemoveName = (index: number) => {
@@ -126,10 +126,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: 'white',
+    
   },
   names: {
     fontSize: 18,
     marginBottom: 8,
+    color: 'white',
   },
   nameContainer: {
     flexDirection: 'row',
@@ -144,10 +147,12 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: 'white',
     borderRadius: 5,
     padding: 10,
     marginRight: 10,
+    backgroundColor: 'white',
+    color: 'black',
   },
   addButton: {
     backgroundColor: 'cadetblue',
@@ -171,6 +176,7 @@ const styles = StyleSheet.create({
   },
   picker: {
     marginBottom: 10,
+    color: 'white',
   }
 });
 
