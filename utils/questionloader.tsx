@@ -27,4 +27,14 @@ const getQuestions = async () => {
     // set the question set
     return finalSet;
 }
-export default getQuestions;
+
+const getQuestionLabels = async () => {
+    // load all questions, return them as {label: title, value: index}
+    const questions = await getQuestions();
+    const labels = [];
+    for (let i = 0; i < questions.length; i++) {
+        labels.push({ label: questions[i].title, value: i });
+    }
+    return labels;
+}
+export { getQuestions, getQuestionLabels }

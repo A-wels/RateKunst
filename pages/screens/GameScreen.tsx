@@ -5,7 +5,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import letters from '../../constants/letters';
 import { questionSet as initialSet } from '../../constants/questions';
-import getQuestions from '../../utils/questionloader';
+import { getQuestions } from '../../utils/questionloader';
 
 const GameScreen = ({ navigation, route }) => {
     // players in rote.params.names
@@ -22,7 +22,6 @@ const GameScreen = ({ navigation, route }) => {
     // when questionSet changes, load first question and set title
     React.useEffect(() => {
         if (!firstLoad) {
-            setTitle(questionSet[route.params.setID].title);
             loadNextQuestion();
         }
 
@@ -33,7 +32,6 @@ const GameScreen = ({ navigation, route }) => {
         // copy the initial set from constants/questions.ts
 
         const getCustomSet = async () => {
-
             setQuestionsSets(await getQuestions());
         }
         getCustomSet();
@@ -49,8 +47,6 @@ const GameScreen = ({ navigation, route }) => {
         });
         setPlayerScores(scores);
 
-        // load first question
-        //loadNextQuestion();
     }, []);
 
     // increment score for player
@@ -82,8 +78,12 @@ const GameScreen = ({ navigation, route }) => {
             return;
         }
         setCanLoadNextQuestion(false);
-        console.log("Loading question for set " + route.params.setID + "...")
-        const questions = questionSet[route.params.setID].questions;
+        // for all Ids, load the questions
+        let questions = [];
+        for (const id of route.params.setID) {
+            questions = questions.concat(questionSet[id].questions);
+        }
+
         const indexQuestion = Math.floor(Math.random() * questions.length);
         const indexLetters = Math.floor(Math.random() * letters.length);
         // clear letter field
@@ -104,7 +104,7 @@ const GameScreen = ({ navigation, route }) => {
 
     return (
         <SafeAreaView style={[styles.container]}>
-            <Text style={styles.title}>RateKunst: {title}</Text>
+            <Text style={styles.title}>RateKunst {title}</Text>
 
             <View style={styles.gamefield}>
                 <View style={styles.questionBox}>

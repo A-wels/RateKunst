@@ -1,16 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import { MultiSelect } from 'react-native-element-dropdown';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { questionSet as initialQuestions } from '../../constants/questions';
 import { Picker } from '@react-native-picker/picker';
-import getQuestions from '../../utils/questionloader';
+import { getQuestions, getQuestionLabels } from '../../utils/questionloader';
 
 const StartScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [names, setNames] = useState([]);
-  const [setID, setSetID] = useState(0);
-  const [questionsSets, setQuestionsSets] = useState(initialQuestions);
+  const [questionsSets, setQuestionsSets] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
+
+  const renderDataItem = (item) => {
+
+    return (
+      <View style={styles.item}>
+        <Text style={styles.selectedTextStyle}>{item.label}</Text>
+        <AntDesign style={styles.icon} color="black" name="Safety" size={20} />
+      </View>
+
+    );
+
+  };
+  // print selected items
+  useEffect(() => {
+    console.log(selectedItems);
+  }
+    , [selectedItems]);
 
   useEffect(() => {
     // Load the saved names when the component mounts
@@ -19,15 +38,16 @@ const StartScreen = ({ navigation }) => {
 
   // Load the question set specified in route.params.id. First use the sets from constants/questions.ts, then use the custom sets from AsyncStorage
   useEffect(() => {
+    const getCustomSet = async () => {
+
+      setQuestionsSets(await getQuestionLabels());
+    }
+
     // copy the initial set from constants/questions.ts
     const unsubscribe = navigation.addListener('focus', () => {
-
-      const getCustomSet = async () => {
-
-        setQuestionsSets(await getQuestions());
-      }
       getCustomSet();
     });
+    getCustomSet();
   }, []);
 
 
@@ -84,9 +104,11 @@ const StartScreen = ({ navigation }) => {
   const handleStartButton = () => {
     if (names.length == 0) {
       Alert.alert('Keine Spieler', 'Bitte mindestens einen Namen eingeben!');
+    } else if (selectedItems.length == 0) {
+      Alert.alert("Kein Set ausgewählt", "Bitte wähle ein Set aus!")
     } else {
-      console.log(" " + names + " " + setID)
-      navigation.navigate('RateKunst', { names: names, setID: setID });
+      console.log(" " + names + " " + selectedItems)
+      navigation.navigate('RateKunst', { names: names, setID: selectedItems });
     }
   }
 
@@ -99,21 +121,45 @@ const StartScreen = ({ navigation }) => {
   return (
 
     <View style={[styles.container]}>
-
       { /* Picker for question set */}
-      <Text style={styles.title}>Frageset</Text>
-      <Picker
-        style={styles.picker}
-        selectedValue={setID}
-        onValueChange={(itemValue, itemIndex) =>
-          setSetID(itemValue)
-        }>
-        {questionsSets.map((item, index) => (
-          <Picker.Item key={index} label={item.title} value={index} />
-        ))
-        }
-      </Picker>
+      <View style={styles.pickercontainer}>
+        <MultiSelect
+          style={styles.dropdown}
+          placeholderStyle={styles.placeholderStyle}
+          selectedTextStyle={styles.selectedTextStyle}
+          inputSearchStyle={styles.inputSearchStyle}
+          iconStyle={styles.iconStyle}
+          data={questionsSets}
+          labelField="label"
+          valueField="value"
+          placeholder="Themensets auswählen"
+          value={selectedItems}
+          search
+          searchPlaceholder="Suchen..."
+          onChange={item => {
+            setSelectedItems(item);
+          }}
+          renderLeftIcon={() => (
+            <AntDesign
+              style={styles.icon}
+              color="black"
+              name="Safety"
+              size={20}
+            />
+          )}
 
+          renderItem={renderDataItem}
+          renderSelectedItem={(item, unSelect) => (
+            <TouchableOpacity onPress={() => unSelect && unSelect(item)}>
+              <View style={styles.selectedStyle}>
+                <Text style={styles.textSelectedStyle}>{item.label}</Text>
+                <AntDesign color="black" name="delete" size={17} />
+              </View>
+            </TouchableOpacity>
+          )}
+
+        />
+      </View>
       { /* List of names */}
       <Text style={styles.title}>Namen</Text>
       <FlatList
@@ -207,10 +253,74 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  picker: {
-    marginBottom: 10,
-    color: 'white',
-  }
+  // picker stuff
+  pickercontainer: {
+    paddingBottom: 10,
+  },
+  dropdown: {
+    height: 50,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+  },
+  placeholderStyle: {
+    fontSize: 16,
+    color: 'black',
+  },
+  selectedTextStyle: {
+    fontSize: 14,
+    color: 'black',
+  },
+  iconStyle: {
+    width: 20,
+    height: 20,
+  },
+  inputSearchStyle: {
+    height: 40,
+    fontSize: 16,
+  },
+  icon: {
+    marginRight: 5,
+  },
+  item: {
+    padding: 17,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    color: 'black',
+  },
+  selectedStyle: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 14,
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    marginTop: 8,
+    marginRight: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+  },
+  textSelectedStyle: {
+    marginRight: 5,
+    fontSize: 16,
+    color: 'black',
+  },
 });
 
 export default StartScreen;
