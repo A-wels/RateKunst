@@ -15,7 +15,7 @@ export const questionSet = [
             'Möbelstück',
             'Gewächs',
             'Fast food',
-            'Synonym für geld ',
+            'Synonym für Geld ',
             'Fluss',
             'Stadt im Inland ',
             'Stadt im Ausland ',
