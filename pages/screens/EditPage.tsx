@@ -14,23 +14,14 @@ const EditPage = ({ navigation, route }) => {
     const [customSetTitle, setCustomSetTitle] = React.useState('');
     const [setID, setSetID] = React.useState('');
 
-    // log customSet and customSetTitle on change
-
-    React.useEffect(() => {
-        console.log("Set ID changed: " + setID);
-    }
-        , [setID]);
-
     // load custom set on mount
     React.useEffect(() => {
         // load custom set specified in route.params.id
         const getCustomSet = () => {
             const id = route.params.id;
-            console.log("Trying to load set with id: " + id);
 
             // check if id is 0: New set
             if (id === 0) {
-                console.log("New set")
                 // generate new id based on current time
                 const id = Date.now().toString();
                 setSetID(id);
@@ -48,10 +39,8 @@ const EditPage = ({ navigation, route }) => {
                         // value previously stored
                         // first line is title
                         setCustomSetTitle(JSON.parse(value)[0]);
-                        console.log(JSON.parse(value)[0])
                         // rest is set
                         setCustomSet(JSON.parse(value).slice(1));
-                        console.log(JSON.parse(value).slice(1))
 
                     }
                 } catch (e) {
@@ -67,10 +56,6 @@ const EditPage = ({ navigation, route }) => {
 
     React.useEffect(() => {
         // Remove whitespace at start and end of each line and remove empty lines
-        console.log("Saving set")
-        console.log("ID: " + setID)
-        console.log("Custom set: " + customSet)
-        console.log("Custom set title: " + customSetTitle)
 
         const trimmedSet = customSet
             .map((line) => {
@@ -85,9 +70,6 @@ const EditPage = ({ navigation, route }) => {
         if (trimmedTitle.length === 0) {
             trimmedTitle = "Unbenanntes Set";
         }
-        console.log("Trimmed title: " + trimmedTitle
-            + "\nTrimmed set: " + trimmedSet)
-
 
         // save custom set to local storage
         // check if set is empty
@@ -97,15 +79,11 @@ const EditPage = ({ navigation, route }) => {
         }
 
         // add title as first line
-        console.log("Trimmedset: " + trimmedSet)
         trimmedSet.unshift(trimmedTitle);
         const saveSet = async () => {
 
         try {
-            console.log("Trying to save set with id: " + setID);
-            console.log("Title: " + trimmedTitle)
-            console.log("Set: " + trimmedSet)
-
+           
             await AsyncStorage.setItem(
                 setID,
                 JSON.stringify(trimmedSet)
@@ -124,7 +102,6 @@ const EditPage = ({ navigation, route }) => {
                     // value previously stored
                     // check if set is already in list
                     const sets = JSON.parse(value);
-                    console.log("Sets: " + sets)
 
                     if (!sets.includes(setID)) {
                         // add set to list
@@ -170,7 +147,7 @@ const EditPage = ({ navigation, route }) => {
                 <TextInput
                     style={styles.text}
                     placeholder="Titel des Sets "
-                    placeholderTextColor='white'
+                    placeholderTextColor='#a9a9a9'
                     onChangeText={text => onChangeTextTitle(text)}
                     value={customSetTitle}>
                 </TextInput>
@@ -178,8 +155,8 @@ const EditPage = ({ navigation, route }) => {
             {/* Multiline textinput, each question on one line */}
             <View style={styles.textField}>
                 <TextInput
-                    placeholder='Eine Kategorie pro Zeile '
-                    placeholderTextColor={'white'}
+                    placeholder='Eine Kategorie pro Zeile. Änderungen werden automatisch gespeichert. '
+                    placeholderTextColor='#a9a9a9'
                     style={styles.text}
                     multiline={true}
                     numberOfLines={10}

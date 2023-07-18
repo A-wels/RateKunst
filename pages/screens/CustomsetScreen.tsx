@@ -18,7 +18,6 @@ const CustomsetScreen = ({ navigation, route }) => {
             try {
                 setCustomSets([]);
                 customSetIDs.forEach(async (id) => {
-                    console.log("Loading set with id: " + id)
                     const value = await AsyncStorage.getItem(id);
                     if (value !== null) {
                         // value previously stored
@@ -42,7 +41,6 @@ const CustomsetScreen = ({ navigation, route }) => {
                 try {
                     const jsonValue = await AsyncStorage.getItem('@customSets');
                     const data = jsonValue != null ? JSON.parse(jsonValue) : [];
-                    console.log("Loaded custom set ids: " + data);
                     setCustomSetIDs(data);
                 } catch (e) {
                     console.log("Error while loading custom sets: " + e);
@@ -56,7 +54,6 @@ const CustomsetScreen = ({ navigation, route }) => {
 
     const editSet = (id: string) => {
         // navigate to edit set screen
-        console.log(id);
         navigation.navigate('Set Bearbeiten', { id: id, });
     }
 
@@ -64,13 +61,13 @@ const CustomsetScreen = ({ navigation, route }) => {
         <View style={styles.item}>
             <View style={styles.row}>
                 <TouchableOpacity style={styles.button} onPress={() => { navigation.navigate('Set Bearbeiten', { id: 0, }) }}>
-                    <AntDesign name="plus" size={32} color="white" />
+                    <AntDesign name="pluscircle" size={32} color="white" />
                 </TouchableOpacity>
             </View>
         </View>
     );
 
-    const Item = ({ title, id }) => (        
+    const Item = ({ title, id }) => (
         <View style={styles.item}>
             <View style={styles.row}>
                 <TouchableOpacity style={styles.button} onPress={() => { editSet(id) }}>
@@ -86,7 +83,6 @@ const CustomsetScreen = ({ navigation, route }) => {
 
     const deleteCustomSet = (id) => {
         // delete custom set from database
-        console.log(id);
         // remove from customSets
         setCustomSets(customSets.filter(item => item.id !== id));
         // remove from customSetIDs
@@ -149,7 +145,8 @@ const CustomsetScreen = ({ navigation, route }) => {
                 <View style={styles.item}>
                     <View style={styles.row}>
                         <TouchableOpacity style={styles.button} onPress={() => { navigation.navigate('Set Bearbeiten', { id: 0, }) }}>
-                            <AntDesign name="plus" size={32} color="white" />
+                            <AntDesign name="pluscircle" size={48} color="white" />
+                            <Text style={styles.textAddSet}>Neues Set erstellen</Text>
                         </TouchableOpacity>
                     </View>
                 </View>}
@@ -170,6 +167,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    textAddSet: {
+        fontSize: 24,
+        paddingTop: 10,
+    },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
@@ -179,6 +180,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#1f1f23',
         borderRadius: 10,
         padding: 10,
+        alignItems: 'center',
     },
     row: {
         flexDirection: 'row',

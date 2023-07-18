@@ -17,7 +17,6 @@ const StartScreen = ({ navigation }) => {
     return (
       <View style={styles.item}>
         <Text style={styles.selectedTextStyle}>{item.label}</Text>
-        <AntDesign style={styles.icon} color="black" name="Safety" size={20} />
       </View>
 
     );
@@ -63,8 +62,6 @@ const StartScreen = ({ navigation }) => {
     };
 
     loadSelectedSets();
-    // load the selected sets on focus
-    const unsubscribe = navigation.addListener('focus', () => { loadSelectedSets(); });
   }, []);
 
   // Load the question set specified in route.params.id. First use the sets from constants/questions.ts, then use the custom sets from AsyncStorage
@@ -86,7 +83,9 @@ const StartScreen = ({ navigation }) => {
     // set navigation header button
     navigation.setOptions({
       headerRight: () => (
+        // View with width of 50 to make the button easier to press
         <TouchableOpacity
+          style={{width: 80, height: 40, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}
           onPress={() => navigation.navigate('Eigene Sets')}
         >
           <AntDesign name="edit" size={24} color="black" />
@@ -123,7 +122,7 @@ const StartScreen = ({ navigation }) => {
         setNames([...names, name]);
         setName('');
       } else {
-        Alert.alert('Zu viele Spieler', 'Maximal 5 Namen möglich!');
+        Alert.alert('Zu viele Spieler', 'Maximal 4 Spieler möglich!');
       }
 
     }
@@ -155,6 +154,7 @@ const StartScreen = ({ navigation }) => {
           placeholderStyle={styles.placeholderStyle}
           selectedTextStyle={styles.selectedTextStyle}
           inputSearchStyle={styles.inputSearchStyle}
+          activeColor="tomato"
           iconStyle={styles.iconStyle}
           data={questionsSets}
           labelField="label"
@@ -170,7 +170,7 @@ const StartScreen = ({ navigation }) => {
             <AntDesign
               style={styles.icon}
               color="black"
-              name="Safety"
+              name="folderopen"
               size={20}
             />
           )}
@@ -205,6 +205,7 @@ const StartScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           placeholder="Name eingeben"
+          placeholderTextColor={'#a9a9a9'}
           value={name}
           onChangeText={(text) => setName(text)}
         />
@@ -313,6 +314,7 @@ const styles = StyleSheet.create({
   inputSearchStyle: {
     height: 40,
     fontSize: 16,
+    color: 'black',
   },
   icon: {
     marginRight: 5,
