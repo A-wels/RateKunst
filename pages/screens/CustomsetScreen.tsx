@@ -8,32 +8,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CustomsetScreen = ({ navigation, route }) => {
     const [customSets, setCustomSets] = React.useState([]);
-    const [customSetIDs, setCustomSetIDs] = React.useState('');
+    const [customSetIDs, setCustomSetIDs] = React.useState([]);
 
-
-    // log customSet and customSetTitle on change
-    React.useEffect(() => {
-        console.log("Custom sets changed: " + customSets);
-    }, [customSets]);
-    React.useEffect(() => {
-        console.log("Custom set ids changed: " + customSetIDs);
-    }
-        , [customSetIDs]);
-
-    // clear local storage on mount
-    React.useEffect(() => {
-        if (false){
-        // clear local storage
-        const clearData = async () => {
-            try {
-                await AsyncStorage.clear();
-            } catch (e) {
-                console.log("Error while clearing local storage: " + e);
-            }
-        }
-        clearData();
-    }
-    }, []);
 
     // when customSetIDs changes, load custom sets from local storage
     React.useEffect(() => {
@@ -78,7 +54,7 @@ const CustomsetScreen = ({ navigation, route }) => {
 
     }, []);
 
-    const editSet = (id) => {
+    const editSet = (id: string) => {
         // navigate to edit set screen
         console.log(id);
         navigation.navigate('Set Bearbeiten', { id: id, });
@@ -158,7 +134,6 @@ const CustomsetScreen = ({ navigation, route }) => {
         );
     }
 
-    console.log("Custom sets before render: " + customSets);
     return (
         <SafeAreaView style={[styles.container]}>
             {/* FlatList of custom sets. Last item is a button to add a new set */}

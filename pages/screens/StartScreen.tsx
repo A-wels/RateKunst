@@ -4,9 +4,7 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import { MultiSelect } from 'react-native-element-dropdown';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { questionSet as initialQuestions } from '../../constants/questions';
-import { Picker } from '@react-native-picker/picker';
-import { getQuestions, getQuestionLabels } from '../../utils/questionloader';
+import { getQuestionLabels } from '../../utils/questionloader';
 
 const StartScreen = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -25,15 +23,48 @@ const StartScreen = ({ navigation }) => {
     );
 
   };
-  // print selected items
-  useEffect(() => {
-    console.log(selectedItems);
-  }
-    , [selectedItems]);
+  //save selected items
+  const saveSelectedItems = async (item) => {
+    try {
+      await AsyncStorage.setItem('customSet', JSON.stringify(item));
+    } catch (error) {
+      console.log('Error saving custom set:', error);
+    }
+  };
+
 
   useEffect(() => {
     // Load the saved names when the component mounts
+
+    const loadNames = async () => {
+      try {
+        const savedNames = await AsyncStorage.getItem('names');
+        if (savedNames !== null) {
+          setNames(JSON.parse(savedNames));
+        }
+      } catch (error) {
+        console.log('Error loading names:', error);
+      }
+    };
+
     loadNames();
+
+
+    const loadSelectedSets = async () => {
+      try {
+        const savedSelectedSets = await AsyncStorage.getItem('customSet');
+        if (savedSelectedSets !== null) {
+
+          setSelectedItems(JSON.parse(savedSelectedSets));
+        }
+      } catch (error) {
+        console.log('Error loading selected sets:', error);
+      }
+    };
+
+    loadSelectedSets();
+    // load the selected sets on focus
+    const unsubscribe = navigation.addListener('focus', () => { loadSelectedSets(); });
   }, []);
 
   // Load the question set specified in route.params.id. First use the sets from constants/questions.ts, then use the custom sets from AsyncStorage
@@ -69,16 +100,13 @@ const StartScreen = ({ navigation }) => {
     // Save the names whenever the names state changes
     saveNames();
   }, [names]);
-  const loadNames = async () => {
-    try {
-      const savedNames = await AsyncStorage.getItem('names');
-      if (savedNames !== null) {
-        setNames(JSON.parse(savedNames));
-      }
-    } catch (error) {
-      console.log('Error loading names:', error);
-    }
-  };
+
+
+  const setSelectedItemsHelper = (item) => {
+    setSelectedItems(item);
+    saveSelectedItems(item);
+  }
+
 
   const saveNames = async () => {
     try {
@@ -107,7 +135,6 @@ const StartScreen = ({ navigation }) => {
     } else if (selectedItems.length == 0) {
       Alert.alert("Kein Set ausgewählt", "Bitte wähle ein Set aus!")
     } else {
-      console.log(" " + names + " " + selectedItems)
       navigation.navigate('RateKunst', { names: names, setID: selectedItems });
     }
   }
@@ -137,7 +164,7 @@ const StartScreen = ({ navigation }) => {
           search
           searchPlaceholder="Suchen..."
           onChange={item => {
-            setSelectedItems(item);
+            setSelectedItemsHelper(item);
           }}
           renderLeftIcon={() => (
             <AntDesign

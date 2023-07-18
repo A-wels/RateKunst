@@ -79,7 +79,7 @@ const GameScreen = ({ navigation, route }) => {
         }
         setCanLoadNextQuestion(false);
         // for all Ids, load the questions
-        let questions = [];
+        let questions: string[] = [];
         for (const id of route.params.setID) {
             questions = questions.concat(questionSet[id].questions);
         }
