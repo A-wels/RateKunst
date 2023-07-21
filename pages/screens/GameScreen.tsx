@@ -17,7 +17,7 @@ const GameScreen = ({ navigation, route }) => {
     const [questionSet, setQuestionsSets] = React.useState(initialSet);
     const [letter, setLetter] = React.useState('');
     const [canLoadNextQuestion, setCanLoadNextQuestion] = React.useState(true);
-    const [title, setTitle] = React.useState('');
+    const [lastTwentyQuestions, setLastTwentyQuestions] = React.useState([])
 
     // when questionSet changes, load first question and set title
     React.useEffect(() => {
@@ -51,24 +51,26 @@ const GameScreen = ({ navigation, route }) => {
 
     // increment score for player
     const incrementScore = (name) => {
-        const updatedScores = { ...playerScores };
-        updatedScores[name] += 1;
-        setPlayerScores(updatedScores);
-        if (updatedScores[name] == 10) {
-            // Display alert and Navigate back to StartScreen on dismiss
-            Alert.alert(
-                'Gewonnen!',
-                `${name} hat gewonnen!`,
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => navigation.navigate('Startmenü'),
-                    },
-                ],
-                { cancelable: false }
-            );
-        } else {
-            loadNextQuestion();
+        if (canLoadNextQuestion) {
+            const updatedScores = { ...playerScores };
+            updatedScores[name] += 1;
+            setPlayerScores(updatedScores);
+            if (updatedScores[name] == 10) {
+                // Display alert and Navigate back to StartScreen on dismiss
+                Alert.alert(
+                    'Gewonnen!',
+                    `${name} hat gewonnen!`,
+                    [
+                        {
+                            text: 'OK',
+                            onPress: () => navigation.navigate('Startmenü'),
+                        },
+                    ],
+                    { cancelable: false }
+                );
+            } else {
+                loadNextQuestion();
+            }
         }
     };
 
@@ -80,11 +82,35 @@ const GameScreen = ({ navigation, route }) => {
         setCanLoadNextQuestion(false);
         // for all Ids, load the questions
         let questions: string[] = [];
+
         for (const id of route.params.setID) {
             questions = questions.concat(questionSet[id].questions);
         }
 
-        const indexQuestion = Math.floor(Math.random() * questions.length);
+        // temp variable: copy of lastTwentyQuestions
+        // Reset last questions if all available questions are already used
+        if (lastTwentyQuestions.length == questions.length) {
+            setLastTwentyQuestions([]);
+        }
+
+        let indexQuestion = Math.floor(Math.random() * questions.length);
+
+        // while an already used question is chosen, choose another one
+        while (lastTwentyQuestions.includes(indexQuestion)) {
+            indexQuestion = Math.floor(Math.random() * questions.length);
+        }
+        // When 20 questions are used, remove the oldest one
+        if (lastTwentyQuestions.length > 20) {
+            // remove the oldest question and add the new one
+            const temp = [...lastTwentyQuestions];
+            temp.shift();
+            temp.push(indexQuestion);
+            setLastTwentyQuestions(temp);
+        } else {
+            // add the chosen question to the list of last questions
+            setLastTwentyQuestions([...lastTwentyQuestions, indexQuestion]);
+        }
+
         const indexLetters = Math.floor(Math.random() * letters.length);
         // clear letter field
         setLetter('');
@@ -104,19 +130,19 @@ const GameScreen = ({ navigation, route }) => {
 
     return (
         <SafeAreaView style={[styles.container]}>
-            <Text style={styles.title}>RateKunst {title}</Text>
+            <Text style={styles.title}>RateKunst</Text>
 
             <View style={styles.gamefield}>
                 <View style={styles.questionBox}>
                     <Text style={styles.smallTitle}> Frage</Text>
                     <View style={styles.textField}>
-                        <Text style={styles.text}> {question}</Text>
+                        <Text style={styles.question}> {question}</Text>
                     </View>
                 </View>
                 <View style={styles.letterBox}>
                     <Text style={styles.smallTitle}> Buchstabe</Text>
                     <View style={styles.textField}>
-                        <Text style={styles.text}> {letter}</Text>
+                        <Text style={styles.letter}> {letter}</Text>
                     </View>
                 </View>
             </View>
@@ -144,7 +170,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     title: {
-        fontSize: 42,
+        fontSize: 38,
         fontWeight: 'bold',
         color: 'white'
     },
@@ -162,7 +188,7 @@ const styles = StyleSheet.create({
         gap: 50,
     },
     box: {
-        width: 150,
+        width: '15%',
         padding: 5,
         backgroundColor: 'lightgreen',
         borderRadius: 8,
@@ -171,7 +197,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     boxSkip: {
-        width: 150,
+        width: '20%',
         padding: 5,
         backgroundColor: 'tomato',
         borderRadius: 8,
@@ -198,6 +224,18 @@ const styles = StyleSheet.create({
     letter: {
         alignItems: 'center',
         justifyContent: 'center',
+        fontSize: 32,
+        color: '#1f1f23',
+        fontWeight: 'bold'
+    },
+    question: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 32,
+        color: '#1f1f23',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        padding: 8,
     },
     smallTitle: {
         color: '#1f1f23',
@@ -207,7 +245,7 @@ const styles = StyleSheet.create({
     },
     questionBox: {
         color: '#1f1f23',
-        width: 600,
+        width: '60%',
         height: 150,
         backgroundColor: 'lightgreen',
         borderRadius: 8,
@@ -217,7 +255,7 @@ const styles = StyleSheet.create({
         color: '#1f1f23',
         fontSize: 24,
         fontWeight: 'bold',
-        width: 200,
+        width: '20%',
         height: 150,
         backgroundColor: 'lightgreen',
         borderRadius: 8,
