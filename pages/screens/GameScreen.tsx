@@ -20,6 +20,7 @@ const GameScreen = ({ navigation, route }) => {
     const [letter, setLetter] = React.useState('');
     const [canLoadNextQuestion, setCanLoadNextQuestion] = React.useState(true);
     const [lastTwentyQuestions, setLastTwentyQuestions] = React.useState([])
+    const [pointsToWin, setPointsToWin] = React.useState(10);
 
     // when questionSet changes, load first question and set title
     React.useEffect(() => {
@@ -50,6 +51,7 @@ const GameScreen = ({ navigation, route }) => {
             hasPlayerScoreIncreased[name] = false;
         });
         setPlayerScores(scores);
+        setPointsToWin(parseInt(route.params.pointsToWin));
 
     }, []);
 
@@ -64,7 +66,7 @@ const GameScreen = ({ navigation, route }) => {
             updatedHasPlayerScoreIncreased[name] = true;
             setPlayerScores(updatedScores);
             setHasPlayerScoreIncreased(updatedHasPlayerScoreIncreased);
-            if (updatedScores[name] == 10) {
+            if (updatedScores[name] == pointsToWin) {
                 // Display alert and Navigate back to StartScreen on dismiss
                 Alert.alert(
                     'Gewonnen!',
@@ -139,7 +141,12 @@ const GameScreen = ({ navigation, route }) => {
 
     return (
         <SafeAreaView style={[styles.container]}>
-            <Text style={styles.title}>RateKunst</Text>
+            {/* Show different title when only one point is necessary to win*/}
+            {pointsToWin == 1 ? (
+                <Text style={styles.title}>RateKunst: Sieg mit {pointsToWin} Punkt. WIESO!?</Text>
+            ) : (
+                <Text style={styles.title}>RateKunst: Sieg mit {pointsToWin} Punkten</Text>
+            )}
 
             <View style={styles.gamefield}>
                 <View style={styles.questionBox}>

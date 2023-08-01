@@ -11,6 +11,8 @@ const StartScreen = ({ navigation }) => {
   const [names, setNames] = useState([]);
   const [questionsSets, setQuestionsSets] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [pointsToWin, setPointsToWin] = useState(10);
+  const [pointsToWinDisplay, setPointsToWinDisplay] = useState('10');
 
   const renderDataItem = (item) => {
 
@@ -62,6 +64,20 @@ const StartScreen = ({ navigation }) => {
     };
 
     loadSelectedSets();
+
+    const loadPointsToWin = async () => {
+      try {
+        const savedPointsToWin = await AsyncStorage.getItem('pointsToWin');
+        if (savedPointsToWin !== null) {
+          setPointsToWin(parseInt(savedPointsToWin));
+          setPointsToWinDisplay(savedPointsToWin);
+        }
+      } catch (error) {
+        console.log('Error loading points to win:', error);
+      }
+    }
+    loadPointsToWin();
+
   }, []);
 
   // Load the question set specified in route.params.id. First use the sets from constants/questions.ts, then use the custom sets from AsyncStorage
@@ -85,7 +101,7 @@ const StartScreen = ({ navigation }) => {
       headerRight: () => (
         // View with width of 50 to make the button easier to press
         <TouchableOpacity
-          style={{width: 80, height: 40, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}
+          style={{ width: 80, height: 40, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}
           onPress={() => navigation.navigate('Eigene Sets')}
         >
           <AntDesign name="edit" size={24} color="black" />
@@ -100,6 +116,11 @@ const StartScreen = ({ navigation }) => {
     saveNames();
   }, [names]);
 
+  useEffect(() => {
+    // Save the points to win whenever the pointsToWin state changes
+    savePointsToWin();
+  }
+    , [pointsToWin]);
 
   const setSelectedItemsHelper = (item) => {
     setSelectedItems(item);
@@ -116,6 +137,14 @@ const StartScreen = ({ navigation }) => {
     }
   };
 
+  const savePointsToWin = async () => {
+    try {
+      await AsyncStorage.setItem('pointsToWin', pointsToWin.toString());
+    } catch (error) {
+      console.log('Error saving points to win:', error);
+    }
+  };
+
   const handleAddName = () => {
     if (name.trim() !== '') {
       if (names.length < 4) {
@@ -128,13 +157,30 @@ const StartScreen = ({ navigation }) => {
     }
   };
 
+  const handlePointsToWinText = (points: string) => {
+   if (points.trim() == '') {
+    setPointsToWinDisplay('');
+   } else {
+    // remove chars that are not numbers
+    const pointsToWinDisplay = points.replace(/[^0-9]/g, '');
+    setPointsToWinDisplay(pointsToWinDisplay);
+    setPointsToWin(parseInt(pointsToWinDisplay));
+    }
+  };
+
+
   const handleStartButton = () => {
     if (names.length == 0) {
       Alert.alert('Keine Spieler', 'Bitte mindestens einen Namen eingeben!');
     } else if (selectedItems.length == 0) {
       Alert.alert("Kein Set ausgewählt", "Bitte wähle ein Set aus!")
     } else {
-      navigation.navigate('RateKunst', { names: names, setID: selectedItems });
+      var chosenPointsToWin = pointsToWin;
+      if (pointsToWinDisplay == '' || pointsToWinDisplay == '0') {
+        chosenPointsToWin = 10;
+        setPointsToWin(10);
+      }
+      navigation.navigate('RateKunst', { names: names, setID: selectedItems, pointsToWin: chosenPointsToWin });
     }
   }
 
@@ -201,6 +247,18 @@ const StartScreen = ({ navigation }) => {
         )}
         keyExtractor={(item, index) => index.toString()}
       />
+      <View style={styles.inputContainerNumber}>
+        <Text style={styles.textPointsToWin}>Punkte um zu gewinnen:</Text>
+        <TextInput
+          style={styles.inputNumber}
+          placeholder="10"
+          placeholderTextColor={'#a9a9a9'}
+          value={pointsToWinDisplay}
+          onChangeText={(text) => {handlePointsToWinText(text)}}
+          keyboardType="numeric"
+        />
+
+      </View>
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -229,6 +287,11 @@ const styles = StyleSheet.create({
     // dark gray background
     backgroundColor: '#1f1f23'
   },
+  textPointsToWin: {
+    fontSize: 18,
+    marginBottom: 32,
+    color: 'white',
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -251,6 +314,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  inputContainerNumber: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    // algin everything in the middle
+    justifyContent: 'center',
+  },
   input: {
     flex: 1,
     borderWidth: 1,
@@ -260,6 +329,20 @@ const styles = StyleSheet.create({
     marginRight: 10,
     backgroundColor: 'white',
     color: 'black',
+  }, 
+  inputNumber: {
+    borderWidth: 1,
+    borderColor: 'white',
+    borderRadius: 5,
+    padding: 10,
+    marginRight: 10,
+    backgroundColor: 'white',
+    color: 'black',
+    width: 50,
+    marginBottom: 32,
+    textAlignVertical: 'center',
+    marginLeft: 10,
+    textAlign: 'center',
   },
   addButton: {
     backgroundColor: 'cadetblue',
