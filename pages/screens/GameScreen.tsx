@@ -13,6 +13,8 @@ const GameScreen = ({ navigation, route }) => {
     const [firstLoad, setFirstLoad] = React.useState(true);
 
     const [playerScores, setPlayerScores] = React.useState({});
+    // State that has a boolean for each player, indicating if their score has increased
+    const [hasPlayerScoreIncreased, setHasPlayerScoreIncreased] = React.useState({})
     const [question, setQuestion] = React.useState('');
     const [questionSet, setQuestionsSets] = React.useState(initialSet);
     const [letter, setLetter] = React.useState('');
@@ -42,8 +44,10 @@ const GameScreen = ({ navigation, route }) => {
     React.useEffect(() => {
         // initialize player scores
         const scores = {};
+        const hasPlayerScoreIncreased = {};
         route.params.names.forEach((name) => {
             scores[name] = 0;
+            hasPlayerScoreIncreased[name] = false;
         });
         setPlayerScores(scores);
 
@@ -51,10 +55,15 @@ const GameScreen = ({ navigation, route }) => {
 
     // increment score for player
     const incrementScore = (name) => {
-        if (canLoadNextQuestion) {
             const updatedScores = { ...playerScores };
+            const updatedHasPlayerScoreIncreased = { ...hasPlayerScoreIncreased };
+            if (updatedHasPlayerScoreIncreased[name]) {
+                return;
+            }
             updatedScores[name] += 1;
+            updatedHasPlayerScoreIncreased[name] = true;
             setPlayerScores(updatedScores);
+            setHasPlayerScoreIncreased(updatedHasPlayerScoreIncreased);
             if (updatedScores[name] == 10) {
                 // Display alert and Navigate back to StartScreen on dismiss
                 Alert.alert(
@@ -71,7 +80,6 @@ const GameScreen = ({ navigation, route }) => {
             } else {
                 loadNextQuestion();
             }
-        }
     };
 
     // load next question. For now: Random words
@@ -126,6 +134,7 @@ const GameScreen = ({ navigation, route }) => {
         setQuestion(questions[indexQuestion]);
         setLetter(letters[indexLetters]);
         setCanLoadNextQuestion(true);
+        setHasPlayerScoreIncreased({});
     }
 
     return (
