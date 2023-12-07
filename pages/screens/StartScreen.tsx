@@ -1,12 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert } from 'react-native';
+import React, {
+  useState,
+  useEffect,
+  JSXElementConstructor,
+  ReactElement,
+  ReactNode,
+  ReactPortal,
+} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  Alert,
+} from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import { MultiSelect } from 'react-native-element-dropdown';
+import {MultiSelect} from 'react-native-element-dropdown';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getQuestionLabels } from '../../utils/questionloader';
+import {getQuestionLabels} from '../../utils/questionloader';
 
-const StartScreen = ({ navigation }) => {
+const StartScreen = ({navigation}) => {
   const [name, setName] = useState('');
   const [names, setNames] = useState([]);
   const [questionsSets, setQuestionsSets] = useState([]);
@@ -14,25 +29,29 @@ const StartScreen = ({ navigation }) => {
   const [pointsToWin, setPointsToWin] = useState(10);
   const [pointsToWinDisplay, setPointsToWinDisplay] = useState('10');
 
-  const renderDataItem = (item) => {
-
+  const renderDataItem = (item: {
+    label:
+      | string
+      | number
+      | boolean
+      | ReactElement<any, string | JSXElementConstructor<any>>
+      | Iterable<ReactNode>
+      | ReactPortal;
+  }) => {
     return (
       <View style={styles.item}>
         <Text style={styles.selectedTextStyle}>{item.label}</Text>
       </View>
-
     );
-
   };
   //save selected items
-  const saveSelectedItems = async (item) => {
+  const saveSelectedItems = async item => {
     try {
       await AsyncStorage.setItem('customSet', JSON.stringify(item));
     } catch (error) {
       console.log('Error saving custom set:', error);
     }
   };
-
 
   useEffect(() => {
     // Load the saved names when the component mounts
@@ -50,12 +69,10 @@ const StartScreen = ({ navigation }) => {
 
     loadNames();
 
-
     const loadSelectedSets = async () => {
       try {
         const savedSelectedSets = await AsyncStorage.getItem('customSet');
         if (savedSelectedSets !== null) {
-
           setSelectedItems(JSON.parse(savedSelectedSets));
         }
       } catch (error) {
@@ -75,17 +92,15 @@ const StartScreen = ({ navigation }) => {
       } catch (error) {
         console.log('Error loading points to win:', error);
       }
-    }
+    };
     loadPointsToWin();
-
   }, []);
 
   // Load the question set specified in route.params.id. First use the sets from constants/questions.ts, then use the custom sets from AsyncStorage
   useEffect(() => {
     const getCustomSet = async () => {
-
       setQuestionsSets(await getQuestionLabels());
-    }
+    };
 
     // copy the initial set from constants/questions.ts
     const unsubscribe = navigation.addListener('focus', () => {
@@ -94,21 +109,24 @@ const StartScreen = ({ navigation }) => {
     getCustomSet();
   }, []);
 
-
   useEffect(() => {
     // set navigation header button
     navigation.setOptions({
       headerRight: () => (
         // View with width of 50 to make the button easier to press
         <TouchableOpacity
-          style={{ width: 80, height: 40, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}
-          onPress={() => navigation.navigate('Eigene Sets')}
-        >
+          style={{
+            width: 80,
+            height: 40,
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+          onPress={() => navigation.navigate('Eigene Sets')}>
           <AntDesign name="edit" size={24} color="black" />
         </TouchableOpacity>
       ),
     });
-
   }, [navigation]);
 
   useEffect(() => {
@@ -119,14 +137,12 @@ const StartScreen = ({ navigation }) => {
   useEffect(() => {
     // Save the points to win whenever the pointsToWin state changes
     savePointsToWin();
-  }
-    , [pointsToWin]);
+  }, [pointsToWin]);
 
-  const setSelectedItemsHelper = (item) => {
+  const setSelectedItemsHelper = item => {
     setSelectedItems(item);
     saveSelectedItems(item);
-  }
-
+  };
 
   const saveNames = async () => {
     try {
@@ -147,42 +163,48 @@ const StartScreen = ({ navigation }) => {
 
   const handleAddName = () => {
     if (name.trim() !== '') {
-      if (names.length < 4) {
-        setNames([...names, name]);
-        setName('');
+      if (name.trim().length > 25) {
+        Alert.alert('Name zu lang!', 'Maximal 25 Zeichen pro Spieler!');
       } else {
-        Alert.alert('Zu viele Spieler', 'Maximal 4 Spieler möglich!');
+        if (names.length < 12) {
+          setNames([...names, name]);
+          setName('');
+        } else {
+          Alert.alert('Zu viele Spieler', 'Maximal 12 Spieler möglich!');
+        }
       }
-
     }
   };
 
   const handlePointsToWinText = (points: string) => {
-   if (points.trim() == '') {
-    setPointsToWinDisplay('');
-   } else {
-    // remove chars that are not numbers
-    const pointsToWinDisplay = points.replace(/[^0-9]/g, '');
-    setPointsToWinDisplay(pointsToWinDisplay);
-    setPointsToWin(parseInt(pointsToWinDisplay));
+    if (points.trim() == '') {
+      setPointsToWinDisplay('');
+    } else {
+      // remove chars that are not numbers
+      const pointsToWinDisplay = points.replace(/[^0-9]/g, '');
+      setPointsToWinDisplay(pointsToWinDisplay);
+      setPointsToWin(parseInt(pointsToWinDisplay));
     }
   };
-
 
   const handleStartButton = () => {
     if (names.length == 0) {
       Alert.alert('Keine Spieler', 'Bitte mindestens einen Namen eingeben!');
     } else if (selectedItems.length == 0) {
-      Alert.alert("Kein Set ausgewählt", "Bitte wähle ein Set aus!")
+      Alert.alert('Kein Set ausgewählt', 'Bitte wähle ein Set aus!');
     } else {
       var chosenPointsToWin = pointsToWin;
       if (pointsToWinDisplay == '' || pointsToWinDisplay == '0') {
         chosenPointsToWin = 10;
         setPointsToWin(10);
       }
-      navigation.navigate('RateKunst', { names: names, setID: selectedItems, pointsToWin: chosenPointsToWin });
+      navigation.navigate('RateKunst', {
+        names: names,
+        setID: selectedItems,
+        pointsToWin: chosenPointsToWin,
+      });
     }
-  }
+  };
 
   const handleRemoveName = (index: number) => {
     const updatedNames = [...names];
@@ -191,9 +213,8 @@ const StartScreen = ({ navigation }) => {
   };
 
   return (
-
     <View style={[styles.container]}>
-      { /* Picker for question set */}
+      {/* Picker for question set */}
       <View style={styles.pickercontainer}>
         <MultiSelect
           style={styles.dropdown}
@@ -220,7 +241,6 @@ const StartScreen = ({ navigation }) => {
               size={20}
             />
           )}
-
           renderItem={renderDataItem}
           renderSelectedItem={(item, unSelect) => (
             <TouchableOpacity onPress={() => unSelect && unSelect(item)}>
@@ -230,14 +250,13 @@ const StartScreen = ({ navigation }) => {
               </View>
             </TouchableOpacity>
           )}
-
         />
       </View>
-      { /* List of names */}
+      {/* List of names */}
       <Text style={styles.title}>Namen</Text>
       <FlatList
         data={names}
-        renderItem={({ item, index }) => (
+        renderItem={({item, index}) => (
           <View style={styles.nameContainer}>
             <Text style={styles.names}>{item}</Text>
             <TouchableOpacity onPress={() => handleRemoveName(index)}>
@@ -254,10 +273,11 @@ const StartScreen = ({ navigation }) => {
           placeholder="10"
           placeholderTextColor={'#a9a9a9'}
           value={pointsToWinDisplay}
-          onChangeText={(text) => {handlePointsToWinText(text)}}
+          onChangeText={text => {
+            handlePointsToWinText(text);
+          }}
           keyboardType="numeric"
         />
-
       </View>
       <View style={styles.inputContainer}>
         <TextInput
@@ -265,7 +285,7 @@ const StartScreen = ({ navigation }) => {
           placeholder="Name eingeben"
           placeholderTextColor={'#a9a9a9'}
           value={name}
-          onChangeText={(text) => setName(text)}
+          onChangeText={text => setName(text)}
         />
         <TouchableOpacity style={styles.addButton} onPress={handleAddName}>
           <AntDesign name="plussquareo" size={24} color="black" />
@@ -273,7 +293,9 @@ const StartScreen = ({ navigation }) => {
       </View>
 
       {/* Button to start the game */}
-      <TouchableOpacity style={styles.startButton} onPress={() => handleStartButton()}>
+      <TouchableOpacity
+        style={styles.startButton}
+        onPress={() => handleStartButton()}>
         <Text style={styles.startButtonText}>Start</Text>
       </TouchableOpacity>
     </View>
@@ -285,7 +307,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     // dark gray background
-    backgroundColor: '#1f1f23'
+    backgroundColor: '#1f1f23',
   },
   textPointsToWin: {
     fontSize: 18,
@@ -297,7 +319,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     color: 'white',
-
   },
   names: {
     fontSize: 18,
@@ -329,7 +350,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     backgroundColor: 'white',
     color: 'black',
-  }, 
+  },
   inputNumber: {
     borderWidth: 1,
     borderColor: 'white',
