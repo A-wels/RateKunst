@@ -52,5 +52,7 @@ jobs:
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
       - name: Install dependencies
         run: npm ci
+      - name: Patch legacy React Native Android toolchain
+        run: node scripts/patch-react-native-gradle-plugin.js
       - name: Build release bundle with development signing
         run: cd android && ./gradlew bundleRelease
