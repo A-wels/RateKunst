@@ -34,3 +34,32 @@ if (patched === original) {
 } else {
   fs.writeFileSync(pluginBuildFile, patched);
 }
+
+const addNamespace = (relativePath, namespace) => {
+  const buildFile = path.join(__dirname, '..', 'node_modules', ...relativePath);
+  if (!fs.existsSync(buildFile)) {
+    throw new Error(`Android dependency build file not found at ${buildFile}`);
+  }
+
+  const source = fs.readFileSync(buildFile, 'utf8');
+  if (source.includes(`namespace "${namespace}"`)) {
+    return;
+  }
+  const updated = source.replace(
+    /android\s*\{/,
+    `android {\n    namespace "${namespace}"`,
+  );
+  if (updated === source) {
+    throw new Error(`Could not add namespace to ${buildFile}`);
+  }
+  fs.writeFileSync(buildFile, updated);
+};
+
+addNamespace(
+  ['@react-native-async-storage', 'async-storage', 'android', 'build.gradle'],
+  'com.reactnativecommunity.asyncstorage',
+);
+addNamespace(
+  ['react-native-vector-icons', 'android', 'build.gradle'],
+  'com.oblador.vectoricons',
+);
