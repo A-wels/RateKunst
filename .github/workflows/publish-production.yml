@@ -1,0 +1,119 @@
+name: Publish Google Play production
+
+on:
+  push:
+    branches: [production]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: google-play-production
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Type-check
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm test -- --runInBand
+
+  publish-production:
+    name: Publish Google Play production
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+          cache-dependency-path: android/**/*.gradle*
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK 35
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate Google Play secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+          SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          declare -A required_secrets=(
+            [ANDROID_UPLOAD_KEYSTORE_BASE64]="$KEYSTORE_BASE64"
+            [ANDROID_UPLOAD_KEY_ALIAS]="$KEY_ALIAS"
+            [ANDROID_UPLOAD_KEY_PASSWORD]="$KEY_PASSWORD"
+            [ANDROID_UPLOAD_STORE_PASSWORD]="$STORE_PASSWORD"
+            [PLAY_SERVICE_ACCOUNT_JSON]="$SERVICE_ACCOUNT_JSON"
+          )
+          for secret_name in "${!required_secrets[@]}"; do
+            [[ -n "${required_secrets[$secret_name]}" ]] || {
+              echo "Missing required GitHub Actions secret: $secret_name" >&2
+              exit 1
+            }
+          done
+      - name: Configure Android signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+        run: printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+      - name: Build signed Android App Bundle
+        env:
+          ORG_GRADLE_PROJECT_MYAPP_UPLOAD_STORE_FILE: upload-keystore.jks
+          ORG_GRADLE_PROJECT_MYAPP_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_MYAPP_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+          ORG_GRADLE_PROJECT_MYAPP_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+        run: |
+          version_code=$((100000 + GITHUB_RUN_NUMBER))
+          version_name="1.1.${GITHUB_RUN_NUMBER}"
+          echo "VERSION_CODE=$version_code" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=$version_name" >> "$GITHUB_ENV"
+          cd android
+          ./gradlew bundleRelease \
+            -PversionCode="$version_code" \
+            -PversionName="$version_name"
+      - name: Publish full production release
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.RateDepp
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          tracks: production
+          status: completed
+          releaseName: RateKunst ${{ env.VERSION_NAME }}
+      - name: Upload production bundle artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ratekunst-production-${{ env.VERSION_CODE }}
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 30
+      - name: Clean up release credentials
+        if: always()
+        run: rm -f android/app/upload-keystore.jks

@@ -78,8 +78,8 @@ android {
         applicationId "com.RateDepp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
-        versionName "1.0.4"
+        versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 7
+        versionName project.hasProperty('versionName') ? project.property('versionName') : "1.0.4"
     }
     signingConfigs {
         debug {
@@ -104,10 +104,9 @@ android {
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-            signingConfig signingConfigs.release
+            signingConfig project.hasProperty('MYAPP_UPLOAD_STORE_FILE') ? signingConfigs.release : signingConfigs.debug
         }
     }
 }

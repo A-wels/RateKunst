@@ -1,459 +1,473 @@
-import React, {
-  useState,
-  useEffect,
-  JSXElementConstructor,
-  ReactElement,
-  ReactNode,
-  ReactPortal,
-} from 'react';
+import React from 'react';
 import {
-  View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  Alert,
+  View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import {MultiSelect} from 'react-native-element-dropdown';
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getQuestionLabels} from '../../utils/questionloader';
+import {useLocalization} from '../../i18n/LocalizationContext';
+import {colors, radii, spacing} from '../../constants/theme';
 
-const StartScreen = ({navigation}) => {
-  const [name, setName] = useState('');
-  const [names, setNames] = useState([]);
-  const [questionsSets, setQuestionsSets] = useState([]);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [pointsToWin, setPointsToWin] = useState(10);
-  const [pointsToWinDisplay, setPointsToWinDisplay] = useState('10');
+type PackLabel = {label: string; value: string};
 
-  const renderDataItem = (item: {
-    label:
-      | string
-      | number
-      | boolean
-      | ReactElement<any, string | JSXElementConstructor<any>>
-      | Iterable<ReactNode>
-      | ReactPortal;
-  }) => {
-    return (
-      <View style={styles.item}>
-        <Text style={styles.selectedTextStyle}>{item.label}</Text>
-      </View>
-    );
-  };
-  //save selected items
-  const saveSelectedItems = async item => {
-    try {
-      await AsyncStorage.setItem('customSet', JSON.stringify(item));
-    } catch (error) {
-      console.log('Error saving custom set:', error);
-    }
-  };
+const migrateSelectedPacks = (items: unknown[]): string[] =>
+  items
+    .map(item => {
+      if (item === 0) {
+        return 'standard';
+      }
+      if (item === 1) {
+        return 'movies-tv';
+      }
+      return typeof item === 'string' ? item : null;
+    })
+    .filter((item): item is string => item !== null);
 
-  useEffect(() => {
-    // Load the saved names when the component mounts
+const StartScreen = ({navigation}: any) => {
+  const {language, t} = useLocalization();
+  const [name, setName] = React.useState('');
+  const [names, setNames] = React.useState<string[]>([]);
+  const [questionPacks, setQuestionPacks] = React.useState<PackLabel[]>([]);
+  const [selectedItems, setSelectedItems] = React.useState<string[]>([]);
+  const [pointsToWinDisplay, setPointsToWinDisplay] = React.useState('10');
 
-    const loadNames = async () => {
-      try {
-        const savedNames = await AsyncStorage.getItem('names');
-        if (savedNames !== null) {
+  React.useEffect(() => {
+    Promise.all([
+      AsyncStorage.getItem('names'),
+      AsyncStorage.getItem('customSet'),
+      AsyncStorage.getItem('pointsToWin'),
+    ])
+      .then(([savedNames, savedPacks, savedPoints]) => {
+        if (savedNames) {
           setNames(JSON.parse(savedNames));
         }
-      } catch (error) {
-        console.log('Error loading names:', error);
-      }
-    };
-
-    loadNames();
-
-    const loadSelectedSets = async () => {
-      try {
-        const savedSelectedSets = await AsyncStorage.getItem('customSet');
-        if (savedSelectedSets !== null) {
-          setSelectedItems(JSON.parse(savedSelectedSets));
+        if (savedPacks) {
+          setSelectedItems(migrateSelectedPacks(JSON.parse(savedPacks)));
         }
-      } catch (error) {
-        console.log('Error loading selected sets:', error);
-      }
-    };
-
-    loadSelectedSets();
-
-    const loadPointsToWin = async () => {
-      try {
-        const savedPointsToWin = await AsyncStorage.getItem('pointsToWin');
-        if (savedPointsToWin !== null) {
-          setPointsToWin(parseInt(savedPointsToWin));
-          setPointsToWinDisplay(savedPointsToWin);
+        if (savedPoints && Number(savedPoints) > 0) {
+          setPointsToWinDisplay(savedPoints);
         }
-      } catch (error) {
-        console.log('Error loading points to win:', error);
-      }
-    };
-    loadPointsToWin();
+      })
+      .catch(error => console.warn('Could not load game setup', error));
   }, []);
 
-  // Load the question set specified in route.params.id. First use the sets from constants/questions.ts, then use the custom sets from AsyncStorage
-  useEffect(() => {
-    const getCustomSet = async () => {
-      setQuestionsSets(await getQuestionLabels());
-    };
-
-    // copy the initial set from constants/questions.ts
-    const unsubscribe = navigation.addListener('focus', () => {
-      getCustomSet();
+  const loadPackLabels = React.useCallback(() => {
+    getQuestionLabels(language).then(labels => {
+      setQuestionPacks(labels);
+      const availableIds = new Set(labels.map(label => label.value));
+      setSelectedItems(current => {
+        const validItems = current.filter(id => availableIds.has(id));
+        if (validItems.length !== current.length) {
+          AsyncStorage.setItem('customSet', JSON.stringify(validItems)).catch(
+            error => console.warn('Could not clean selected packs', error),
+          );
+        }
+        return validItems;
+      });
     });
-    getCustomSet();
-  }, []);
+  }, [language]);
 
-  useEffect(() => {
-    // set navigation header button
-    navigation.setOptions({
-      headerRight: () => (
-        // View with width of 50 to make the button easier to press
-        <TouchableOpacity
-          style={{
-            width: 80,
-            height: 40,
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-          onPress={() => navigation.navigate('Eigene Sets')}>
-          <AntDesign name="edit" size={24} color="black" />
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation]);
+  React.useEffect(() => {
+    loadPackLabels();
+    const unsubscribe = navigation.addListener('focus', loadPackLabels);
+    return unsubscribe;
+  }, [loadPackLabels, navigation]);
 
-  useEffect(() => {
-    // Save the names whenever the names state changes
-    saveNames();
+  React.useEffect(() => {
+    AsyncStorage.setItem('names', JSON.stringify(names)).catch(error =>
+      console.warn('Could not save players', error),
+    );
   }, [names]);
 
-  useEffect(() => {
-    // Save the points to win whenever the pointsToWin state changes
-    savePointsToWin();
-  }, [pointsToWin]);
-
-  const setSelectedItemsHelper = item => {
-    setSelectedItems(item);
-    saveSelectedItems(item);
+  const updateSelectedItems = (items: string[]) => {
+    setSelectedItems(items);
+    AsyncStorage.setItem('customSet', JSON.stringify(items)).catch(error =>
+      console.warn('Could not save selected packs', error),
+    );
   };
 
-  const saveNames = async () => {
-    try {
-      const namesToSave = JSON.stringify(names);
-      await AsyncStorage.setItem('names', namesToSave);
-    } catch (error) {
-      console.log('Error saving names:', error);
+  const addPlayer = () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      return;
+    }
+    if (trimmedName.length > 25) {
+      Alert.alert(t('nameTooLongTitle'), t('nameTooLongMessage'));
+      return;
+    }
+    if (names.length >= 12) {
+      Alert.alert(t('tooManyPlayersTitle'), t('tooManyPlayersMessage'));
+      return;
+    }
+    setNames(current => [...current, trimmedName]);
+    setName('');
+  };
+
+  const updatePoints = (value: string) => {
+    const digits = value.replace(/[^0-9]/g, '').slice(0, 3);
+    setPointsToWinDisplay(digits);
+    if (digits && Number(digits) > 0) {
+      AsyncStorage.setItem('pointsToWin', digits).catch(error =>
+        console.warn('Could not save target score', error),
+      );
     }
   };
 
-  const savePointsToWin = async () => {
-    try {
-      await AsyncStorage.setItem('pointsToWin', pointsToWin.toString());
-    } catch (error) {
-      console.log('Error saving points to win:', error);
+  const startGame = () => {
+    if (names.length === 0) {
+      Alert.alert(t('noPlayersTitle'), t('noPlayersMessage'));
+      return;
     }
-  };
-
-  const handleAddName = () => {
-    if (name.trim() !== '') {
-      if (name.trim().length > 25) {
-        Alert.alert('Name zu lang!', 'Maximal 25 Zeichen pro Spieler!');
-      } else {
-        if (names.length < 12) {
-          setNames([...names, name]);
-          setName('');
-        } else {
-          Alert.alert('Zu viele Spieler', 'Maximal 12 Spieler möglich!');
-        }
-      }
+    if (selectedItems.length === 0) {
+      Alert.alert(t('noPackTitle'), t('noPackMessage'));
+      return;
     }
-  };
 
-  const handlePointsToWinText = (points: string) => {
-    if (points.trim() == '') {
-      setPointsToWinDisplay('');
-    } else {
-      // remove chars that are not numbers
-      const pointsToWinDisplay = points.replace(/[^0-9]/g, '');
-      setPointsToWinDisplay(pointsToWinDisplay);
-      setPointsToWin(parseInt(pointsToWinDisplay));
-    }
-  };
-
-  const handleStartButton = () => {
-    if (names.length == 0) {
-      Alert.alert('Keine Spieler', 'Bitte mindestens einen Namen eingeben!');
-    } else if (selectedItems.length == 0) {
-      Alert.alert('Kein Set ausgewählt', 'Bitte wähle ein Set aus!');
-    } else {
-      var chosenPointsToWin = pointsToWin;
-      if (pointsToWinDisplay == '' || pointsToWinDisplay == '0') {
-        chosenPointsToWin = 10;
-        setPointsToWin(10);
-      }
-      navigation.navigate('RateKunst', {
-        names: names,
-        setID: selectedItems,
-        pointsToWin: chosenPointsToWin,
-      });
-    }
-  };
-
-  const handleRemoveName = (index: number) => {
-    const updatedNames = [...names];
-    updatedNames.splice(index, 1);
-    setNames(updatedNames);
+    const pointsToWin = Math.max(1, Number(pointsToWinDisplay) || 10);
+    setPointsToWinDisplay(String(pointsToWin));
+    navigation.navigate('Game', {
+      names,
+      packIds: selectedItems,
+      pointsToWin,
+      language,
+    });
   };
 
   return (
-    <View style={[styles.container]}>
-      {/* Picker for question set */}
-      <View style={styles.pickercontainer}>
-        <MultiSelect
-          style={styles.dropdown}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={styles.selectedTextStyle}
-          inputSearchStyle={styles.inputSearchStyle}
-          activeColor="tomato"
-          iconStyle={styles.iconStyle}
-          data={questionsSets}
-          labelField="label"
-          valueField="value"
-          placeholder="Themensets auswählen"
-          value={selectedItems}
-          search
-          searchPlaceholder="Suchen..."
-          onChange={item => {
-            setSelectedItemsHelper(item);
-          }}
-          renderLeftIcon={() => (
-            <AntDesign
-              style={styles.icon}
-              color="black"
-              name="folderopen"
-              size={20}
+    <KeyboardAvoidingView
+      style={styles.screen}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled">
+        <View style={styles.hero}>
+          <Text style={styles.eyebrow}>{t('homeEyebrow')}</Text>
+          <Text style={styles.heroTitle}>{t('homeTitle')}</Text>
+          <Text style={styles.heroSubtitle}>{t('homeSubtitle')}</Text>
+        </View>
+
+        <View style={styles.card}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIcon}>
+              <AntDesign name="appstore-o" size={20} color={colors.accent} />
+            </View>
+            <View style={styles.sectionHeadingText}>
+              <Text style={styles.sectionTitle}>{t('packs')}</Text>
+              <Text style={styles.sectionMeta}>
+                {t('selectedCount', {count: selectedItems.length})}
+              </Text>
+            </View>
+          </View>
+          <MultiSelect
+            style={styles.dropdown}
+            containerStyle={styles.dropdownContainer}
+            placeholderStyle={styles.dropdownPlaceholder}
+            selectedTextStyle={styles.dropdownText}
+            inputSearchStyle={styles.searchInput}
+            itemTextStyle={styles.dropdownText}
+            activeColor={colors.accentSoft}
+            data={questionPacks}
+            labelField="label"
+            valueField="value"
+            placeholder={t('choosePacks')}
+            value={selectedItems}
+            search
+            searchPlaceholder={t('search')}
+            onChange={updateSelectedItems}
+            renderLeftIcon={() => (
+              <AntDesign
+                style={styles.dropdownIcon}
+                color={colors.textMuted}
+                name="folderopen"
+                size={19}
+              />
+            )}
+            renderSelectedItem={(
+              item: PackLabel,
+              unselect?: (item: PackLabel) => void,
+            ) => (
+              <TouchableOpacity
+                onPress={() => unselect?.(item)}
+                style={styles.packChip}>
+                <Text style={styles.packChipText}>{item.label}</Text>
+                <AntDesign name="close" size={14} color={colors.accent} />
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+
+        <View style={styles.card}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIcon}>
+              <AntDesign name="team" size={20} color={colors.accent} />
+            </View>
+            <View style={styles.sectionHeadingText}>
+              <Text style={styles.sectionTitle}>{t('players')}</Text>
+              <Text style={styles.sectionMeta}>{names.length}/12</Text>
+            </View>
+          </View>
+
+          <View style={styles.playerInputRow}>
+            <TextInput
+              style={styles.textInput}
+              placeholder={t('playerName')}
+              placeholderTextColor={colors.textMuted}
+              value={name}
+              maxLength={26}
+              returnKeyType="done"
+              onSubmitEditing={addPlayer}
+              onChangeText={setName}
             />
-          )}
-          renderItem={renderDataItem}
-          renderSelectedItem={(item, unSelect) => (
-            <TouchableOpacity onPress={() => unSelect && unSelect(item)}>
-              <View style={styles.selectedStyle}>
-                <Text style={styles.textSelectedStyle}>{item.label}</Text>
-                <AntDesign color="black" name="delete" size={17} />
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
-      {/* List of names */}
-      <Text style={styles.title}>Namen</Text>
-      <FlatList
-        data={names}
-        renderItem={({item, index}) => (
-          <View style={styles.nameContainer}>
-            <Text style={styles.names}>{item}</Text>
-            <TouchableOpacity onPress={() => handleRemoveName(index)}>
-              <AntDesign name="delete" size={24} color="white" />
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={t('addPlayer')}
+              style={styles.addButton}
+              onPress={addPlayer}>
+              <AntDesign name="plus" size={22} color={colors.black} />
             </TouchableOpacity>
           </View>
-        )}
-        keyExtractor={(item, index) => index.toString()}
-      />
-      <View style={styles.inputContainerNumber}>
-        <Text style={styles.textPointsToWin}>Punkte um zu gewinnen:</Text>
-        <TextInput
-          style={styles.inputNumber}
-          placeholder="10"
-          placeholderTextColor={'#a9a9a9'}
-          value={pointsToWinDisplay}
-          onChangeText={text => {
-            handlePointsToWinText(text);
-          }}
-          keyboardType="numeric"
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Name eingeben"
-          placeholderTextColor={'#a9a9a9'}
-          value={name}
-          onChangeText={text => setName(text)}
-        />
-        <TouchableOpacity style={styles.addButton} onPress={handleAddName}>
-          <AntDesign name="plussquareo" size={24} color="black" />
-        </TouchableOpacity>
-      </View>
 
-      {/* Button to start the game */}
-      <TouchableOpacity
-        style={styles.startButton}
-        onPress={() => handleStartButton()}>
-        <Text style={styles.startButtonText}>Start</Text>
-      </TouchableOpacity>
-    </View>
+          {names.length === 0 ? (
+            <Text style={styles.emptyText}>{t('noPlayers')}</Text>
+          ) : (
+            <View style={styles.playerChips}>
+              {names.map((player, index) => (
+                <View key={`${player}-${index}`} style={styles.playerChip}>
+                  <Text numberOfLines={1} style={styles.playerChipText}>
+                    {player}
+                  </Text>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t('delete')} ${player}`}
+                    onPress={() =>
+                      setNames(current => current.filter((_, i) => i !== index))
+                    }>
+                    <AntDesign
+                      name="close"
+                      size={15}
+                      color={colors.textMuted}
+                    />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
+
+          <View style={styles.pointsRow}>
+            <Text style={styles.pointsLabel}>{t('pointsToWin')}</Text>
+            <TextInput
+              style={styles.pointsInput}
+              value={pointsToWinDisplay}
+              placeholder="10"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="number-pad"
+              selectTextOnFocus
+              onChangeText={updatePoints}
+            />
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={styles.secondaryButton}
+          onPress={() => navigation.navigate('CustomSets')}>
+          <AntDesign name="edit" size={18} color={colors.text} />
+          <Text style={styles.secondaryButtonText}>{t('editCustomSets')}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.startButton} onPress={startGame}>
+          <Text style={styles.startButtonText}>{t('start')}</Text>
+          <AntDesign name="arrowright" size={21} color={colors.white} />
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    // dark gray background
-    backgroundColor: '#1f1f23',
+  screen: {flex: 1, backgroundColor: colors.background},
+  content: {
+    width: '100%',
+    maxWidth: 760,
+    alignSelf: 'center',
+    padding: spacing.lg,
+    paddingBottom: 48,
+    gap: spacing.md,
   },
-  textPointsToWin: {
-    fontSize: 18,
-    marginBottom: 32,
-    color: 'white',
+  hero: {paddingVertical: spacing.sm},
+  eyebrow: {
+    color: colors.accent,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.2,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: 'white',
+  heroTitle: {
+    color: colors.text,
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: '800',
+    marginTop: spacing.sm,
   },
-  names: {
-    fontSize: 18,
-    marginBottom: 8,
-    color: 'white',
+  heroSubtitle: {
+    color: colors.textMuted,
+    fontSize: 16,
+    lineHeight: 23,
+    marginTop: spacing.sm,
   },
-  nameContainer: {
+  card: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.large,
+    padding: spacing.md,
+  },
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: spacing.md,
   },
-  inputContainer: {
-    flexDirection: 'row',
+  sectionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
-  },
-  inputContainerNumber: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    // algin everything in the middle
     justifyContent: 'center',
+    backgroundColor: colors.accentSoft,
   },
-  input: {
+  sectionHeadingText: {flex: 1, marginLeft: 12},
+  sectionTitle: {color: colors.text, fontSize: 18, fontWeight: '700'},
+  sectionMeta: {color: colors.textMuted, fontSize: 13, marginTop: 2},
+  dropdown: {
+    minHeight: 54,
+    borderRadius: radii.medium,
+    paddingHorizontal: 14,
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  dropdownContainer: {
+    backgroundColor: colors.surfaceRaised,
+    borderColor: colors.border,
+    borderRadius: radii.medium,
+    overflow: 'hidden',
+  },
+  dropdownPlaceholder: {fontSize: 15, color: colors.textMuted},
+  dropdownText: {fontSize: 15, color: colors.text},
+  dropdownIcon: {marginRight: 10},
+  searchInput: {
+    height: 44,
+    borderColor: colors.border,
+    borderRadius: 12,
+    color: colors.text,
+    fontSize: 15,
+  },
+  packChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginTop: spacing.sm,
+    marginRight: spacing.sm,
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+    borderRadius: radii.pill,
+    backgroundColor: colors.accentSoft,
+    borderWidth: 1,
+    borderColor: '#28695F',
+  },
+  packChipText: {color: colors.text, fontSize: 13, fontWeight: '600'},
+  playerInputRow: {flexDirection: 'row', gap: spacing.sm},
+  textInput: {
     flex: 1,
+    height: 50,
+    paddingHorizontal: 14,
+    borderRadius: radii.medium,
+    backgroundColor: colors.surfaceRaised,
     borderWidth: 1,
-    borderColor: 'white',
-    borderRadius: 5,
-    padding: 10,
-    marginRight: 10,
-    backgroundColor: 'white',
-    color: 'black',
-  },
-  inputNumber: {
-    borderWidth: 1,
-    borderColor: 'white',
-    borderRadius: 5,
-    padding: 10,
-    marginRight: 10,
-    backgroundColor: 'white',
-    color: 'black',
-    width: 50,
-    marginBottom: 32,
-    textAlignVertical: 'center',
-    marginLeft: 10,
-    textAlign: 'center',
+    borderColor: colors.border,
+    color: colors.text,
+    fontSize: 16,
   },
   addButton: {
-    backgroundColor: 'cadetblue',
-    padding: 10,
-    borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  startButton: {
-    backgroundColor: 'tomato',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  startButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  // picker stuff
-  pickercontainer: {
-    paddingBottom: 10,
-  },
-  dropdown: {
+    width: 50,
     height: 50,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
-  },
-  placeholderStyle: {
-    fontSize: 16,
-    color: 'black',
-  },
-  selectedTextStyle: {
-    fontSize: 14,
-    color: 'black',
-  },
-  iconStyle: {
-    width: 20,
-    height: 20,
-  },
-  inputSearchStyle: {
-    height: 40,
-    fontSize: 16,
-    color: 'black',
-  },
-  icon: {
-    marginRight: 5,
-  },
-  item: {
-    padding: 17,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    color: 'black',
-  },
-  selectedStyle: {
-    flexDirection: 'row',
     justifyContent: 'center',
+    borderRadius: radii.medium,
+    backgroundColor: colors.accent,
+  },
+  emptyText: {color: colors.textMuted, fontSize: 14, marginTop: spacing.md},
+  playerChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  playerChip: {
+    maxWidth: '100%',
+    flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
-    backgroundColor: 'white',
-    shadowColor: '#000',
-    marginTop: 8,
-    marginRight: 12,
+    gap: spacing.sm,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
+    paddingVertical: 9,
+    borderRadius: radii.pill,
+    backgroundColor: colors.surfaceRaised,
   },
-  textSelectedStyle: {
-    marginRight: 5,
-    fontSize: 16,
-    color: 'black',
+  playerChipText: {
+    maxWidth: 220,
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '600',
   },
+  pointsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: spacing.lg,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  pointsLabel: {color: colors.text, fontSize: 15, fontWeight: '600'},
+  pointsInput: {
+    width: 72,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceRaised,
+    color: colors.text,
+    fontSize: 17,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  secondaryButton: {
+    minHeight: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    borderRadius: radii.medium,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  secondaryButtonText: {color: colors.text, fontSize: 15, fontWeight: '700'},
+  startButton: {
+    minHeight: 58,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    borderRadius: radii.medium,
+    backgroundColor: colors.primary,
+  },
+  startButtonText: {color: colors.white, fontSize: 18, fontWeight: '800'},
 });
 
 export default StartScreen;
