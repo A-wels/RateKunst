@@ -39,7 +39,7 @@ Update it in the same commit whenever an item changes state.
 - [x] Pass TypeScript checking.
 - [x] Pass ESLint.
 - [x] Pass Jest tests.
-- [ ] Build the Android release bundle in CI (legacy dependency namespace patch pending rerun).
+- [ ] Build the Android release bundle in CI (legacy transitive R compatibility pending rerun).
 
 ## One-time owner actions
 
