@@ -39,7 +39,7 @@ Update it in the same commit whenever an item changes state.
 - [x] Pass TypeScript checking.
 - [x] Pass ESLint.
 - [x] Pass Jest tests.
-- [ ] Build the Android release bundle in CI (local Gradle download is network-blocked).
+- [ ] Build the Android release bundle in CI (AGP/Gradle compatibility update pending rerun).
 
 ## One-time owner actions
 
