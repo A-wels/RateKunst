@@ -24,9 +24,11 @@ round, read the question and letter, and award points quickly.
   saved immediately, including when leaving with Android Back. Search filtering
   never removes a selected topic.
 - Narrow forms scroll; landscape scoring scrolls horizontally. Question and
-  letter text fill bounded display windows. Native font fitting uses both width
-  and height, including groups such as X / Y / Z; no fixed line height or three-line
-  truncation prevents shrinking. The full text is also exposed to TalkBack.
+  letter text fill bounded display windows. Questions retain native paragraph
+  fitting. Single-line letters use the measured native width and height of the
+  complete group, then scale it into the actual field with a small rounding
+  margin. This avoids relying on Android automatic single-line fitting, which
+  clipped X / Y / Z in the device screenshot. Full text is exposed to TalkBack.
   The player input stacks on narrow displays or with enlarged text. Long set
   titles and topic names wrap. Controls grow instead of using fixed heights.
 - A four-step tutorial appears once, can be skipped (including Android Back),
@@ -60,3 +62,26 @@ Question text and source title travel together through random selection, so
 identical prompts from different sets retain their correct source. The title
 clears during the countdown and is bounded to two lines in the existing label
 area. The existing palette and screen layout are unchanged.
+
+## Single-line letter fitting
+
+An invisible, noninteractive Text measures the full short letter/group at the
+preferred size, with the same system font and weight as the displayed text.
+Its wide measurement area prevents wrapping or truncation before measurement.
+The [native onTextLayout metrics](https://reactnative.dev/docs/0.72/text#ontextlayout)
+include the device's system font scaling. The rendered font size scales by the
+smaller ratio of available width or height to those metrics, never exceeding the
+preferred size. Four dp of total margin cover native pixel rounding. No separate
+character-count approximation or Android auto-fit is used for these letters.
+
+The measuring copy is excluded from accessibility and the whole letter window
+is noninteractive. The visible group is announced once. Unmeasured text stays
+hidden, preventing a clipped first frame. Measurement resets for a new group,
+preferred size or system font scale; resizing the field recalculates immediately.
+Late events from a previous group cannot replace newer measurements.
+
+Jest exercises all five grouped entries, small fields, height constraints,
+resizing, switching back to a single letter, 150%/200% system font scaling and
+stale native measurement events. These tests use supplied native event metrics;
+actual Android typography still needs device verification. The existing theme,
+game layout, question typography and player controls are unchanged.

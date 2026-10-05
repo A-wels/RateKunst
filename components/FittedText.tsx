@@ -1,5 +1,6 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
+import SingleLineFittedText from './SingleLineFittedText';
 import {colors} from '../constants/theme';
 
 type Props = {
@@ -9,28 +10,31 @@ type Props = {
   singleLine?: boolean;
 };
 
-// Give the native text measurer both dimensions. It can then reduce the font
-// against the actual available width and height, including grouped letters.
-// A fixed lineHeight would prevent Android from shrinking the line boxes.
+// Paragraphs retain native fitting against the bounded question window.
+// Single-line letters use measured glyph dimensions rather than Android auto-fit.
 const FittedText = ({
   children,
   fontSize,
   color = colors.text,
   singleLine = false,
-}: Props) => (
-  <View style={styles.window}>
-    <Text
-      key={children}
-      accessibilityLiveRegion="polite"
-      accessibilityLabel={children}
-      adjustsFontSizeToFit
-      minimumFontScale={0.1}
-      numberOfLines={singleLine ? 1 : undefined}
-      style={[styles.text, {fontSize, color}]}>
+}: Props) =>
+  singleLine ? (
+    <SingleLineFittedText fontSize={fontSize} color={color}>
       {children}
-    </Text>
-  </View>
-);
+    </SingleLineFittedText>
+  ) : (
+    <View style={styles.window}>
+      <Text
+        key={children}
+        accessibilityLiveRegion="polite"
+        accessibilityLabel={children}
+        adjustsFontSizeToFit
+        minimumFontScale={0.1}
+        style={[styles.text, {fontSize, color}]}>
+        {children}
+      </Text>
+    </View>
+  );
 
 const styles = StyleSheet.create({
   window: {flex: 1, minHeight: 0},
