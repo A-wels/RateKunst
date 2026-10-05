@@ -177,7 +177,11 @@ it('restores permanent ad removal and does not award it for a failed or pending 
 });
 
 it('records a win once when returning to the menu and ignores subsequent score taps', async () => {
-  jest.useFakeTimers();
+  // Only the game's countdown needs virtual time. Keep React's asynchronous
+  // task queue on real timers so Jest can finish cleanup on Node 18 as well.
+  jest.useFakeTimers({
+    doNotFake: ['nextTick', 'setImmediate', 'clearImmediate'],
+  });
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   const navigation = {popToTop: jest.fn()};
   try {

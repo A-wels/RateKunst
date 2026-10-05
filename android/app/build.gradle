@@ -69,13 +69,13 @@ def enableProguardInReleaseBuilds = false
 def jscFlavor = 'org.webkit:android-jsc:+'
 
 // Public integration identifiers; configure through Gradle properties or CI variables.
-// Missing production IDs safely use Google's sample inventory, never invented live IDs.
+// Release defaults belong to RateKunst; debug builds override them with test inventory.
 def setting = { name, fallback -> project.findProperty(name) ?: System.getenv(name) ?: fallback }
 def quoted = { value -> '"' + value.replace('\\', '\\\\').replace('"', '\\"') + '"' }
-def admobAppId = setting('ADMOB_APP_ID', 'ca-app-pub-3940256099942544~3347511713')
-def admobBannerId = setting('ADMOB_BANNER_ID', 'ca-app-pub-3940256099942544/6300978111')
-def admobInterstitialId = setting('ADMOB_INTERSTITIAL_ID', 'ca-app-pub-3940256099942544/1033173712')
-def billingPublicKey = setting('PLAY_BILLING_PUBLIC_KEY', '').replaceAll('\\s', '')
+def admobAppId = setting('ADMOB_APP_ID', 'ca-app-pub-4579090895960312~2264456781')
+def admobBannerId = setting('ADMOB_BANNER_ID', 'ca-app-pub-4579090895960312/2477133216')
+def admobInterstitialId = setting('ADMOB_INTERSTITIAL_ID', 'ca-app-pub-4579090895960312/7672610412')
+def billingPublicKey = setting('PLAY_BILLING_PUBLIC_KEY', file('play-billing-public-key.txt').text).replaceAll('\\s', '')
 if (!(admobAppId ==~ /ca-app-pub-\d{16}~\d{10}/)) throw new GradleException('ADMOB_APP_ID must be an AdMob app ID containing ~')
 for (id in [admobBannerId, admobInterstitialId]) {
     if (!(id ==~ /ca-app-pub-\d{16}\/\d{10}/)) throw new GradleException('AdMob ad-unit IDs must contain /')

@@ -36,30 +36,32 @@ No additional React Native packages or billing server are required.
 
 ## Production configuration
 
-Create these **repository variables** under Settings → Secrets and variables →
-Actions → Variables. The internal-release workflow passes them to Gradle.
-These values are public identifiers, including the RSA **public** key.
+The supplied RateKunst release IDs and RSA public key are included in the app.
+Optional overrides can be set as **repository variables** under Settings → Secrets
+and variables → Actions → Variables. The internal-release workflow passes them to
+Gradle. These values are public identifiers, including the RSA **public** key.
 
 | Variable | Value |
 | --- | --- |
-| `ADMOB_APP_ID` | App ID with `~`, e.g. `ca-app-pub-…~…` |
-| `ADMOB_BANNER_ID` | Banner ad-unit ID with `/` |
-| `ADMOB_INTERSTITIAL_ID` | Interstitial ad-unit ID with `/` |
+| `ADMOB_APP_ID` | Included default: `ca-app-pub-4579090895960312~2264456781` |
+| `ADMOB_BANNER_ID` | Included default: `ca-app-pub-4579090895960312/2477133216` |
+| `ADMOB_INTERSTITIAL_ID` | Included default: `ca-app-pub-4579090895960312/7672610412` |
 | `ADMOB_MAX_AD_CONTENT_RATING` | `G`, `PG`, `T` or `MA`; default `G` |
-| `PLAY_BILLING_PUBLIC_KEY` | This app's Base64 RSA licensing public key from Play Console → Monetize with Play → Monetization setup |
+| `PLAY_BILLING_PUBLIC_KEY` | Optional override for this app's Base64 RSA licensing public key; the supplied RateKunst key is included in `android/app/play-billing-public-key.txt` |
 
 Local builds accept the same environment variables or `-P<name>=<value>` Gradle
-properties. Without IDs, Google's test IDs are used; debug builds **always** use
-Google test inventory. An absent public key disables purchases instead of accepting
-unverified transactions. Do not confuse publisher ID `pub-…`, AdMob App ID, ad-unit
+properties. Release builds use the supplied RateKunst IDs; debug builds **always**
+use Google test inventory. Purchases use the bundled public key by default; a configured
+override replaces it. The Android manifest explicitly declares `com.android.vending.BILLING`.
+Do not confuse publisher ID `pub-…`, AdMob App ID, ad-unit
 IDs, Android application ID or the Play public licensing key.
 
-1. In AdMob register **de.awels.ratekunst**, create a banner and an interstitial
-   ad unit, and configure the UMP European regulations message / privacy options.
+1. In AdMob configure the UMP European regulations message / privacy options for
+   **de.awels.ratekunst**. The supplied app, banner and interstitial IDs are configured.
 2. In Play Console create and activate the **one-time product** `remove_ads`,
    with a regular **buy** purchase option and your chosen price. Do not configure
    a subscription or consume the product. The price is loaded from Google Play.
-3. Set the variables above and distribute a signed internal test build. Add
+3. Set any necessary overrides above and distribute a signed internal test build. Add
    license testers and test cancelled, pending, completed and restored purchases,
    reinstall/restoration, offline operation, refunds, the second-round boundary,
    age groups, consent choices, dark mode and foreground interruptions.
