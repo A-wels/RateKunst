@@ -1,4 +1,4 @@
-package com.RateKunst;
+package de.awels.ratekunst;
 
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;

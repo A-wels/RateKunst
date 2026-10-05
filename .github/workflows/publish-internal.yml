@@ -1,0 +1,134 @@
+name: Publish Google Play internal test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      upload_to_play:
+        description: Upload to internal testing (leave disabled for the first signed build)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: google-play-ratekunst-internal
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate internal test build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Type-check
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Test
+        run: npm test -- --runInBand
+
+  publish-internal:
+    name: Publish Google Play internal test
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+          cache-dependency-path: android/**/*.gradle*
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - name: Install Android SDK 36
+        run: sdkmanager "platforms;android-36" "build-tools;35.0.0"
+      - name: Install dependencies
+        run: npm ci
+      - name: Patch legacy React Native Android toolchain
+        run: node scripts/patch-react-native-gradle-plugin.js
+      - name: Validate signing and Google Play secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+          SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          UPLOAD_TO_PLAY: ${{ github.event_name == 'push' || inputs.upload_to_play }}
+        run: |
+          declare -A required_secrets=(
+            [ANDROID_UPLOAD_KEYSTORE_BASE64]="$KEYSTORE_BASE64"
+            [ANDROID_UPLOAD_KEY_ALIAS]="$KEY_ALIAS"
+            [ANDROID_UPLOAD_KEY_PASSWORD]="$KEY_PASSWORD"
+            [ANDROID_UPLOAD_STORE_PASSWORD]="$STORE_PASSWORD"
+          )
+          for secret_name in "${!required_secrets[@]}"; do
+            [[ -n "${required_secrets[$secret_name]}" ]] || {
+              echo "Missing required GitHub Actions secret: $secret_name" >&2
+              exit 1
+            }
+          done
+          if [[ "$UPLOAD_TO_PLAY" == 'true' && -z "$SERVICE_ACCOUNT_JSON" ]]; then
+            echo "Missing required GitHub Actions secret: PLAY_SERVICE_ACCOUNT_JSON" >&2
+            exit 1
+          fi
+      - name: Configure Android signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+        run: printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+      - name: Build signed Android App Bundle
+        env:
+          ORG_GRADLE_PROJECT_MYAPP_UPLOAD_STORE_FILE: upload-keystore.jks
+          ORG_GRADLE_PROJECT_MYAPP_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_MYAPP_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+          ORG_GRADLE_PROJECT_MYAPP_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+        run: |
+          version_code=$((100000 + GITHUB_RUN_NUMBER))
+          version_name="1.1.${GITHUB_RUN_NUMBER}"
+          echo "VERSION_CODE=$version_code" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=$version_name" >> "$GITHUB_ENV"
+          cd android
+          ./gradlew bundleRelease \
+            -PversionCode="$version_code" \
+            -PversionName="$version_name"
+      - name: Upload signed bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ratekunst-internal-${{ env.VERSION_CODE }}
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish internal test release
+        if: github.event_name == 'push' || inputs.upload_to_play
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: de.awels.ratekunst
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          tracks: internal
+          status: completed
+          releaseName: RateKunst ${{ env.VERSION_NAME }}
+      - name: Clean up release credentials
+        if: always()
+        run: rm -f android/app/upload-keystore.jks

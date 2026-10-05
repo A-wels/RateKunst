@@ -1,113 +1,127 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React from 'react';
-import type { PropsWithChildren } from 'react';
 import {
-  Alert,
-  Button,
-  SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import StartScreen from './pages/screens/StartScreen';
 import GameScreen from './pages/screens/GameScreen';
-import AntDesign from 'react-native-vector-icons/AntDesign';
 import CustomsetScreen from './pages/screens/CustomsetScreen';
 import EditPage from './pages/screens/EditPage';
-
+import {
+  Language,
+  LocalizationProvider,
+  useLocalization,
+} from './i18n/LocalizationContext';
+import {colors} from './constants/theme';
 
 const Stack = createNativeStackNavigator();
-function App(): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  const navBarStyle = {
-    backgroundColor: isDarkMode ? '#1f1f23' : '#fafafa',
-  };
+
+const LanguageSwitch = () => {
+  const {language, setLanguage} = useLocalization();
+  const option = (value: Language) => (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityLabel={value === 'de' ? 'Deutsch' : 'English'}
+      onPress={() => setLanguage(value)}
+      style={[
+        styles.languageOption,
+        language === value && styles.languageOptionActive,
+      ]}>
+      <Text
+        style={[
+          styles.languageText,
+          language === value && styles.languageTextActive,
+        ]}>
+        {value.toUpperCase()}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.languageSwitch}>
+      {option('de')}
+      {option('en')}
+    </View>
+  );
+};
+
+const AppNavigator = () => {
+  const {t} = useLocalization();
+
   return (
     <NavigationContainer>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={navBarStyle.backgroundColor}
-      />
-      <Stack.Navigator>
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      <Stack.Navigator
+        screenOptions={{
+          headerStyle: {backgroundColor: colors.background},
+          headerTintColor: colors.text,
+          headerShadowVisible: false,
+          headerTitleStyle: {fontSize: 19, fontWeight: '700'},
+          contentStyle: {backgroundColor: colors.background},
+        }}>
         <Stack.Screen
-          name="Startmenü"
+          name="Home"
           component={StartScreen}
-          options= {{ 
-            headerTintColor: 'white',
-            headerTitleStyle: { fontSize: 24, fontWeight: 'bold' },
-            headerStyle: { backgroundColor: 'tomato' },
-            headerRight: () => (
-              <TouchableOpacity>
-              <AntDesign name="edit" size={24} color="black" />
-            </TouchableOpacity>
-            ),
+          options={{
+            title: t('appName'),
+            headerRight: LanguageSwitch,
           }}
         />
-        <Stack.Screen name="RateKunst"
+        <Stack.Screen
+          name="Game"
           component={GameScreen}
-          options = {{
-          headerShown: false,
-          orientation: 'landscape'
-            
-          }}
-          />
-          <Stack.Screen name="Eigene Sets"
+          options={{headerShown: false, orientation: 'landscape'}}
+        />
+        <Stack.Screen
+          name="CustomSets"
           component={CustomsetScreen}
-          options = {{
-            headerTintColor: 'white',
-            headerTitleStyle: { fontSize: 24, fontWeight: 'bold' },
-            headerStyle: { backgroundColor: 'tomato' },
-          }}
-          />
-          <Stack.Screen name="Set Bearbeiten"
+          options={{title: t('customSets')}}
+        />
+        <Stack.Screen
+          name="EditSet"
           component={EditPage}
-          options = {{
-            headerTintColor: 'white',
-            headerTitleStyle: { fontSize: 24, fontWeight: 'bold' },
-            headerStyle: { backgroundColor: 'tomato' },
-          }}
-          />
+          options={{title: t('editSet')}}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
-}
+};
 
-
+const App = (): JSX.Element => (
+  <LocalizationProvider>
+    <AppNavigator />
+  </LocalizationProvider>
+);
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  languageSwitch: {
+    flexDirection: 'row',
+    padding: 3,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  languageOption: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 9,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
+  languageOptionActive: {
+    backgroundColor: colors.primary,
   },
-  highlight: {
-    fontWeight: '700',
+  languageText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: '800',
   },
-  backgroundStyle: {
-    backgroundColor: '#1f1f23',
+  languageTextActive: {
+    color: colors.white,
   },
-
 });
 
 export default App;
