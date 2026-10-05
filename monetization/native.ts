@@ -1,6 +1,22 @@
 import {NativeModules, Platform} from 'react-native';
 
 export type AgeGroup = 'under16' | 'teen' | 'adult';
+export type MonetizationDiagnostics = {
+  version: string;
+  bannerId: string;
+  adContentRating: string;
+  ageProtected: boolean;
+  consentBusy: boolean;
+  consentStatus: number;
+  consentFormAvailable: boolean;
+  billingError: string;
+  consentError: string;
+  bannerState: 'idle' | 'loading' | 'loaded' | 'failed';
+  bannerSize: string;
+  bannerError: string;
+  interstitialState: 'idle' | 'loading' | 'loaded' | 'failed';
+  interstitialError: string;
+};
 export type MonetizationStatus = {
   adsRemoved: boolean;
   purchaseChecked: boolean;
@@ -9,6 +25,7 @@ export type MonetizationStatus = {
   price: string;
   ageGroup: AgeGroup | '';
   privacyOptionsRequired: boolean;
+  diagnostics?: MonetizationDiagnostics;
 };
 export type NativeMonetization = {
   initialize: () => Promise<MonetizationStatus>;
@@ -16,6 +33,7 @@ export type NativeMonetization = {
   restore: () => Promise<MonetizationStatus>;
   setAgeGroup: (group: AgeGroup) => Promise<MonetizationStatus>;
   privacyOptions: () => Promise<MonetizationStatus>;
+  retryAds: () => Promise<MonetizationStatus>;
   setGameActive: (active: boolean) => void;
   showInterstitial: () => Promise<boolean>;
   addListener: (event: string) => void;

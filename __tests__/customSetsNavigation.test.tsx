@@ -1,11 +1,12 @@
 import React from 'react';
-import {Platform, Pressable, Text, TextInput} from 'react-native';
+import {BackHandler, Platform, Pressable, Text, TextInput} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import renderer, {act} from 'react-test-renderer';
 import {afterAll, afterEach, beforeEach, expect, it, jest} from '@jest/globals';
 import App from '../App';
 import CustomsetScreen from '../pages/screens/CustomsetScreen';
 import EditPage from '../pages/screens/EditPage';
+import StartScreen from '../pages/screens/StartScreen';
 import {LocalizationProvider} from '../i18n/LocalizationContext';
 
 let tree: renderer.ReactTestRenderer | undefined;
@@ -58,6 +59,37 @@ it('opens custom sets, edits a pack and returns with working controls', async ()
   expect(
     tree!.root.findByType(EditPage).findAllByType(TextInput)[1].props.value,
   ).toBe('Eine Serie');
+});
+
+it('system back pops one screen at a time and only falls through on Home', async () => {
+  const registration = jest.spyOn(BackHandler, 'addEventListener');
+  try {
+    await act(async () => {
+      tree = renderer.create(<App />);
+    });
+    const back = registration.mock.calls.find(
+      ([event]) => event === 'hardwareBackPress',
+    )![1];
+    const routes = () =>
+      tree!.root
+        .findByType(StartScreen)
+        .props.navigation.getState()
+        .routes.map((route: {name: string}) => route.name);
+    await press('Einstellungen');
+    expect(routes()).toEqual(['Home', 'Settings']);
+    await act(async () => expect(back()).toBe(true));
+    expect(routes()).toEqual(['Home']);
+    await press('Eigene Sets verwalten');
+    await press('Neues Set');
+    expect(routes()).toEqual(['Home', 'CustomSets', 'EditSet']);
+    await act(async () => expect(back()).toBe(true));
+    expect(routes()).toEqual(['Home', 'CustomSets']);
+    await act(async () => expect(back()).toBe(true));
+    expect(routes()).toEqual(['Home']);
+    expect(back()).toBe(false);
+  } finally {
+    registration.mockRestore();
+  }
 });
 
 it('skips corrupt and missing records, deduplicates IDs and finishes loading', async () => {

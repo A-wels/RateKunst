@@ -37,6 +37,25 @@ No additional React Native packages or billing server are required.
 
 ## Production configuration
 
+### Diagnosing missing ads without ADB
+
+Open Settings → Ad diagnostics. The panel reports the installed version, purchase
+check, UMP status/form availability, age treatment, content limit, banner ad-unit
+ID, banner state/measured size, interstitial state and SDK error codes/messages.
+It does not include purchase receipts, purchase tokens or device identifiers and
+is neither persisted nor uploaded. Share a screenshot of this panel when ads fail.
+The retry button rechecks ownership and UMP and creates a fresh banner request;
+it does not reset consent, change age, bypass gates or request ads during a game.
+An unsuccessful first UMP request can also be retried on a later foreground event.
+
+`BannerView` must measure/layout its Android children after asynchronous AdMob
+updates: React Native 0.72's `ReactViewGroup.requestLayout()` is intentionally a
+no-op. A posted, coalesced native measure/layout pass preserves the dimensions
+assigned by Yoga while laying out the ad's child tree. Banner callbacks report
+load success/failure; empty inventory and configuration errors are distinguished
+from layout failures. Actual ad inventory and consent messages still need device
+verification against the production AdMob configuration.
+
 The native bridge carries the `@ReactModule` registration required by React Native's
 class-based lookup when `BannerView` first resolves the module. Android unit tests
 check this runtime registration contract as well as the unknown-age G policy.

@@ -1,5 +1,24 @@
 # Android input recovery
 
+## System Back on Android 16 and later
+
+The app targets SDK 36, where the system no longer delivers Back through the
+legacy `Activity.onBackPressed()` path. RN 0.72 still uses that path to emit its
+JavaScript `hardwareBackPress` event. MainActivity registers a lifecycle-owned
+AndroidX `OnBackPressedCallback` to forward modern system Back to React's
+existing handler. React Navigation then pops Settings, EditSet and CustomSets
+one screen at a time, and falls through at Home. Native dialogs and the keyboard
+retain their own back handling.
+
+The callback disables itself while delegating and while React invokes the
+default native fallback, preventing dispatcher recursion at the root. Native
+unit tests verify forwarding, fallback and restoration after errors; a Jest
+navigation test verifies the screen-by-screen back stack and root fallback.
+Device checks remain necessary for gesture and three-button Back on recent
+Android versions, after dialogs and after background/resume.
+
+Reference: [Android 16 behavior changes](https://developer.android.com/about/versions/16/behavior-changes-16).
+
 The reported symptom is that the language switch still works while content
 buttons and inputs stop responding after a possible focus loss. This points to
 the content input path rather than a stopped JavaScript runtime. The exact
