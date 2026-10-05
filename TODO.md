@@ -48,6 +48,7 @@ Update it in the same commit whenever an item changes state.
 - [x] Increase the release-build heap and bound Gradle workers for clean Hermes AAR transforms.
 - [x] Target and compile Android API 36 with AGP 8.9.2, Gradle 8.11.1 and the matching Kotlin plugin patch.
 - [x] Replace the legacy plugin's removed Gradle `serviceOf` helper with an equivalent service lookup.
+- [x] Declare the icon-font copy dependency for AGP lint tasks.
 - [ ] Verify the current API 36 Android release bundle in CI.
 - [ ] Smoke-test layout, scoring, navigation, and language switching on an Android device.
 

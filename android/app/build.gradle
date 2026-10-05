@@ -130,3 +130,13 @@ dependencies {
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
+
+// The legacy font script wires asset generation, but newer AGP lint tasks also
+// read this generated asset directory and must depend on the font copy task.
+afterEvaluate {
+    tasks.configureEach { task ->
+        if (task.name.contains("Lint") || task.name.startsWith("lint")) {
+            task.dependsOn(tasks.named("copyReactNativeVectorIconFonts"))
+        }
+    }
+}
