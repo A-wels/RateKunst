@@ -109,7 +109,7 @@ const translations = {
     privacyOptions: 'Datenschutz für Werbung',
     adAgeTitle: 'Altersgruppe für Werbung',
     adAgeHint:
-      'Wähle die Altersgruppe der Person, die dieses Gerät nutzt. Gespeichert wird nur die Altersgruppe, kein Geburtsdatum. Sie steuert den Jugendschutz bei Werbung. Ohne Auswahl wird keine Werbung geladen.',
+      'Wähle die Altersgruppe der Person, die dieses Gerät nutzt. Gespeichert wird nur die Altersgruppe, kein Geburtsdatum. Sie steuert den Jugendschutz bei Werbung. Ohne Auswahl gibt es nur Werbung der Kategorie G, geeignet für alle Altersgruppen.',
     ageUnder16: 'Unter 16',
     ageTeen: '16–17',
     ageAdult: '18 oder älter',
@@ -227,7 +227,7 @@ const translations = {
     privacyOptions: 'Ad privacy settings',
     adAgeTitle: 'Age group for ads',
     adAgeHint:
-      'Choose the age group of the person using this device. Only the age group is saved, not a date of birth. It controls age protections for ads. No ads load before you choose.',
+      'Choose the age group of the person using this device. Only the age group is saved, not a date of birth. It controls age protections for ads. Without a selection, only G-rated ads suitable for all ages are shown.',
     ageUnder16: 'Under 16',
     ageTeen: '16–17',
     ageAdult: '18 or older',
