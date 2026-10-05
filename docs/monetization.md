@@ -27,14 +27,19 @@ No additional React Native packages or billing server are required.
   purchase cannot be verified, ads remain suppressed until verification succeeds.
 - A neutral age-group prompt follows the tutorial. **Under 16**, **16–17** and
   **18 or older** choose UMP/ad treatment; no birth date is collected. Changes
-  remain available under Settings. Deferring the choice keeps ads off.
-- Under 16 gets conservative CHILD / under-age-of-consent treatment and a G-only
+  remain available under Settings. Deferring the choice still allows G-rated ads
+  after the ownership and UMP checks; no age choice is required to load them.
+- Unknown age and under 16 get conservative CHILD / under-age-of-consent treatment and a G-only
   ad-content limit regardless of the configured app limit; 16–17 gets
   TEEN treatment; adult requests use UNSPECIFIED and the user's UMP consent.
   The selected age group stays in app storage; an age-treatment signal is sent
   with ad requests. UMP privacy options are available when required.
 
 ## Production configuration
+
+The native bridge carries the `@ReactModule` registration required by React Native's
+class-based lookup when `BannerView` first resolves the module. Android unit tests
+check this runtime registration contract as well as the unknown-age G policy.
 
 The supplied RateKunst release IDs and RSA public key are included in the app.
 Optional overrides can be set as **repository variables** under Settings → Secrets

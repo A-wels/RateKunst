@@ -114,7 +114,7 @@ jobs:
           echo "VERSION_CODE=$version_code" >> "$GITHUB_ENV"
           echo "VERSION_NAME=$version_name" >> "$GITHUB_ENV"
           cd android
-          ./gradlew bundleRelease \
+          ./gradlew testReleaseUnitTest bundleRelease \
             -PversionCode="$version_code" \
             -PversionName="$version_name"
       - name: Upload signed bundle artifact

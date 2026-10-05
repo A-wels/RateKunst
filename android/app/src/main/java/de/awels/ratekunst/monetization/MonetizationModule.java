@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import com.android.billingclient.api.*;
 import com.facebook.react.bridge.*;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
+import com.facebook.react.module.annotations.ReactModule;
 import com.google.android.gms.ads.*;
 import com.google.android.gms.ads.interstitial.*;
 import com.google.android.ump.*;
@@ -20,8 +21,10 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 
 /** Android-only bridge; Google Play owns the permanent, non-consumable entitlement. */
+@ReactModule(name = MonetizationModule.NAME)
 public final class MonetizationModule extends ReactContextBaseJavaModule
     implements LifecycleEventListener {
+  public static final String NAME = "RateKunstMonetization";
   static final String PRODUCT = "remove_ads";
   private final Handler main = new Handler(Looper.getMainLooper());
   private final SharedPreferences preferences;
@@ -50,7 +53,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     context.addLifecycleEventListener(this);
   }
 
-  @NonNull @Override public String getName() { return "RateKunstMonetization"; }
+  @NonNull @Override public String getName() { return NAME; }
   @ReactMethod public void addListener(String name) {}
   @ReactMethod public void removeListeners(double count) {}
 
@@ -272,19 +275,27 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     });
   }
 
+  static boolean needsAgeProtection(String group) {
+    // Unknown age receives the same conservative treatment as the youngest group.
+    return !"adult".equals(group) && !"teen".equals(group);
+  }
+
+  static String maxAdContentRating(String group, String configuredRating) {
+    return needsAgeProtection(group) ? RequestConfiguration.MAX_AD_CONTENT_RATING_G : configuredRating;
+  }
+
   private void gatherConsent() {
-    if (destroyed || removed || !purchaseChecked || ageGroup.isEmpty() || consentBusy || consentGathered || gameActive) return;
+    if (destroyed || removed || !purchaseChecked || consentBusy || consentGathered || gameActive) return;
     Activity activity = getCurrentActivity();
     if (activity == null || activity.isFinishing()) return;
     consentBusy = true;
     final int revision = ++consentRevision;
     MobileAds.setRequestConfiguration(new RequestConfiguration.Builder()
-        .setMaxAdContentRating(ageGroup.equals("under16")
-            ? RequestConfiguration.MAX_AD_CONTENT_RATING_G : BuildConfig.ADMOB_MAX_AD_CONTENT_RATING)
+        .setMaxAdContentRating(maxAdContentRating(ageGroup, BuildConfig.ADMOB_MAX_AD_CONTENT_RATING))
         .setAgeRestrictedTreatment(ageGroup.equals("adult") ? AgeRestrictedTreatment.UNSPECIFIED
             : ageGroup.equals("teen") ? AgeRestrictedTreatment.TEEN : AgeRestrictedTreatment.CHILD).build());
     consent.requestConsentInfoUpdate(activity, new ConsentRequestParameters.Builder()
-        .setTagForUnderAgeOfConsent(ageGroup.equals("under16")).build(), () -> {
+        .setTagForUnderAgeOfConsent(needsAgeProtection(ageGroup)).build(), () -> {
       if (revision != consentRevision || destroyed || removed) return;
       UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity, error -> main.post(() -> finishConsent(revision)));
     }, error -> main.post(() -> finishConsent(revision)));
@@ -321,7 +332,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   }
 
   boolean canLoadAds() {
-    return !destroyed && initialized && purchaseChecked && !removed && !ageGroup.isEmpty()
+    return !destroyed && initialized && purchaseChecked && !removed
         && consentGathered && !consentBusy && consent.canRequestAds();
   }
   boolean canShowBanner() { return canLoadAds() && !gameActive && !interstitialShowing; }

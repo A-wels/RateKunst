@@ -57,5 +57,5 @@ jobs:
         run: npm ci
       - name: Patch legacy React Native Android toolchain
         run: node scripts/patch-react-native-gradle-plugin.js
-      - name: Build release bundle with development signing
-        run: cd android && ./gradlew bundleRelease
+      - name: Test native monetization and build release bundle
+        run: cd android && ./gradlew testReleaseUnitTest bundleRelease
