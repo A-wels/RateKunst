@@ -45,6 +45,7 @@ Update it in the same commit whenever an item changes state.
 - [x] Preserve the last custom-pack edit when leaving the editor; serialize writes.
 - [x] Keep manually selected language when a delayed storage read completes.
 - [x] Remove the retired Android SDK `tools` package from CI and publishing setup.
+- [x] Increase the release-build heap and bound Gradle workers for clean Hermes AAR transforms.
 - [ ] Smoke-test layout, scoring, navigation, and language switching on an Android device.
 
 ## Maintenance
