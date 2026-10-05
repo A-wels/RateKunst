@@ -53,6 +53,9 @@ jobs:
           cache-dependency-path: android/**/*.gradle*
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
       - name: Install Android SDK 35
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
       - name: Install dependencies

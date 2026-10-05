@@ -44,11 +44,13 @@ Update it in the same commit whenever an item changes state.
 - [x] Migrate legacy numeric selections, including custom packs, to stable IDs.
 - [x] Preserve the last custom-pack edit when leaving the editor; serialize writes.
 - [x] Keep manually selected language when a delayed storage read completes.
+- [x] Remove the retired Android SDK `tools` package from CI and publishing setup.
 - [ ] Smoke-test layout, scoring, navigation, and language switching on an Android device.
 
 ## Maintenance
 
 - [ ] Upgrade React Native 0.72 and review dependency security findings; remove the Android compatibility patch when supported upstream.
+- [ ] Verify native-library 16 KB page-size compatibility and upgrade incompatible dependencies before rollout to 16 KB devices. See https://developer.android.com/guide/practices/page-sizes.
 
 ## One-time owner actions
 
