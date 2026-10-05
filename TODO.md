@@ -46,6 +46,8 @@ Update it in the same commit whenever an item changes state.
 - [x] Keep manually selected language when a delayed storage read completes.
 - [x] Remove the retired Android SDK `tools` package from CI and publishing setup.
 - [x] Increase the release-build heap and bound Gradle workers for clean Hermes AAR transforms.
+- [x] Target and compile Android API 36 with AGP 8.9.2, Gradle 8.11.1 and the matching Kotlin plugin patch.
+- [ ] Verify the current API 36 Android release bundle in CI.
 - [ ] Smoke-test layout, scoring, navigation, and language switching on an Android device.
 
 ## Maintenance

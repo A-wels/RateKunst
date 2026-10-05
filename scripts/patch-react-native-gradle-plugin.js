@@ -16,16 +16,25 @@ if (!fs.existsSync(pluginBuildFile)) {
 
 const original = fs.readFileSync(pluginBuildFile, 'utf8');
 const patched = original
-  .replace('kotlin("jvm") version "1.7.22"', 'kotlin("jvm") version "1.9.22"')
   .replace(
-    'implementation("com.android.tools.build:gradle:7.4.2")',
-    'implementation("com.android.tools.build:gradle:8.6.1")',
-  );
+    /kotlin\("jvm"\) version "(?:1\.7\.22|1\.9\.22)"/,
+    'kotlin("jvm") version "2.0.21"',
+  )
+  .replace(
+    /implementation\("com\.android\.tools\.build:gradle:(?:7\.4\.2|8\.6\.1)"\)/,
+    'implementation("com.android.tools.build:gradle:8.9.2")',
+  )
+  .replace('apiVersion = "1.5"', 'apiVersion = "1.8"')
+  .replace('languageVersion = "1.5"', 'languageVersion = "1.8"');
 
 if (patched === original) {
   const alreadyPatched =
-    original.includes('kotlin("jvm") version "1.9.22"') &&
-    original.includes('implementation("com.android.tools.build:gradle:8.6.1")');
+    original.includes('kotlin("jvm") version "2.0.21"') &&
+    original.includes(
+      'implementation("com.android.tools.build:gradle:8.9.2")',
+    ) &&
+    original.includes('apiVersion = "1.8"') &&
+    original.includes('languageVersion = "1.8"');
   if (!alreadyPatched) {
     throw new Error(
       'React Native Gradle plugin layout changed; patch needs review',
