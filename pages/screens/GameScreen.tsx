@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Button from '../../components/Button';
+import FittedText from '../../components/FittedText';
 
 import letters from '../../constants/letters';
 import {getQuestions} from '../../utils/questionloader';
@@ -140,7 +141,7 @@ const GameScreen = ({navigation, route}: any) => {
         <Button label={t('leave')} variant="text" onPress={leaveGame} />
         <View style={styles.roundTitle}>
           <Text style={styles.target}>
-            {t('firstTo', {count: params.pointsToWin})}
+            {t('scoreTarget', {count: params.pointsToWin})}
           </Text>
         </View>
         <Button
@@ -153,18 +154,13 @@ const GameScreen = ({navigation, route}: any) => {
       <View style={styles.gameArea}>
         <View style={styles.questionPanel}>
           <Text style={styles.label}>{t('question')}</Text>
-          <Text
-            accessibilityLiveRegion="polite"
-            adjustsFontSizeToFit
-            minimumFontScale={0.65}
-            numberOfLines={3}
-            style={styles.question}>
-            {question}
-          </Text>
+          <FittedText fontSize={38}>{question}</FittedText>
         </View>
         <View style={styles.letterPanel}>
           <Text style={styles.label}>{t('letter')}</Text>
-          <Text style={styles.letter}>{letter}</Text>
+          <FittedText fontSize={72} color={colors.primary} singleLine>
+            {letter}
+          </FittedText>
         </View>
       </View>
 
@@ -221,22 +217,16 @@ const styles = StyleSheet.create({
   },
   roundTitle: {flex: 1, alignItems: 'center'},
   target: {color: colors.textMuted, fontSize: 14, textAlign: 'center'},
-  gameArea: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    paddingVertical: spacing.sm,
-  },
+  gameArea: {flex: 1, flexDirection: 'row', paddingVertical: spacing.sm},
   questionPanel: {
     flex: 3,
-    justifyContent: 'center',
     paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
   },
   letterPanel: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.sm,
     borderLeftWidth: 1,
     borderLeftColor: colors.border,
   },
@@ -245,20 +235,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: spacing.xs,
     textAlign: 'center',
-  },
-  question: {
-    color: colors.text,
-    fontSize: 32,
-    lineHeight: 39,
-    fontWeight: '500',
-    textAlign: 'center',
-    flexShrink: 1,
-  },
-  letter: {
-    color: colors.primary,
-    fontSize: 64,
-    fontWeight: '500',
-    flexShrink: 1,
   },
   scoreArea: {
     borderTopWidth: 1,

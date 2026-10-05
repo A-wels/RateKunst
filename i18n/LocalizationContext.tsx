@@ -9,6 +9,28 @@ const LANGUAGE_KEY = '@ratekunst/language';
 const translations = {
   de: {
     appName: 'RateKunst',
+    tutorial: 'Spielanleitung',
+    skipTutorial: 'Überspringen',
+    tutorialStep: '{{current}} von {{total}}',
+    previous: 'Zurück',
+    next: 'Weiter',
+    finishTutorial: 'Los geht’s',
+    tutorialSetupTitle: 'Eine Runde vorbereiten',
+    tutorialSetupBody:
+      'Füge die Mitspieler hinzu, wähle mindestens ein Themenpack und lege fest, wie viele Punkte zum Gewinnen nötig sind. Mit „Runde starten“ beginnt das Spiel.',
+    tutorialAnswerTitle: 'Kategorie und Buchstabe',
+    tutorialAnswerBody:
+      'Nach dem Countdown erscheint eine Kategorie mit einem Buchstaben. Nennt möglichst schnell eine passende Antwort, die damit beginnt. Stehen mehrere Buchstaben zur Auswahl, genügt einer davon.',
+    tutorialCategory: 'Tier',
+    tutorialExample:
+      'Zum Beispiel: Bär. Bei „SCH / Q“ passen Antworten mit SCH oder Q am Anfang.',
+    tutorialScoreTitle: 'Punkte vergeben',
+    tutorialScoreBody:
+      'Tippe auf den Namen der Person mit der richtigen Antwort. Sie erhält einen Punkt und die nächste Frage beginnt. Mit „Überspringen“ gibt es eine neue Frage ohne Punkt. Wer zuerst die Zielpunktzahl erreicht, gewinnt.',
+    tutorialPacksTitle: 'Eigene Themen und Sprache',
+    tutorialPacksBody:
+      'Unter „Eigene Sets verwalten“ kannst du Kategorien sammeln: eine pro Zeile. Wähle dein Set anschließend bei den Themenpacks aus. DE und EN wechseln die Oberfläche und alle eingebauten Packs. Deine eigenen Texte bleiben so, wie du sie geschrieben hast. Diese Anleitung kannst du im Menü jederzeit erneut öffnen.',
+
     startMenu: 'Spiel vorbereiten',
     customSets: 'Eigene Sets',
     editSet: 'Set bearbeiten',
@@ -43,7 +65,7 @@ const translations = {
     question: 'Kategorie',
     letter: 'Buchstabe',
     skip: 'Überspringen',
-    firstTo: 'Erste Person mit {{count}} Punkten gewinnt',
+    scoreTarget: 'Ziel: {{count}} Punkte',
     tapScore: 'Tippen für einen Punkt',
     winnerTitle: 'Gewonnen!',
     winnerMessage: '{{name}} gewinnt die Runde.',
@@ -78,6 +100,28 @@ const translations = {
   },
   en: {
     appName: 'RateKunst',
+    tutorial: 'How to play',
+    skipTutorial: 'Skip',
+    tutorialStep: '{{current}} of {{total}}',
+    previous: 'Back',
+    next: 'Next',
+    finishTutorial: 'Start playing',
+    tutorialSetupTitle: 'Prepare a round',
+    tutorialSetupBody:
+      'Add the players, choose at least one topic pack and set the number of points needed to win. Tap “Start round” to begin.',
+    tutorialAnswerTitle: 'Category and letter',
+    tutorialAnswerBody:
+      'After the countdown, a category and letter appear. Be the first to name a matching answer that starts with that letter. When several letters are shown, any one of them is allowed.',
+    tutorialCategory: 'Animal',
+    tutorialExample:
+      'For example: Bear. For “X / Y / Z”, your answer can start with X, Y or Z.',
+    tutorialScoreTitle: 'Award points',
+    tutorialScoreBody:
+      'Tap the name of the player with the correct answer. They earn one point and the next question begins. “Skip” starts a new question without awarding a point. The first player to reach the target score wins.',
+    tutorialPacksTitle: 'Your own topics and language',
+    tutorialPacksBody:
+      'Use “Manage custom packs” to collect categories: one per line. Then select your pack in the topic picker. DE and EN switch the interface and all built-in packs. Your own text stays as you wrote it. You can reopen this guide from the menu at any time.',
+
     startMenu: 'Set up game',
     customSets: 'Custom packs',
     editSet: 'Edit pack',
@@ -112,7 +156,7 @@ const translations = {
     question: 'Category',
     letter: 'Letter',
     skip: 'Skip',
-    firstTo: 'First to {{count}} points wins',
+    scoreTarget: 'Target: {{count}} points',
     tapScore: 'Tap to score a point',
     winnerTitle: 'Winner!',
     winnerMessage: '{{name}} wins the round.',

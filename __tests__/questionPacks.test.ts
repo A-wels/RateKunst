@@ -22,6 +22,19 @@ describe('built-in question packs', () => {
     ]);
   });
 
+  it('uses matching language entries and returns independent question lists', () => {
+    const german = getBuiltInQuestionPacks('de');
+    const english = getBuiltInQuestionPacks('en');
+    expect(german.map(pack => pack.id)).toEqual(english.map(pack => pack.id));
+    german.forEach((pack, index) => {
+      expect(pack.questions).toHaveLength(english[index].questions.length);
+    });
+    german[0].questions.length = 0;
+    expect(getBuiltInQuestionPacks('de')[0].questions.length).toBeGreaterThan(
+      0,
+    );
+  });
+
   it.each(['de', 'en'] as const)(
     'has localized titles and substantial question lists in %s',
     language => {

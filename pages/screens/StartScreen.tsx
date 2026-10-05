@@ -7,11 +7,14 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Button from '../../components/Button';
+import Tutorial from '../../components/Tutorial';
+import {useTutorial} from '../../hooks/useTutorial';
 import PackPicker, {PackLabel} from '../../components/PackPicker';
 
 import {getQuestionLabels} from '../../utils/questionloader';
@@ -21,6 +24,9 @@ import {colors, radii, spacing} from '../../constants/theme';
 
 const StartScreen = ({navigation}: any) => {
   const {language, t} = useLocalization();
+  const tutorial = useTutorial();
+  const {width, fontScale} = useWindowDimensions();
+  const stackPlayerInput = width < 360 || fontScale > 1.2;
   const [isChoosingPacks, setIsChoosingPacks] = React.useState(false);
   const [name, setName] = React.useState('');
   const [names, setNames] = React.useState<string[]>([]);
@@ -166,10 +172,17 @@ const StartScreen = ({navigation}: any) => {
             <Text accessibilityRole="header" style={styles.sectionTitle}>
               {t('players')}
             </Text>
-            <View style={styles.playerInputRow}>
+            <View
+              style={[
+                styles.playerInputRow,
+                stackPlayerInput && styles.playerInputColumn,
+              ]}>
               <TextInput
                 accessibilityLabel={t('playerName')}
-                style={styles.textInput}
+                style={[
+                  styles.textInput,
+                  stackPlayerInput && styles.fullWidthInput,
+                ]}
                 placeholder={t('playerName')}
                 placeholderTextColor={colors.textMuted}
                 value={name}
@@ -251,8 +264,14 @@ const StartScreen = ({navigation}: any) => {
             variant="text"
             onPress={() => navigation.navigate('CustomSets')}
           />
+          <Button
+            label={t('tutorial')}
+            variant="text"
+            onPress={tutorial.open}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
+      <Tutorial visible={tutorial.visible} onClose={tutorial.close} />
       <PackPicker
         visible={isChoosingPacks}
         packs={questionPacks}
@@ -289,6 +308,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   playerInputRow: {flexDirection: 'row', gap: spacing.sm, alignItems: 'center'},
+  playerInputColumn: {flexDirection: 'column', alignItems: 'stretch'},
+  fullWidthInput: {flex: 0, width: '100%'},
   textInput: {
     flex: 1,
     minWidth: 0,

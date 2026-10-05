@@ -105,7 +105,9 @@ it('persists picker changes through close, language changes and game launch', as
   expect(await AsyncStorage.getItem('customSet')).toBe('[]');
   await act(async () => press('Standard'));
   press('Fertig');
-  expect(tree!.root.findByType(Modal).props.visible).toBe(false);
+  expect(
+    tree!.root.findByType(PackPicker).findByType(Modal).props.visible,
+  ).toBe(false);
   await act(async () => press('Switch to English'));
   press('Start round');
   expect(navigation.navigate).toHaveBeenCalledWith('Game', {
@@ -143,8 +145,12 @@ it('clears search when closing the picker, including Android back', async () => 
     );
   });
   act(() => tree!.root.findByType(TextInput).props.onChangeText('nothing'));
-  act(() => tree!.root.findByType(Modal).props.onRequestClose());
-  expect(tree!.root.findByType(Modal).props.visible).toBe(false);
+  act(() =>
+    tree!.root.findByType(PackPicker).findByType(Modal).props.onRequestClose(),
+  );
+  expect(
+    tree!.root.findByType(PackPicker).findByType(Modal).props.visible,
+  ).toBe(false);
   press('Reopen');
   expect(tree!.root.findByType(TextInput).props.value).toBe('');
 });

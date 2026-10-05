@@ -18,8 +18,18 @@ round, read the category and letter, and award points quickly.
 - Topics are selected in a searchable full-screen native modal. Selection is
   saved immediately, including when leaving with Android Back. Search filtering
   never removes a selected topic.
-- Narrow forms scroll; landscape scoring scrolls horizontally. Long set titles
-  and topic names wrap. Controls grow with text instead of using fixed heights.
+- Narrow forms scroll; landscape scoring scrolls horizontally. Category and
+  letter text fill bounded display windows. Native font fitting uses both width
+  and height, including groups such as X / Y / Z; no fixed line height or three-line
+  truncation prevents shrinking. The full text is also exposed to TalkBack.
+  The player input stacks on narrow displays or with enlarged text. Long set
+  titles and topic names wrap. Controls grow instead of using fixed heights.
+- A four-step tutorial appears once, can be skipped (including Android Back),
+  and can be reopened from the setup menu. It is available in both languages.
+- All ten built-in packs use one bilingual schema in questionPacks.ts. The
+  separate German-only pack file and legacy runtime composition are removed.
+  Old numeric selections still migrate to the same stable IDs. Custom text
+  remains user-authored and is not translated automatically.
 - The existing storage keys, stable topic IDs, languages and game rules remain
   compatible. The icon-font and dropdown dependencies are no longer needed.
 
