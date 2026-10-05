@@ -11,7 +11,7 @@ export const colors = {
   danger: '#B3261E',
   white: '#FFFFFF',
   header: '#F3B99A',
-  headerMuted: '#685046',
+  headerMuted: '#5F4A40',
   headerAccent: '#A74726',
   selection: '#A74726',
   selectionSoft: '#FFF0E5',
