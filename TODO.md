@@ -26,7 +26,7 @@ Update it in the same commit whenever an item changes state.
 
 ## Production publishing
 
-- [x] Create the permanent `production` branch from `main`.
+- [x] Restore the permanent `production` branch from the pre-workflow `main` commit, without triggering a live release.
 - [x] Add a production-only GitHub Actions workflow.
 - [x] Validate TypeScript, lint, and tests before upload.
 - [x] Build a signed Android App Bundle with a unique automatic version code.
@@ -38,8 +38,17 @@ Update it in the same commit whenever an item changes state.
 
 - [x] Pass TypeScript checking.
 - [x] Pass ESLint.
-- [x] Pass Jest tests.
-- [ ] Build the Android release bundle in CI (legacy transitive R compatibility pending rerun).
+- [x] Pass Jest tests (3 suites, 10 tests, including persistence regressions).
+- [x] Build the Android release bundle in CI with API 35 (run 33991673867).
+- [x] Prevent setup hydration from overwriting saved players.
+- [x] Migrate legacy numeric selections, including custom packs, to stable IDs.
+- [x] Preserve the last custom-pack edit when leaving the editor; serialize writes.
+- [x] Keep manually selected language when a delayed storage read completes.
+- [ ] Smoke-test layout, scoring, navigation, and language switching on an Android device.
+
+## Maintenance
+
+- [ ] Upgrade React Native 0.72 and review dependency security findings; remove the Android compatibility patch when supported upstream.
 
 ## One-time owner actions
 

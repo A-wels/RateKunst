@@ -38,7 +38,7 @@ const CustomsetScreen = ({navigation}: any) => {
           };
         }),
       );
-      setCustomSets(summaries.filter(set => set.count > 0));
+      setCustomSets(summaries);
     } catch (error) {
       console.warn('Could not load custom packs', error);
     }

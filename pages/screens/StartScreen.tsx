@@ -15,23 +15,11 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import {MultiSelect} from 'react-native-element-dropdown';
 
 import {getQuestionLabels} from '../../utils/questionloader';
+import {loadGameSetup} from '../../utils/gameSetup';
 import {useLocalization} from '../../i18n/LocalizationContext';
 import {colors, radii, spacing} from '../../constants/theme';
 
 type PackLabel = {label: string; value: string};
-
-const migrateSelectedPacks = (items: unknown[]): string[] =>
-  items
-    .map(item => {
-      if (item === 0) {
-        return 'standard';
-      }
-      if (item === 1) {
-        return 'movies-tv';
-      }
-      return typeof item === 'string' ? item : null;
-    })
-    .filter((item): item is string => item !== null);
 
 const StartScreen = ({navigation}: any) => {
   const {language, t} = useLocalization();
@@ -40,28 +28,30 @@ const StartScreen = ({navigation}: any) => {
   const [questionPacks, setQuestionPacks] = React.useState<PackLabel[]>([]);
   const [selectedItems, setSelectedItems] = React.useState<string[]>([]);
   const [pointsToWinDisplay, setPointsToWinDisplay] = React.useState('10');
+  const [hasLoaded, setHasLoaded] = React.useState(false);
 
   React.useEffect(() => {
-    Promise.all([
-      AsyncStorage.getItem('names'),
-      AsyncStorage.getItem('customSet'),
-      AsyncStorage.getItem('pointsToWin'),
-    ])
-      .then(([savedNames, savedPacks, savedPoints]) => {
-        if (savedNames) {
-          setNames(JSON.parse(savedNames));
+    let active = true;
+    loadGameSetup()
+      .then(setup => {
+        if (!active) {
+          return;
         }
-        if (savedPacks) {
-          setSelectedItems(migrateSelectedPacks(JSON.parse(savedPacks)));
-        }
-        if (savedPoints && Number(savedPoints) > 0) {
-          setPointsToWinDisplay(savedPoints);
-        }
+        setNames(setup.names);
+        setSelectedItems(setup.packIds);
+        setPointsToWinDisplay(setup.pointsToWin);
+        setHasLoaded(true);
       })
       .catch(error => console.warn('Could not load game setup', error));
+    return () => {
+      active = false;
+    };
   }, []);
 
   const loadPackLabels = React.useCallback(() => {
+    if (!hasLoaded) {
+      return;
+    }
     getQuestionLabels(language).then(labels => {
       setQuestionPacks(labels);
       const availableIds = new Set(labels.map(label => label.value));
@@ -75,7 +65,7 @@ const StartScreen = ({navigation}: any) => {
         return validItems;
       });
     });
-  }, [language]);
+  }, [hasLoaded, language]);
 
   React.useEffect(() => {
     loadPackLabels();
@@ -84,10 +74,13 @@ const StartScreen = ({navigation}: any) => {
   }, [loadPackLabels, navigation]);
 
   React.useEffect(() => {
+    if (!hasLoaded) {
+      return;
+    }
     AsyncStorage.setItem('names', JSON.stringify(names)).catch(error =>
       console.warn('Could not save players', error),
     );
-  }, [names]);
+  }, [hasLoaded, names]);
 
   const updateSelectedItems = (items: string[]) => {
     setSelectedItems(items);
@@ -97,6 +90,9 @@ const StartScreen = ({navigation}: any) => {
   };
 
   const addPlayer = () => {
+    if (!hasLoaded) {
+      return;
+    }
     const trimmedName = name.trim();
     if (!trimmedName) {
       return;
@@ -124,6 +120,9 @@ const StartScreen = ({navigation}: any) => {
   };
 
   const startGame = () => {
+    if (!hasLoaded) {
+      return;
+    }
     if (names.length === 0) {
       Alert.alert(t('noPlayersTitle'), t('noPlayersMessage'));
       return;
@@ -284,7 +283,10 @@ const StartScreen = ({navigation}: any) => {
           <Text style={styles.secondaryButtonText}>{t('editCustomSets')}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.startButton} onPress={startGame}>
+        <TouchableOpacity
+          disabled={!hasLoaded}
+          style={styles.startButton}
+          onPress={startGame}>
           <Text style={styles.startButtonText}>{t('start')}</Text>
           <AntDesign name="arrowright" size={21} color={colors.white} />
         </TouchableOpacity>

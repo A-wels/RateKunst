@@ -18,27 +18,50 @@ import {colors, radii, spacing} from '../../constants/theme';
 const EditPage = ({route}: any) => {
   const {t} = useLocalization();
   const [setId] = React.useState<string>(
-    () => route.params?.id ?? Date.now().toString(),
+    () =>
+      route.params?.id ??
+      `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
   );
   const [title, setTitle] = React.useState('');
   const [questionsText, setQuestionsText] = React.useState('');
   const [hasLoaded, setHasLoaded] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [saveFailed, setSaveFailed] = React.useState(false);
+  const dirty = React.useRef(false);
+  const active = React.useRef(true);
+  const revision = React.useRef(0);
+  const saveQueue = React.useRef<Promise<void>>(Promise.resolve());
+
+  React.useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
 
   React.useEffect(() => {
     AsyncStorage.getItem(setId)
       .then(value => {
+        if (!active.current) {
+          return;
+        }
         if (value) {
           const [storedTitle, ...storedQuestions]: string[] = JSON.parse(value);
           setTitle(storedTitle ?? '');
           setQuestionsText(storedQuestions.join('\n'));
         }
+        setHasLoaded(true);
       })
-      .finally(() => setHasLoaded(true));
+      .catch(error => {
+        console.warn('Could not load custom pack', error);
+        if (active.current) {
+          setSaveFailed(true);
+        }
+      });
   }, [setId]);
 
   React.useEffect(() => {
-    if (!hasLoaded) {
+    if (!hasLoaded || !dirty.current) {
       return;
     }
 
@@ -46,12 +69,12 @@ const EditPage = ({route}: any) => {
       .split('\n')
       .map(line => line.trim())
       .filter(Boolean);
-    if (questions.length === 0) {
-      return;
-    }
-
+    const currentRevision = ++revision.current;
     setIsSaving(true);
-    const timeout = setTimeout(async () => {
+    setSaveFailed(false);
+    // Serialize writes and do not cancel them on navigation. The last edit must
+    // reach storage even when the user immediately leaves the editor.
+    saveQueue.current = saveQueue.current.then(async () => {
       try {
         const finalTitle = title.trim() || t('untitledSet');
         const storedIds = await AsyncStorage.getItem(CUSTOM_SET_INDEX_KEY);
@@ -66,12 +89,17 @@ const EditPage = ({route}: any) => {
             JSON.stringify(ids.includes(setId) ? ids : [...ids, setId]),
           ),
         ]);
+      } catch (error) {
+        console.warn('Could not save custom pack', error);
+        if (active.current && revision.current === currentRevision) {
+          setSaveFailed(true);
+        }
       } finally {
-        setIsSaving(false);
+        if (active.current && revision.current === currentRevision) {
+          setIsSaving(false);
+        }
       }
-    }, 350);
-
-    return () => clearTimeout(timeout);
+    });
   }, [hasLoaded, questionsText, setId, t, title]);
 
   const categoryCount = questionsText
@@ -89,12 +117,30 @@ const EditPage = ({route}: any) => {
         <View style={styles.statusRow}>
           <View style={styles.statusPill}>
             <AntDesign
-              name={isSaving ? 'clockcircleo' : 'checkcircleo'}
+              name={
+                saveFailed
+                  ? 'exclamationcircleo'
+                  : isSaving
+                  ? 'clockcircleo'
+                  : 'checkcircleo'
+              }
               size={15}
-              color={isSaving ? colors.warning : colors.accent}
+              color={
+                saveFailed
+                  ? colors.danger
+                  : isSaving
+                  ? colors.warning
+                  : colors.accent
+              }
             />
             <Text style={styles.statusText}>
-              {t(isSaving ? 'saving' : 'saved')}
+              {t(
+                saveFailed
+                  ? 'saveFailed'
+                  : !hasLoaded || isSaving
+                  ? 'saving'
+                  : 'saved',
+              )}
             </Text>
           </View>
           <Text style={styles.countText}>
@@ -107,7 +153,11 @@ const EditPage = ({route}: any) => {
           <TextInput
             style={styles.titleInput}
             value={title}
-            onChangeText={setTitle}
+            editable={hasLoaded}
+            onChangeText={value => {
+              dirty.current = true;
+              setTitle(value);
+            }}
             placeholder={t('setTitlePlaceholder')}
             placeholderTextColor={colors.textMuted}
             maxLength={60}
@@ -122,7 +172,11 @@ const EditPage = ({route}: any) => {
           <TextInput
             style={styles.questionsInput}
             value={questionsText}
-            onChangeText={setQuestionsText}
+            editable={hasLoaded}
+            onChangeText={value => {
+              dirty.current = true;
+              setQuestionsText(value);
+            }}
             placeholder={t('categoriesPlaceholder')}
             placeholderTextColor={colors.textMuted}
             multiline

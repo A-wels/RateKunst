@@ -8,7 +8,7 @@ RateKunst ist ein Spiel für Android. Die Spieler müssen möglichst schnell Ant
 Die App enthält zehn vorgefertigte Themenpacks sowie eigene Sets. Oberfläche und
 integrierte Packs stehen vollständig auf Deutsch und Englisch zur Verfügung.
 
-## Vefügbarkeit
+## Verfügbarkeit
 
 Es ist möglich, die App im Google Play Store zu kaufen: https://play.google.com/store/apps/details?id=com.RateDepp
 Alternativ kann man sich die App selbst mit dem hier verfügbaren Code erstellen :)
@@ -17,6 +17,7 @@ Alternativ kann man sich die App selbst mit dem hier verfügbaren Code erstellen
 
 ```bash
 npm ci
+node scripts/patch-react-native-gradle-plugin.js
 npm run typecheck
 npm run lint
 npm test -- --runInBand

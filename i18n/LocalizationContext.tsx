@@ -62,6 +62,7 @@ const translations = {
       'Peinlicher Versprecher\nUrlaubserlebnis\nSchlechter Filmtitel',
     saved: 'Gespeichert',
     saving: 'Speichert …',
+    saveFailed: 'Speicherfehler',
     categoryCount: '{{count}} Kategorien',
     untitledSet: 'Unbenanntes Set',
     language: 'Sprache',
@@ -122,6 +123,7 @@ const translations = {
     categoriesPlaceholder: 'Embarrassing typo\nHoliday mishap\nBad movie title',
     saved: 'Saved',
     saving: 'Saving …',
+    saveFailed: 'Storage error',
     categoryCount: '{{count}} categories',
     untitledSet: 'Untitled pack',
     language: 'Language',
@@ -157,16 +159,28 @@ const LocalizationContext = React.createContext<LocalizationValue | undefined>(
 export const LocalizationProvider = ({children}: React.PropsWithChildren) => {
   const [language, setLanguageState] =
     React.useState<Language>(getDeviceLanguage);
+  const languageChosen = React.useRef(false);
 
   React.useEffect(() => {
-    AsyncStorage.getItem(LANGUAGE_KEY).then(saved => {
-      if (saved === 'de' || saved === 'en') {
-        setLanguageState(saved);
-      }
-    });
+    let active = true;
+    AsyncStorage.getItem(LANGUAGE_KEY)
+      .then(saved => {
+        if (
+          active &&
+          !languageChosen.current &&
+          (saved === 'de' || saved === 'en')
+        ) {
+          setLanguageState(saved);
+        }
+      })
+      .catch(error => console.warn('Could not load language', error));
+    return () => {
+      active = false;
+    };
   }, []);
 
   const setLanguage = React.useCallback((nextLanguage: Language) => {
+    languageChosen.current = true;
     setLanguageState(nextLanguage);
     AsyncStorage.setItem(LANGUAGE_KEY, nextLanguage).catch(error =>
       console.warn('Could not persist language', error),
