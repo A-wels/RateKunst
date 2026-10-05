@@ -1,7 +1,7 @@
 import React from 'react';
+import {useTheme} from '../theme/ThemeContext';
 import {StyleSheet, Text, View} from 'react-native';
 import SingleLineFittedText from './SingleLineFittedText';
-import {colors} from '../constants/theme';
 
 type Props = {
   children: string;
@@ -12,14 +12,11 @@ type Props = {
 
 // Paragraphs retain native fitting against the bounded question window.
 // Single-line letters use measured glyph dimensions rather than Android auto-fit.
-const FittedText = ({
-  children,
-  fontSize,
-  color = colors.text,
-  singleLine = false,
-}: Props) =>
-  singleLine ? (
-    <SingleLineFittedText fontSize={fontSize} color={color}>
+const FittedText = ({children, fontSize, color, singleLine = false}: Props) => {
+  const {colors} = useTheme();
+  const textColor = color ?? colors.onSurface;
+  return singleLine ? (
+    <SingleLineFittedText fontSize={fontSize} color={textColor}>
       {children}
     </SingleLineFittedText>
   ) : (
@@ -30,11 +27,12 @@ const FittedText = ({
         accessibilityLabel={children}
         adjustsFontSizeToFit
         minimumFontScale={0.1}
-        style={[styles.text, {fontSize, color}]}>
+        style={[styles.text, {fontSize, color: textColor}]}>
         {children}
       </Text>
     </View>
   );
+};
 
 const styles = StyleSheet.create({
   window: {flex: 1, minHeight: 0},

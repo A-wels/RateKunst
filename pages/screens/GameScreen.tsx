@@ -1,4 +1,6 @@
 import React from 'react';
+import {useMonetization} from '../../monetization/MonetizationContext';
+import {useTheme, useThemedStyles} from '../../theme/ThemeContext';
 import {
   Alert,
   StatusBar,
@@ -16,7 +18,7 @@ import letters from '../../constants/letters';
 import {getQuestions} from '../../utils/questionloader';
 import {useLocalization} from '../../i18n/LocalizationContext';
 import type {Language} from '../../i18n/LocalizationContext';
-import {colors, radii, spacing} from '../../constants/theme';
+import {ThemeColors, radii, spacing} from '../../constants/theme';
 
 type RoundQuestion = {text: string; setTitle: string};
 
@@ -32,6 +34,11 @@ const delay = (milliseconds: number) =>
 
 const GameScreen = ({navigation, route}: any) => {
   const {t} = useLocalization();
+  const {completeRound} = useMonetization();
+  const finished = React.useRef(false);
+  const roundEnded = React.useRef(false);
+  const {colors, mode} = useTheme();
+  const styles = useThemedStyles(createStyles);
   const params = route.params as GameParams;
   const [scores, setScores] = React.useState<number[]>(() =>
     params.names.map(() => 0),
@@ -109,7 +116,11 @@ const GameScreen = ({navigation, route}: any) => {
   }, [isCountingDown, loadNextQuestion, question, questionPool.length]);
 
   const awardPoint = (index: number) => {
-    if (isCountingDown || scoredThisTurn.includes(index)) {
+    if (
+      roundEnded.current ||
+      isCountingDown ||
+      scoredThisTurn.includes(index)
+    ) {
       return;
     }
 
@@ -120,10 +131,22 @@ const GameScreen = ({navigation, route}: any) => {
     setScoredThisTurn(current => [...current, index]);
 
     if (updatedScores[index] >= params.pointsToWin) {
+      roundEnded.current = true;
       Alert.alert(
         t('winnerTitle'),
         t('winnerMessage', {name: params.names[index]}),
-        [{text: t('backToMenu'), onPress: () => navigation.popToTop()}],
+        [
+          {
+            text: t('backToMenu'),
+            onPress: () => {
+              if (!finished.current) {
+                finished.current = true;
+                completeRound();
+              }
+              navigation.popToTop();
+            },
+          },
+        ],
         {cancelable: false},
       );
     } else {
@@ -146,7 +169,10 @@ const GameScreen = ({navigation, route}: any) => {
     <SafeAreaView
       style={styles.screen}
       edges={['top', 'left', 'right', 'bottom']}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <StatusBar
+        barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
+      />
       <View style={styles.topBar}>
         <Button label={t('leave')} variant="text" onPress={leaveGame} />
         <View style={styles.roundTitle}>
@@ -170,7 +196,10 @@ const GameScreen = ({navigation, route}: any) => {
         </View>
         <View style={styles.letterPanel}>
           <Text style={styles.label}>{t('letter')}</Text>
-          <FittedText fontSize={72} color={colors.letter} singleLine>
+          <FittedText
+            fontSize={72}
+            color={colors.onPrimaryContainer}
+            singleLine>
             {letter}
           </FittedText>
         </View>
@@ -194,7 +223,7 @@ const GameScreen = ({navigation, route}: any) => {
                 })}
                 accessibilityHint={t('tapScore')}
                 accessibilityState={{disabled: isCountingDown || alreadyScored}}
-                android_ripple={{color: colors.border}}
+                android_ripple={{color: colors.outlineVariant}}
                 key={`${name}-${index}`}
                 disabled={isCountingDown || alreadyScored}
                 onPress={() => awardPoint(index)}
@@ -203,12 +232,28 @@ const GameScreen = ({navigation, route}: any) => {
                   alreadyScored && styles.playerButtonScored,
                   pressed && styles.playerButtonPressed,
                 ]}>
-                <Text numberOfLines={1} style={styles.playerName}>
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.playerName,
+                    alreadyScored && {color: colors.onPrimaryContainer},
+                  ]}>
                   {name}
                 </Text>
-                <Text style={styles.score}>
+                <Text
+                  style={[
+                    styles.score,
+                    alreadyScored && {color: colors.onPrimaryContainer},
+                  ]}>
                   {scores[index]}
-                  <Text style={styles.scoreGoal}> / {params.pointsToWin}</Text>
+                  <Text
+                    style={[
+                      styles.scoreGoal,
+                      alreadyScored && {color: colors.onPrimaryContainer},
+                    ]}>
+                    {' '}
+                    / {params.pointsToWin}
+                  </Text>
                 </Text>
               </Pressable>
             );
@@ -219,74 +264,87 @@ const GameScreen = ({navigation, route}: any) => {
   );
 };
 
-const styles = StyleSheet.create({
-  screen: {flex: 1, backgroundColor: colors.background, padding: spacing.sm},
-  topBar: {
-    minHeight: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  roundTitle: {flex: 1, alignItems: 'center'},
-  target: {color: colors.textMuted, fontSize: 14, textAlign: 'center'},
-  gameArea: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: spacing.sm,
-    paddingVertical: spacing.sm,
-  },
-  questionPanel: {
-    flex: 3,
-    backgroundColor: colors.questionSurface,
-    borderRadius: radii.control,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  letterPanel: {
-    flex: 1,
-    backgroundColor: colors.letterSurface,
-    borderRadius: radii.control,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
-  },
-  label: {
-    color: colors.textMuted,
-    fontSize: 14,
-    marginBottom: spacing.xs,
-    textAlign: 'center',
-  },
-  scoreArea: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: spacing.sm,
-  },
-  scoreHint: {color: colors.textMuted, fontSize: 13, marginBottom: spacing.sm},
-  scoreRow: {gap: spacing.sm, paddingRight: spacing.sm},
-  playerButton: {
-    backgroundColor: colors.playerSurface,
-    borderTopColor: colors.playerEdge,
-    width: 152,
-    minHeight: 72,
-    padding: spacing.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radii.control,
-    borderTopWidth: 3,
-    overflow: 'hidden',
-  },
-  playerButtonScored: {
-    backgroundColor: colors.primarySoft,
-    borderTopColor: colors.primary,
-  },
-  playerButtonPressed: {backgroundColor: colors.border},
-  playerName: {maxWidth: '100%', color: colors.text, fontSize: 16},
-  score: {
-    color: colors.text,
-    fontSize: 24,
-    fontWeight: '500',
-    marginTop: spacing.xs,
-  },
-  scoreGoal: {color: colors.textMuted, fontSize: 14, fontWeight: '400'},
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    screen: {flex: 1, backgroundColor: colors.background, padding: spacing.sm},
+    topBar: {
+      minHeight: 48,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    roundTitle: {flex: 1, alignItems: 'center'},
+    target: {color: colors.onSurfaceVariant, fontSize: 14, textAlign: 'center'},
+    gameArea: {
+      flex: 1,
+      flexDirection: 'row',
+      gap: spacing.sm,
+      paddingVertical: spacing.sm,
+    },
+    questionPanel: {
+      flex: 3,
+      backgroundColor: colors.surfaceContainerLow,
+      borderRadius: radii.control,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    letterPanel: {
+      flex: 1,
+      backgroundColor: colors.primaryContainer,
+      borderRadius: radii.control,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.sm,
+    },
+    label: {
+      color: colors.onSurfaceVariant,
+      fontSize: 14,
+      marginBottom: spacing.xs,
+      textAlign: 'center',
+    },
+    scoreArea: {
+      borderTopWidth: 1,
+      borderTopColor: colors.outlineVariant,
+      paddingTop: spacing.sm,
+    },
+    scoreHint: {
+      color: colors.onSurfaceVariant,
+      fontSize: 13,
+      marginBottom: spacing.sm,
+    },
+    scoreRow: {gap: spacing.sm, paddingRight: spacing.sm},
+    playerButton: {
+      backgroundColor: colors.secondaryContainer,
+      borderTopColor: colors.secondary,
+      width: 152,
+      minHeight: 72,
+      padding: spacing.sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radii.control,
+      borderTopWidth: 3,
+      overflow: 'hidden',
+    },
+    playerButtonScored: {
+      backgroundColor: colors.primaryContainer,
+      borderTopColor: colors.primary,
+    },
+    playerButtonPressed: {backgroundColor: colors.outlineVariant},
+    playerName: {
+      maxWidth: '100%',
+      color: colors.onSecondaryContainer,
+      fontSize: 16,
+    },
+    score: {
+      color: colors.onSecondaryContainer,
+      fontSize: 24,
+      fontWeight: '500',
+      marginTop: spacing.xs,
+    },
+    scoreGoal: {
+      color: colors.onSecondaryContainer,
+      fontSize: 14,
+      fontWeight: '400',
+    },
+  });
 
 export default GameScreen;

@@ -1,4 +1,6 @@
 import React from 'react';
+import AdAgePrompt from '../../components/AdAgePrompt';
+import {useTheme, useThemedStyles} from '../../theme/ThemeContext';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -21,10 +23,12 @@ import PackPicker, {PackLabel} from '../../components/PackPicker';
 import {getQuestionLabels} from '../../utils/questionloader';
 import {loadGameSetup} from '../../utils/gameSetup';
 import {useLocalization} from '../../i18n/LocalizationContext';
-import {colors, radii, spacing} from '../../constants/theme';
+import {ThemeColors, radii, spacing} from '../../constants/theme';
 
 const StartScreen = ({navigation}: any) => {
   const {language, t} = useLocalization();
+  const {colors} = useTheme();
+  const styles = useThemedStyles(createStyles);
   const tutorial = useTutorial();
   const {width, fontScale} = useWindowDimensions();
   const stackPlayerInput = width < 360 || fontScale > 1.2;
@@ -179,13 +183,14 @@ const StartScreen = ({navigation}: any) => {
                 stackPlayerInput && styles.playerInputColumn,
               ]}>
               <TextInput
+                selectionColor={colors.primary}
                 accessibilityLabel={t('playerName')}
                 style={[
                   styles.textInput,
                   stackPlayerInput && styles.fullWidthInput,
                 ]}
                 placeholder={t('playerName')}
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={colors.onSurfaceVariant}
                 value={name}
                 editable={hasLoaded}
                 maxLength={26}
@@ -240,12 +245,13 @@ const StartScreen = ({navigation}: any) => {
           <View style={styles.pointsRow}>
             <Text style={styles.pointsLabel}>{t('pointsToWin')}</Text>
             <TextInput
+              selectionColor={colors.primary}
               accessibilityLabel={t('pointsToWin')}
               style={styles.pointsInput}
               value={pointsToWinDisplay}
               editable={hasLoaded}
               placeholder="10"
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={colors.onSurfaceVariant}
               keyboardType="number-pad"
               selectTextOnFocus
               onChangeText={updatePoints}
@@ -264,12 +270,18 @@ const StartScreen = ({navigation}: any) => {
             onPress={() => navigation.navigate('CustomSets')}
           />
           <Button
+            label={t('settings')}
+            variant="text"
+            onPress={() => navigation.navigate('Settings')}
+          />
+          <Button
             label={t('tutorial')}
             variant="text"
             onPress={tutorial.open}
           />
         </ScrollView>
       </KeyboardAvoidingView>
+      <AdAgePrompt defer={tutorial.visible || isChoosingPacks || !hasLoaded} />
       <Tutorial visible={tutorial.visible} onClose={tutorial.close} />
       <PackPicker
         visible={isChoosingPacks}
@@ -282,92 +294,97 @@ const StartScreen = ({navigation}: any) => {
   );
 };
 
-const styles = StyleSheet.create({
-  screen: {flex: 1, backgroundColor: colors.background},
-  content: {
-    width: '100%',
-    maxWidth: 640,
-    alignSelf: 'center',
-    padding: spacing.md,
-    paddingBottom: spacing.lg,
-    gap: spacing.md,
-  },
-  title: {
-    color: colors.text,
-    fontSize: 24,
-    fontWeight: '500',
-    marginVertical: spacing.sm,
-  },
-  section: {
-    paddingVertical: spacing.sm,
-    paddingLeft: 12,
-    borderLeftWidth: 3,
-    gap: spacing.sm,
-  },
-  playersSection: {borderLeftColor: colors.playerEdge},
-  packsSection: {borderLeftColor: colors.primary},
-  sectionTitle: {color: colors.text, fontSize: 18, fontWeight: '500'},
-  helper: {
-    color: colors.textMuted,
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: spacing.sm,
-  },
-  playerInputRow: {flexDirection: 'row', gap: spacing.sm, alignItems: 'center'},
-  playerInputColumn: {flexDirection: 'column', alignItems: 'stretch'},
-  fullWidthInput: {flex: 0, width: '100%'},
-  textInput: {
-    flex: 1,
-    minWidth: 0,
-    minHeight: 48,
-    paddingHorizontal: 12,
-    borderRadius: radii.control,
-    borderWidth: 1,
-    backgroundColor: colors.white,
-    borderColor: colors.inputBorder,
-    color: colors.text,
-    fontSize: 16,
-  },
-  playerList: {marginTop: spacing.sm},
-  playerRow: {
-    borderLeftColor: colors.playerEdge,
-    borderLeftWidth: 3,
-    paddingLeft: spacing.sm,
-    marginBottom: spacing.xs,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  playerName: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 16,
-    lineHeight: 23,
-    paddingVertical: spacing.sm,
-  },
-  pointsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.letterSurface,
-    paddingHorizontal: 12,
-    borderRadius: radii.control,
-  },
-  pointsLabel: {flex: 1, color: colors.text, fontSize: 16},
-  pointsInput: {
-    width: 80,
-    minHeight: 48,
-    borderWidth: 1,
-    backgroundColor: colors.white,
-    borderColor: colors.inputBorder,
-    borderRadius: radii.control,
-    color: colors.text,
-    fontSize: 18,
-    textAlign: 'center',
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    screen: {flex: 1, backgroundColor: colors.background},
+    content: {
+      width: '100%',
+      maxWidth: 640,
+      alignSelf: 'center',
+      padding: spacing.md,
+      paddingBottom: spacing.lg,
+      gap: spacing.md,
+    },
+    title: {
+      color: colors.onSurface,
+      fontSize: 24,
+      fontWeight: '500',
+      marginVertical: spacing.sm,
+    },
+    section: {
+      paddingVertical: spacing.sm,
+      paddingLeft: 12,
+      borderLeftWidth: 3,
+      gap: spacing.sm,
+    },
+    playersSection: {borderLeftColor: colors.secondary},
+    packsSection: {borderLeftColor: colors.primary},
+    sectionTitle: {color: colors.onSurface, fontSize: 18, fontWeight: '500'},
+    helper: {
+      color: colors.onSurfaceVariant,
+      fontSize: 15,
+      lineHeight: 22,
+      marginBottom: spacing.sm,
+    },
+    playerInputRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      alignItems: 'center',
+    },
+    playerInputColumn: {flexDirection: 'column', alignItems: 'stretch'},
+    fullWidthInput: {flex: 0, width: '100%'},
+    textInput: {
+      flex: 1,
+      minWidth: 0,
+      minHeight: 48,
+      paddingHorizontal: 12,
+      borderRadius: radii.control,
+      borderWidth: 1,
+      backgroundColor: colors.surfaceContainerLow,
+      borderColor: colors.outline,
+      color: colors.onSurface,
+      fontSize: 16,
+    },
+    playerList: {marginTop: spacing.sm},
+    playerRow: {
+      borderLeftColor: colors.secondary,
+      borderLeftWidth: 3,
+      paddingLeft: spacing.sm,
+      marginBottom: spacing.xs,
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: colors.outlineVariant,
+    },
+    playerName: {
+      flex: 1,
+      color: colors.onSurface,
+      fontSize: 16,
+      lineHeight: 23,
+      paddingVertical: spacing.sm,
+    },
+    pointsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.md,
+      paddingVertical: spacing.md,
+      backgroundColor: colors.primaryContainer,
+      paddingHorizontal: 12,
+      borderRadius: radii.control,
+    },
+    pointsLabel: {flex: 1, color: colors.onSurface, fontSize: 16},
+    pointsInput: {
+      width: 80,
+      minHeight: 48,
+      borderWidth: 1,
+      backgroundColor: colors.surfaceContainerLow,
+      borderColor: colors.outline,
+      borderRadius: radii.control,
+      color: colors.onSurface,
+      fontSize: 18,
+      textAlign: 'center',
+    },
+  });
 
 export default StartScreen;

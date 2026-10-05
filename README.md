@@ -12,6 +12,28 @@ Start erscheint eine überspringbare Spielanleitung, die im Menü erneut geöffn
 werden kann. Die Oberfläche verwendet schlichte Listen und beschriftete Aktionen;
 Fragen und Buchstabengruppen werden an ihre Anzeigebereiche angepasst.
 
+## Darstellung und Einstellungen
+
+Unter **Einstellungen** stehen **System**, **Hell** und **Dunkel** zur Auswahl.
+Standardmäßig folgt die gesamte Oberfläche dem Gerätedesign und reagiert auch
+während der Nutzung auf Änderungen. Eine manuelle Auswahl wird lokal gespeichert.
+Die Sprache lässt sich dort ebenfalls ändern; der DE/EN-Schalter bleibt im Menü.
+Die native React-Native-Oberfläche verwendet Material-Farbrollen mit warmen
+Pfirsich-/Orange-Akzenten und eigenen Hell-/Dunkel-Paletten, einschließlich der
+Navigation, Eingaben, Spielansicht, Auswahldialoge und Spielanleitung.
+
+## Werbung und Werbefrei-Kauf
+
+Banner erscheinen außerhalb aktiver Runden. Nach jeder zweiten abgeschlossenen
+Runde wird beim Wechsel zurück ins Menü ein Interstitial angezeigt, sofern eines
+bereitsteht. Der einmalige Google-Play-Kauf `remove_ads` entfernt sämtliche
+Werbung dauerhaft und kann in den Einstellungen wiederhergestellt werden.
+Die Android-Mindestversion ist mit dem aktuellen AdMob-SDK Android 7.0 (API 24).
+Produkt, AdMob-IDs, Einwilligungsnachrichten und Store-Angaben müssen vor dem
+produktiven Einsatz eingerichtet werden; ohne AdMob-IDs läuft Testwerbung.
+Die vollständige Einrichtung einschließlich app-ads.txt steht in
+[docs/monetization.md](docs/monetization.md).
+
 ## Verfügbarkeit
 
 Die neue Android-App verwendet die Paket-ID `de.awels.ratekunst` und wird zunächst

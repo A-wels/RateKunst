@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTheme, useThemedStyles} from '../../theme/ThemeContext';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -13,10 +14,12 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 
 import {CUSTOM_SET_INDEX_KEY} from '../../utils/questionloader';
 import {useLocalization} from '../../i18n/LocalizationContext';
-import {colors, radii, spacing} from '../../constants/theme';
+import {ThemeColors, radii, spacing} from '../../constants/theme';
 
 const EditPage = ({route}: any) => {
   const {t} = useLocalization();
+  const {colors} = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [setId] = React.useState<string>(
     () =>
       route.params?.id ??
@@ -135,6 +138,7 @@ const EditPage = ({route}: any) => {
           <View style={styles.fieldGroup}>
             <Text style={styles.label}>{t('setTitle')}</Text>
             <TextInput
+              selectionColor={colors.primary}
               accessibilityLabel={t('setTitle')}
               style={styles.titleInput}
               value={title}
@@ -144,7 +148,7 @@ const EditPage = ({route}: any) => {
                 setTitle(value);
               }}
               placeholder={t('setTitlePlaceholder')}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={colors.onSurfaceVariant}
               maxLength={60}
             />
           </View>
@@ -155,6 +159,7 @@ const EditPage = ({route}: any) => {
               <Text style={styles.hint}>{t('questionsHint')}</Text>
             </View>
             <TextInput
+              selectionColor={colors.primary}
               accessibilityLabel={t('questions')}
               accessibilityHint={t('questionsHint')}
               style={styles.questionsInput}
@@ -165,7 +170,7 @@ const EditPage = ({route}: any) => {
                 setQuestionsText(value);
               }}
               placeholder={t('questionsPlaceholder')}
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={colors.onSurfaceVariant}
               multiline
               textAlignVertical="top"
               autoCapitalize="sentences"
@@ -177,56 +182,57 @@ const EditPage = ({route}: any) => {
   );
 };
 
-const styles = StyleSheet.create({
-  screen: {flex: 1, backgroundColor: colors.background},
-  content: {
-    flexGrow: 1,
-    width: '100%',
-    maxWidth: 640,
-    alignSelf: 'center',
-    padding: spacing.md,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-  statusText: {color: colors.textMuted, fontSize: 14},
-  failedText: {color: colors.danger},
-  countText: {color: colors.textMuted, fontSize: 14},
-  fieldGroup: {marginBottom: spacing.lg},
-  questionsGroup: {flex: 1},
-  questionLabelRow: {marginBottom: spacing.sm},
-  label: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: spacing.sm,
-  },
-  hint: {color: colors.textMuted, fontSize: 14},
-  titleInput: {
-    minHeight: 48,
-    paddingHorizontal: 12,
-    borderRadius: radii.control,
-    borderWidth: 1,
-    borderColor: colors.inputBorder,
-    color: colors.text,
-    fontSize: 16,
-  },
-  questionsInput: {
-    minHeight: 300,
-    flex: 1,
-    padding: 12,
-    borderRadius: radii.control,
-    borderWidth: 1,
-    borderColor: colors.inputBorder,
-    color: colors.text,
-    fontSize: 16,
-    lineHeight: 25,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    screen: {flex: 1, backgroundColor: colors.background},
+    content: {
+      flexGrow: 1,
+      width: '100%',
+      maxWidth: 640,
+      alignSelf: 'center',
+      padding: spacing.md,
+    },
+    statusRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.sm,
+      marginBottom: spacing.lg,
+    },
+    statusText: {color: colors.onSurfaceVariant, fontSize: 14},
+    failedText: {color: colors.error},
+    countText: {color: colors.onSurfaceVariant, fontSize: 14},
+    fieldGroup: {marginBottom: spacing.lg},
+    questionsGroup: {flex: 1},
+    questionLabelRow: {marginBottom: spacing.sm},
+    label: {
+      color: colors.onSurface,
+      fontSize: 16,
+      fontWeight: '500',
+      marginBottom: spacing.sm,
+    },
+    hint: {color: colors.onSurfaceVariant, fontSize: 14},
+    titleInput: {
+      minHeight: 48,
+      paddingHorizontal: 12,
+      borderRadius: radii.control,
+      borderWidth: 1,
+      borderColor: colors.outline,
+      color: colors.onSurface,
+      fontSize: 16,
+    },
+    questionsInput: {
+      minHeight: 300,
+      flex: 1,
+      padding: 12,
+      borderRadius: radii.control,
+      borderWidth: 1,
+      borderColor: colors.outline,
+      color: colors.onSurface,
+      fontSize: 16,
+      lineHeight: 25,
+    },
+  });
 
 export default EditPage;

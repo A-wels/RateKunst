@@ -1,4 +1,5 @@
 import React from 'react';
+import {useThemedStyles} from '../../theme/ThemeContext';
 import {Alert, FlatList, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -6,12 +7,13 @@ import Button from '../../components/Button';
 
 import {CUSTOM_SET_INDEX_KEY} from '../../utils/questionloader';
 import {useLocalization} from '../../i18n/LocalizationContext';
-import {colors, spacing} from '../../constants/theme';
+import {ThemeColors, spacing} from '../../constants/theme';
 
 type CustomSetSummary = {id: string; title: string; count: number};
 
 const CustomsetScreen = ({navigation}: any) => {
   const {t} = useLocalization();
+  const styles = useThemedStyles(createStyles);
   const [customSets, setCustomSets] = React.useState<CustomSetSummary[]>([]);
 
   React.useEffect(() => {
@@ -146,43 +148,44 @@ const CustomsetScreen = ({navigation}: any) => {
   );
 };
 
-const styles = StyleSheet.create({
-  screen: {flex: 1, backgroundColor: colors.background},
-  content: {
-    flexGrow: 1,
-    width: '100%',
-    maxWidth: 640,
-    alignSelf: 'center',
-    padding: spacing.md,
-  },
-  header: {alignItems: 'flex-start', marginBottom: spacing.lg},
-  empty: {paddingVertical: spacing.lg},
-  emptyTitle: {color: colors.text, fontSize: 18, fontWeight: '500'},
-  emptyBody: {
-    color: colors.textMuted,
-    fontSize: 16,
-    lineHeight: 24,
-    marginTop: spacing.sm,
-  },
-  setRow: {
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  setText: {gap: spacing.xs},
-  setTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '500',
-    lineHeight: 25,
-  },
-  setCount: {color: colors.textMuted, fontSize: 14},
-  actions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-end',
-    marginTop: spacing.sm,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    screen: {flex: 1, backgroundColor: colors.background},
+    content: {
+      flexGrow: 1,
+      width: '100%',
+      maxWidth: 640,
+      alignSelf: 'center',
+      padding: spacing.md,
+    },
+    header: {alignItems: 'flex-start', marginBottom: spacing.lg},
+    empty: {paddingVertical: spacing.lg},
+    emptyTitle: {color: colors.onSurface, fontSize: 18, fontWeight: '500'},
+    emptyBody: {
+      color: colors.onSurfaceVariant,
+      fontSize: 16,
+      lineHeight: 24,
+      marginTop: spacing.sm,
+    },
+    setRow: {
+      paddingVertical: spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.outlineVariant,
+    },
+    setText: {gap: spacing.xs},
+    setTitle: {
+      color: colors.onSurface,
+      fontSize: 18,
+      fontWeight: '500',
+      lineHeight: 25,
+    },
+    setCount: {color: colors.onSurfaceVariant, fontSize: 14},
+    actions: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'flex-end',
+      marginTop: spacing.sm,
+    },
+  });
 
 export default CustomsetScreen;
