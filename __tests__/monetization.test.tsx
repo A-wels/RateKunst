@@ -18,6 +18,7 @@ import {LocalizationProvider} from '../i18n/LocalizationContext';
 import AdBanner from '../components/AdBanner';
 import AdAgePrompt from '../components/AdAgePrompt';
 import GameScreen from '../pages/screens/GameScreen';
+import SettingsScreen from '../pages/screens/SettingsScreen';
 
 jest.mock('../monetization/native', () => ({
   nativeMonetization: {
@@ -26,6 +27,7 @@ jest.mock('../monetization/native', () => ({
     restore: jest.fn(),
     setAgeGroup: jest.fn(),
     privacyOptions: jest.fn(),
+    retryAds: jest.fn(),
     setGameActive: jest.fn(),
     showInterstitial: jest.fn(),
     addListener: jest.fn(),
@@ -250,4 +252,57 @@ it('defers the age prompt until purchase ownership is checked', async () => {
     }),
   );
   expect(ageChoices()).toHaveLength(1);
+});
+
+it('shows consent and ad load errors locally and retries without resetting age or consent', async () => {
+  const blocked: MonetizationStatus = {
+    ...ready,
+    diagnostics: {
+      version: '1.1.12 (100012)',
+      bannerId: 'ca-app-pub-4579090895960312/2477133216',
+      adContentRating: 'G',
+      ageProtected: false,
+      consentBusy: false,
+      consentStatus: 1,
+      consentFormAvailable: false,
+      billingError: '',
+      consentError: '3: No published message for this app.',
+      bannerState: 'failed',
+      bannerSize: '0 × 0 px',
+      bannerError: 'com.google.android.gms.ads / 3: No fill.',
+      interstitialState: 'loaded',
+      interstitialError: '',
+    },
+  };
+  native.initialize.mockResolvedValue(blocked);
+  native.retryAds.mockResolvedValue(blocked);
+  await act(async () => {
+    tree = renderer.create(
+      <LocalizationProvider>
+        <MonetizationProvider>
+          <SettingsScreen />
+        </MonetizationProvider>
+      </LocalizationProvider>,
+    );
+  });
+  const text = () =>
+    tree!.root
+      .findAllByType(Text)
+      .map(node => node.props.children)
+      .join('\n');
+  expect(text()).not.toContain('No fill.');
+  const button = (label: string) =>
+    tree!.root
+      .findAllByType(Pressable)
+      .find(node => node.props.accessibilityLabel === label)!;
+  act(() => button('Werbediagnose').props.onPress());
+  expect(text()).toContain('Banner-Ladefehler');
+  expect(text()).toContain('No fill.');
+  expect(text()).toContain('No published message for this app.');
+  expect(text()).toContain('Nicht erforderlich');
+  await act(async () => button('Werbung erneut laden').props.onPress());
+  expect(native.retryAds).toHaveBeenCalledTimes(1);
+  expect(native.setAgeGroup).not.toHaveBeenCalled();
+  expect(native.privacyOptions).not.toHaveBeenCalled();
+  expect(native.purchase).not.toHaveBeenCalled();
 });

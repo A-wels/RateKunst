@@ -29,6 +29,7 @@ type MonetizationValue = MonetizationStatus & {
   restore: () => Promise<void>;
   setAgeGroup: (group: AgeGroup) => Promise<void>;
   privacyOptions: () => Promise<void>;
+  retryAds: () => Promise<void>;
 };
 
 const MonetizationContext = React.createContext<MonetizationValue>({
@@ -42,6 +43,7 @@ const MonetizationContext = React.createContext<MonetizationValue>({
   restore: async () => {},
   setAgeGroup: async () => {},
   privacyOptions: async () => {},
+  retryAds: async () => {},
 });
 
 export const MonetizationProvider = ({children}: React.PropsWithChildren) => {
@@ -186,6 +188,8 @@ export const MonetizationProvider = ({children}: React.PropsWithChildren) => {
       native ? runAction(() => native!.setAgeGroup(group)) : Promise.resolve(),
     privacyOptions: () =>
       native ? runAction(() => native!.privacyOptions()) : Promise.resolve(),
+    retryAds: () =>
+      native ? runAction(() => native!.retryAds()) : Promise.resolve(),
   };
   return (
     <MonetizationContext.Provider value={value}>
