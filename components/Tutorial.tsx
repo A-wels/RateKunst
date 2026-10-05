@@ -1,7 +1,9 @@
 import React from 'react';
+import AdBanner from './AdBanner';
+import {useTheme, useThemedStyles} from '../theme/ThemeContext';
 import {ScrollView, StatusBar, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {colors, spacing} from '../constants/theme';
+import {ThemeColors, spacing} from '../constants/theme';
 import {useLocalization, TranslationKey} from '../i18n/LocalizationContext';
 import Button from './Button';
 import FittedText from './FittedText';
@@ -17,6 +19,8 @@ const steps: {title: TranslationKey; body: TranslationKey}[] = [
 
 const Tutorial = ({visible, onClose}: Props) => {
   const {t} = useLocalization();
+  const {colors, mode} = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [step, setStep] = React.useState(0);
   React.useEffect(() => {
     if (visible) {
@@ -32,7 +36,7 @@ const Tutorial = ({visible, onClose}: Props) => {
       <SafeAreaView style={styles.screen}>
         {visible && (
           <StatusBar
-            barStyle="dark-content"
+            barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
             backgroundColor={colors.background}
           />
         )}
@@ -66,7 +70,10 @@ const Tutorial = ({visible, onClose}: Props) => {
                   </View>
                   <View style={styles.exampleLetter}>
                     <Text style={styles.exampleLabel}>{t('letter')}</Text>
-                    <FittedText fontSize={64} color={colors.letter} singleLine>
+                    <FittedText
+                      fontSize={64}
+                      color={colors.onPrimaryContainer}
+                      singleLine>
                       B
                     </FittedText>
                   </View>
@@ -96,58 +103,65 @@ const Tutorial = ({visible, onClose}: Props) => {
             </View>
           </View>
         </View>
+        <AdBanner />
       </SafeAreaView>
     </ForegroundModal>
   );
 };
 
-const styles = StyleSheet.create({
-  screen: {flex: 1, backgroundColor: colors.background},
-  content: {
-    flex: 1,
-    width: '100%',
-    maxWidth: 640,
-    alignSelf: 'center',
-    padding: spacing.md,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.sm,
-  },
-  progress: {flex: 1, color: colors.textMuted, fontSize: 14},
-  body: {paddingVertical: spacing.lg, gap: spacing.lg},
-  title: {color: colors.text, fontSize: 24, lineHeight: 32, fontWeight: '500'},
-  description: {color: colors.text, fontSize: 16, lineHeight: 25},
-  example: {
-    height: 160,
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  exampleQuestion: {
-    flex: 2,
-    padding: spacing.md,
-    backgroundColor: colors.questionSurface,
-  },
-  exampleLetter: {
-    flex: 1,
-    padding: spacing.md,
-    backgroundColor: colors.letterSurface,
-  },
-  exampleLabel: {
-    color: colors.textMuted,
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: spacing.sm,
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingTop: spacing.md,
-  },
-  next: {flex: 1},
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    screen: {flex: 1, backgroundColor: colors.background},
+    content: {
+      flex: 1,
+      width: '100%',
+      maxWidth: 640,
+      alignSelf: 'center',
+      padding: spacing.md,
+    },
+    topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.sm,
+    },
+    progress: {flex: 1, color: colors.onSurfaceVariant, fontSize: 14},
+    body: {paddingVertical: spacing.lg, gap: spacing.lg},
+    title: {
+      color: colors.onSurface,
+      fontSize: 24,
+      lineHeight: 32,
+      fontWeight: '500',
+    },
+    description: {color: colors.onSurface, fontSize: 16, lineHeight: 25},
+    example: {
+      height: 160,
+      flexDirection: 'row',
+      gap: spacing.sm,
+    },
+    exampleQuestion: {
+      flex: 2,
+      padding: spacing.md,
+      backgroundColor: colors.surfaceContainerLow,
+    },
+    exampleLetter: {
+      flex: 1,
+      padding: spacing.md,
+      backgroundColor: colors.primaryContainer,
+    },
+    exampleLabel: {
+      color: colors.onSurfaceVariant,
+      fontSize: 14,
+      textAlign: 'center',
+      marginBottom: spacing.sm,
+    },
+    actions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+      paddingTop: spacing.md,
+    },
+    next: {flex: 1},
+  });
 
 export default Tutorial;
