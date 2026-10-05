@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 import {CUSTOM_SET_INDEX_KEY} from '../../utils/questionloader';
 import {useLocalization} from '../../i18n/LocalizationContext';
@@ -108,32 +108,17 @@ const EditPage = ({route}: any) => {
     .filter(Boolean).length;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled">
-        <View style={styles.statusRow}>
-          <View style={styles.statusPill}>
-            <AntDesign
-              name={
-                saveFailed
-                  ? 'exclamationcircleo'
-                  : isSaving
-                  ? 'clockcircleo'
-                  : 'checkcircleo'
-              }
-              size={15}
-              color={
-                saveFailed
-                  ? colors.danger
-                  : isSaving
-                  ? colors.warning
-                  : colors.accent
-              }
-            />
-            <Text style={styles.statusText}>
+    <SafeAreaView style={styles.screen} edges={['left', 'right', 'bottom']}>
+      <KeyboardAvoidingView
+        style={styles.screen}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled">
+          <View style={styles.statusRow}>
+            <Text
+              accessibilityLiveRegion="polite"
+              style={[styles.statusText, saveFailed && styles.failedText]}>
               {t(
                 saveFailed
                   ? 'saveFailed'
@@ -142,50 +127,53 @@ const EditPage = ({route}: any) => {
                   : 'saved',
               )}
             </Text>
+            <Text style={styles.countText}>
+              {t('categoryCount', {count: categoryCount})}
+            </Text>
           </View>
-          <Text style={styles.countText}>
-            {t('categoryCount', {count: categoryCount})}
-          </Text>
-        </View>
 
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>{t('setTitle')}</Text>
-          <TextInput
-            style={styles.titleInput}
-            value={title}
-            editable={hasLoaded}
-            onChangeText={value => {
-              dirty.current = true;
-              setTitle(value);
-            }}
-            placeholder={t('setTitlePlaceholder')}
-            placeholderTextColor={colors.textMuted}
-            maxLength={60}
-          />
-        </View>
-
-        <View style={[styles.fieldGroup, styles.questionsGroup]}>
-          <View style={styles.questionLabelRow}>
-            <Text style={styles.label}>{t('categories')}</Text>
-            <Text style={styles.hint}>{t('categoriesHint')}</Text>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>{t('setTitle')}</Text>
+            <TextInput
+              accessibilityLabel={t('setTitle')}
+              style={styles.titleInput}
+              value={title}
+              editable={hasLoaded}
+              onChangeText={value => {
+                dirty.current = true;
+                setTitle(value);
+              }}
+              placeholder={t('setTitlePlaceholder')}
+              placeholderTextColor={colors.textMuted}
+              maxLength={60}
+            />
           </View>
-          <TextInput
-            style={styles.questionsInput}
-            value={questionsText}
-            editable={hasLoaded}
-            onChangeText={value => {
-              dirty.current = true;
-              setQuestionsText(value);
-            }}
-            placeholder={t('categoriesPlaceholder')}
-            placeholderTextColor={colors.textMuted}
-            multiline
-            textAlignVertical="top"
-            autoCapitalize="sentences"
-          />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+          <View style={[styles.fieldGroup, styles.questionsGroup]}>
+            <View style={styles.questionLabelRow}>
+              <Text style={styles.label}>{t('categories')}</Text>
+              <Text style={styles.hint}>{t('categoriesHint')}</Text>
+            </View>
+            <TextInput
+              accessibilityLabel={t('categories')}
+              accessibilityHint={t('categoriesHint')}
+              style={styles.questionsInput}
+              value={questionsText}
+              editable={hasLoaded}
+              onChangeText={value => {
+                dirty.current = true;
+                setQuestionsText(value);
+              }}
+              placeholder={t('categoriesPlaceholder')}
+              placeholderTextColor={colors.textMuted}
+              multiline
+              textAlignVertical="top"
+              autoCapitalize="sentences"
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -194,60 +182,47 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     width: '100%',
-    maxWidth: 760,
+    maxWidth: 640,
     alignSelf: 'center',
-    padding: spacing.lg,
+    padding: spacing.md,
   },
   statusRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: spacing.sm,
     marginBottom: spacing.lg,
   },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    paddingHorizontal: 11,
-    paddingVertical: 7,
-    borderRadius: radii.pill,
-    backgroundColor: colors.surface,
-  },
-  statusText: {color: colors.textMuted, fontSize: 12, fontWeight: '700'},
-  countText: {color: colors.textMuted, fontSize: 13},
+  statusText: {color: colors.textMuted, fontSize: 14},
+  failedText: {color: colors.danger},
+  countText: {color: colors.textMuted, fontSize: 14},
   fieldGroup: {marginBottom: spacing.lg},
   questionsGroup: {flex: 1},
-  questionLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-  },
+  questionLabelRow: {marginBottom: spacing.sm},
   label: {
     color: colors.text,
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '500',
     marginBottom: spacing.sm,
   },
-  hint: {color: colors.textMuted, fontSize: 12},
+  hint: {color: colors.textMuted, fontSize: 14},
   titleInput: {
-    height: 54,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.medium,
-    backgroundColor: colors.surface,
+    minHeight: 48,
+    paddingHorizontal: 12,
+    borderRadius: radii.control,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.inputBorder,
     color: colors.text,
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 16,
   },
   questionsInput: {
-    minHeight: 330,
+    minHeight: 300,
     flex: 1,
-    padding: spacing.md,
-    borderRadius: radii.medium,
-    backgroundColor: colors.surface,
+    padding: 12,
+    borderRadius: radii.control,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.inputBorder,
     color: colors.text,
     fontSize: 16,
     lineHeight: 25,

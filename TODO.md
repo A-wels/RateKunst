@@ -10,6 +10,9 @@ Update it in the same commit whenever an item changes state.
 - [x] Add complete German and English UI localization.
 - [x] Persist the selected language and default to the device language.
 - [x] Preserve existing players, selected packs, target score, and custom sets.
+- [x] Replace decorative cards and icons with plain lists, labeled controls and system typography.
+- [x] Fit categories and grouped letters to bounded display windows using native text measurement.
+- [x] Add a German/English first-launch tutorial with skip and menu replay.
 
 ## Question packs
 
@@ -23,6 +26,7 @@ Update it in the same commit whenever an item changes state.
 - [x] Add Food & Drinks.
 - [x] Add Travel & Places.
 - [x] Validate stable IDs, translations, and non-empty pack contents in tests.
+- [x] Use one bilingual schema for all built-in packs; remove the German-only legacy file.
 
 ## New app identity and internal-test publishing
 
@@ -39,7 +43,7 @@ Update it in the same commit whenever an item changes state.
 
 - [x] Pass TypeScript checking.
 - [x] Pass ESLint.
-- [x] Pass Jest tests (3 suites, 11 tests, including persistence regressions).
+- [x] Pass Jest tests (5 suites, 18 tests, including persistence, selection and tutorial regressions).
 - [x] Prevent setup hydration from overwriting saved players.
 - [x] Migrate legacy numeric selections, including custom packs, to stable IDs.
 - [x] Preserve the last custom-pack edit when leaving the editor; serialize writes.
@@ -48,7 +52,7 @@ Update it in the same commit whenever an item changes state.
 - [x] Increase the release-build heap and bound Gradle workers for clean Hermes AAR transforms.
 - [x] Target and compile Android API 36 with AGP 8.9.2, Gradle 8.11.1 and the matching Kotlin plugin patch.
 - [x] Replace the legacy plugin's removed Gradle `serviceOf` helper with an equivalent service lookup.
-- [x] Declare the icon-font copy dependency for AGP lint tasks.
+- [x] Remove unused icon fonts, dropdown packages and their obsolete Android Gradle wiring.
 - [x] Verify the API 36 release bundle after the `de.awels.ratekunst` package migration: https://github.com/A-wels/RateKunst/actions/runs/37273223445 (type-check, lint, all 11 tests and bundleRelease passed with development signing).
 - [ ] Smoke-test layout, scoring, navigation, and language switching on an Android device.
 

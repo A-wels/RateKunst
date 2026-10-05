@@ -1,25 +1,19 @@
 export const colors = {
-  background: '#0B1020',
-  surface: '#151D31',
-  surfaceRaised: '#1D2942',
-  border: '#2A3857',
-  text: '#F8FAFC',
-  textMuted: '#A8B3C7',
-  primary: '#FF6B4A',
-  primaryPressed: '#E85A3A',
-  accent: '#63D2B1',
-  accentSoft: '#173F3A',
-  warning: '#F7B955',
-  danger: '#FB7185',
+  background: '#FFFFFF',
+  surface: '#F4F5F6',
+  border: '#D8DCE0',
+  inputBorder: '#848B93',
+  text: '#202124',
+  textMuted: '#5F6368',
+  primary: '#2457A7',
+  primaryPressed: '#1B4382',
+  primarySoft: '#EDF2FA',
+  danger: '#B3261E',
   white: '#FFFFFF',
-  black: '#0B1020',
 };
 
 export const radii = {
-  small: 10,
-  medium: 16,
-  large: 24,
-  pill: 999,
+  control: 6,
 };
 
 export const spacing = {

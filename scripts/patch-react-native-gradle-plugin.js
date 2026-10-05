@@ -76,7 +76,3 @@ addNamespace(
   ['@react-native-async-storage', 'async-storage', 'android', 'build.gradle'],
   'com.reactnativecommunity.asyncstorage',
 );
-addNamespace(
-  ['react-native-vector-icons', 'android', 'build.gradle'],
-  'com.oblador.vectoricons',
-);
