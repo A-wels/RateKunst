@@ -26,6 +26,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     implements LifecycleEventListener {
   public static final String NAME = "RateKunstMonetization";
   static final String PRODUCT = "remove_ads";
+  static final String PURCHASE_OPTION = "standard";
   private final Handler main = new Handler(Looper.getMainLooper());
   private final SharedPreferences preferences;
   private final ConsentInformation consent;
@@ -36,6 +37,8 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   private final List<Promise> connectionWaiters = new ArrayList<>();
   private boolean interstitialLoading, interstitialShowing, destroyed;
   private String ageGroup, price = "";
+  private boolean productLoading;
+  private String productError = "";
   private InterstitialAd interstitial;
   private Promise purchasePromise;
   private int consentRevision;
@@ -66,6 +69,8 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     value.putBoolean("adsReady", canLoadAds());
     value.putBoolean("purchaseAvailable", !BuildConfig.PLAY_BILLING_PUBLIC_KEY.isEmpty() && !price.isEmpty());
     value.putString("price", price);
+    value.putBoolean("productLoading", productLoading);
+    value.putString("productError", productError);
     value.putString("ageGroup", ageGroup);
     value.putBoolean("privacyOptionsRequired", consent.getPrivacyOptionsRequirementStatus()
         == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED);
@@ -78,6 +83,9 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     diagnostics.putInt("consentStatus", consent.getConsentStatus());
     diagnostics.putBoolean("consentFormAvailable", consent.isConsentFormAvailable());
     diagnostics.putString("billingError", billingError);
+    diagnostics.putString("productId", PRODUCT);
+    diagnostics.putString("purchaseOptionId", PURCHASE_OPTION);
+    diagnostics.putString("productError", productError);
     diagnostics.putString("consentError", consentError);
     diagnostics.putString("bannerState", bannerState);
     diagnostics.putString("bannerSize", bannerSize);
@@ -103,7 +111,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   }
 
   private void connect(Promise promise) {
-    if (billing.isReady()) { queryOwned(promise); return; }
+    if (billing.isReady()) { queryOwned(promise); queryProduct(null); return; }
     if (promise != null) connectionWaiters.add(promise);
     if (connecting) return;
     connecting = true;
@@ -206,33 +214,109 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     }
   }
 
-  private void queryProduct(Promise launchPromise) {
+  // Prefer the configured regular buy option; never select a different named
+  // option simply because Google returned it first. A legacy unnamed default
+  // offer is supported only when it is the sole returned, non-promotional offer.
+  static int standardOfferIndex(List<String> optionIds, List<String> offerIds) {
+    int standard = -1;
+    for (int i = 0; i < optionIds.size(); i++) {
+      if (!PURCHASE_OPTION.equals(optionIds.get(i))) continue;
+      if (offerIds.get(i) == null || offerIds.get(i).isEmpty()) return i;
+      if (standard < 0) standard = i;
+    }
+    if (standard >= 0) return standard;
+    if (optionIds.size() == 1 && (optionIds.get(0) == null || optionIds.get(0).isEmpty())
+        && (offerIds.get(0) == null || offerIds.get(0).isEmpty())) return 0;
+    return -1;
+  }
+
+  @ReactMethod public void refreshProducts(Promise promise) {
+    main.post(() -> {
+      if (removed) { promise.resolve(status()); return; }
+      if (!billing.isReady()) { connect(promise); return; }
+      queryProduct(null, promise);
+    });
+  }
+
+  private void queryProduct(Promise launchPromise) { queryProduct(launchPromise, null); }
+
+  private void productFailure(String message, Promise launchPromise, Promise refreshPromise) {
+    price = "";
+    productError = message;
+    publish();
+    if (launchPromise != null) finishPurchaseError("STORE_UNAVAILABLE", message);
+    if (refreshPromise != null) refreshPromise.resolve(status());
+  }
+
+  private void queryProduct(Promise launchPromise, Promise refreshPromise) {
+    if (productLoading || (launchPromise == null && purchasePromise != null)) {
+      if (refreshPromise != null) refreshPromise.resolve(status());
+      if (launchPromise != null) finishPurchaseError("PURCHASE_BUSY", "Product query in progress.");
+      return;
+    }
+    productLoading = true;
+    productError = "";
+    publish();
     billing.queryProductDetailsAsync(QueryProductDetailsParams.newBuilder().setProductList(
         Collections.singletonList(QueryProductDetailsParams.Product.newBuilder()
             .setProductId(PRODUCT).setProductType(BillingClient.ProductType.INAPP).build())).build(),
         (result, products) -> main.post(() -> {
+          productLoading = false;
+          if (destroyed) return;
           if (result.getResponseCode() != BillingClient.BillingResponseCode.OK
               || products.getProductDetailsList().isEmpty()) {
-            if (launchPromise != null) finishPurchaseError("STORE_UNAVAILABLE", "Product is unavailable.");
+            StringBuilder message = new StringBuilder("Product query ")
+                .append(result.getResponseCode()).append(": ").append(result.getDebugMessage());
+            for (UnfetchedProduct product : products.getUnfetchedProductList()) {
+              message.append("; ").append(product.getProductId())
+                  .append(" status=").append(product.getStatusCode());
+            }
+            productFailure(message.toString(), launchPromise, refreshPromise);
             return;
           }
-          ProductDetails details = products.getProductDetailsList().get(0);
+          ProductDetails details = null;
+          for (ProductDetails candidate : products.getProductDetailsList()) {
+            if (PRODUCT.equals(candidate.getProductId())) { details = candidate; break; }
+          }
+          if (details == null) {
+            productFailure("Google Play did not return " + PRODUCT + ".", launchPromise, refreshPromise);
+            return;
+          }
           List<ProductDetails.OneTimePurchaseOfferDetails> offers = details.getOneTimePurchaseOfferDetailsList();
           if (offers == null || offers.isEmpty()) {
-            if (launchPromise != null) finishPurchaseError("STORE_UNAVAILABLE", "Purchase option is unavailable.");
+            ProductDetails.OneTimePurchaseOfferDetails legacy = details.getOneTimePurchaseOfferDetails();
+            offers = legacy == null ? Collections.emptyList() : Collections.singletonList(legacy);
+          }
+          List<ProductDetails.OneTimePurchaseOfferDetails> buyOffers = new ArrayList<>();
+          List<String> optionIds = new ArrayList<>(), offerIds = new ArrayList<>();
+          for (ProductDetails.OneTimePurchaseOfferDetails offer : offers) {
+            if (offer.getRentalDetails() != null) continue;
+            buyOffers.add(offer);
+            optionIds.add(offer.getPurchaseOptionId());
+            offerIds.add(offer.getOfferId());
+          }
+          int selected = standardOfferIndex(optionIds, offerIds);
+          if (selected < 0) {
+            productFailure("No eligible buy option " + PURCHASE_OPTION + " for " + PRODUCT
+                + "; returned options=" + optionIds, launchPromise, refreshPromise);
             return;
           }
-          ProductDetails.OneTimePurchaseOfferDetails offer = offers.get(0);
+          ProductDetails.OneTimePurchaseOfferDetails offer = buyOffers.get(selected);
           price = offer.getFormattedPrice();
           publish();
+          if (refreshPromise != null) refreshPromise.resolve(status());
           if (launchPromise == null) return;
           Activity activity = getCurrentActivity();
           if (activity == null || activity.isFinishing()) {
             finishPurchaseError("NO_ACTIVITY", "No foreground activity."); return;
           }
+          BillingFlowParams.ProductDetailsParams.Builder selectedOffer =
+              BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(details);
+          if (offer.getOfferToken() != null && !offer.getOfferToken().isEmpty()) {
+            selectedOffer.setOfferToken(offer.getOfferToken());
+          }
           BillingResult launched = billing.launchBillingFlow(activity, BillingFlowParams.newBuilder()
-              .setProductDetailsParamsList(Collections.singletonList(BillingFlowParams.ProductDetailsParams.newBuilder()
-                  .setProductDetails(details).setOfferToken(offer.getOfferToken()).build())).build());
+              .setProductDetailsParamsList(Collections.singletonList(selectedOffer.build())).build());
           if (launched.getResponseCode() == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
             Promise pending = purchasePromise; purchasePromise = null; queryOwned(pending);
           } else if (launched.getResponseCode() != BillingClient.BillingResponseCode.OK) {
