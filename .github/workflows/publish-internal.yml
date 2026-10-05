@@ -1,19 +1,25 @@
-name: Publish Google Play production
+name: Publish Google Play internal test
 
 on:
   push:
-    branches: [production]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      upload_to_play:
+        description: Upload to internal testing (leave disabled for the first signed build)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 concurrency:
-  group: google-play-production
+  group: google-play-ratekunst-internal
   cancel-in-progress: false
 
 jobs:
   validate:
-    name: Validate production build
+    name: Validate internal test build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -32,8 +38,8 @@ jobs:
       - name: Test
         run: npm test -- --runInBand
 
-  publish-production:
-    name: Publish Google Play production
+  publish-internal:
+    name: Publish Google Play internal test
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -62,20 +68,20 @@ jobs:
         run: npm ci
       - name: Patch legacy React Native Android toolchain
         run: node scripts/patch-react-native-gradle-plugin.js
-      - name: Validate Google Play secrets
+      - name: Validate signing and Google Play secrets
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
           KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
           SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          UPLOAD_TO_PLAY: ${{ github.event_name == 'push' || inputs.upload_to_play }}
         run: |
           declare -A required_secrets=(
             [ANDROID_UPLOAD_KEYSTORE_BASE64]="$KEYSTORE_BASE64"
             [ANDROID_UPLOAD_KEY_ALIAS]="$KEY_ALIAS"
             [ANDROID_UPLOAD_KEY_PASSWORD]="$KEY_PASSWORD"
             [ANDROID_UPLOAD_STORE_PASSWORD]="$STORE_PASSWORD"
-            [PLAY_SERVICE_ACCOUNT_JSON]="$SERVICE_ACCOUNT_JSON"
           )
           for secret_name in "${!required_secrets[@]}"; do
             [[ -n "${required_secrets[$secret_name]}" ]] || {
@@ -83,6 +89,10 @@ jobs:
               exit 1
             }
           done
+          if [[ "$UPLOAD_TO_PLAY" == 'true' && -z "$SERVICE_ACCOUNT_JSON" ]]; then
+            echo "Missing required GitHub Actions secret: PLAY_SERVICE_ACCOUNT_JSON" >&2
+            exit 1
+          fi
       - name: Configure Android signing
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
@@ -102,23 +112,23 @@ jobs:
           ./gradlew bundleRelease \
             -PversionCode="$version_code" \
             -PversionName="$version_name"
-      - name: Publish full production release
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: com.RateDepp
-          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
-          tracks: production
-          status: completed
-          releaseName: RateKunst ${{ env.VERSION_NAME }}
-      - name: Upload production bundle artifact
-        if: success()
+      - name: Upload signed bundle artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ratekunst-production-${{ env.VERSION_CODE }}
+          name: ratekunst-internal-${{ env.VERSION_CODE }}
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 30
+      - name: Publish internal test release
+        if: github.event_name == 'push' || inputs.upload_to_play
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: de.awels.ratekunst
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          tracks: internal
+          status: completed
+          releaseName: RateKunst ${{ env.VERSION_NAME }}
       - name: Clean up release credentials
         if: always()
         run: rm -f android/app/upload-keystore.jks

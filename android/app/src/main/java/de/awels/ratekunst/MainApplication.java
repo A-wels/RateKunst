@@ -1,4 +1,4 @@
-package com.RateKunst;
+package de.awels.ratekunst;
 
 import android.app.Application;
 import com.facebook.react.PackageList;

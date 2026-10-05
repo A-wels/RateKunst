@@ -24,15 +24,16 @@ Update it in the same commit whenever an item changes state.
 - [x] Add Travel & Places.
 - [x] Validate stable IDs, translations, and non-empty pack contents in tests.
 
-## Production publishing
+## New app identity and internal-test publishing
 
-- [x] Restore the permanent `production` branch from the pre-workflow `main` commit, without triggering a live release.
-- [x] Add a production-only GitHub Actions workflow.
+- [x] Migrate the application ID, Android namespace, Java packages and source paths to `de.awels.ratekunst`.
+- [x] Replace the production-branch workflow with internal testing on pushes to `main`.
 - [x] Validate TypeScript, lint, and tests before upload.
 - [x] Build a signed Android App Bundle with a unique automatic version code.
-- [x] Publish directly to the Google Play `production` track at 100% rollout.
-- [x] Keep active production releases serialized and retain the AAB for 30 days.
-- [x] Document the fast-forward promotion procedure.
+- [x] Configure Google Play uploads for `de.awels.ratekunst`, track `internal`, status `completed`.
+- [x] Serialize internal releases and retain the signed AAB for 30 days before upload, including failed uploads.
+- [x] Add a manually triggered signed build with optional Play upload for first-app registration.
+- [x] Document the new app's first manual upload, secrets, tester-track permissions and separate local storage.
 
 ## Verification
 
@@ -49,6 +50,7 @@ Update it in the same commit whenever an item changes state.
 - [x] Replace the legacy plugin's removed Gradle `serviceOf` helper with an equivalent service lookup.
 - [x] Declare the icon-font copy dependency for AGP lint tasks.
 - [x] Verify the API 36 Android release bundle in CI: https://github.com/A-wels/RateKunst/actions/runs/37267997885 (type-check, lint, tests and bundleRelease all passed).
+- [ ] Verify the release bundle after the `de.awels.ratekunst` package migration.
 - [ ] Smoke-test layout, scoring, navigation, and language switching on an Android device.
 
 ## Maintenance
@@ -58,10 +60,11 @@ Update it in the same commit whenever an item changes state.
 
 ## One-time owner actions
 
-- [ ] Add the RateKunst upload key as `ANDROID_UPLOAD_KEYSTORE_BASE64`.
+- [ ] Create a new Play Console app and register `de.awels.ratekunst` through the first manual AAB upload with Play App Signing.
+- [ ] Add the new RateKunst upload key as `ANDROID_UPLOAD_KEYSTORE_BASE64`.
 - [ ] Add `ANDROID_UPLOAD_KEY_ALIAS`, `ANDROID_UPLOAD_KEY_PASSWORD`, and `ANDROID_UPLOAD_STORE_PASSWORD`.
 - [ ] Add the Play service account JSON as `PLAY_SERVICE_ACCOUNT_JSON`.
-- [ ] Grant that service account permission to publish production releases for `com.RateDepp`.
-- [ ] Complete all required Play Console listing, policy, content-rating, and production-access steps.
+- [ ] Grant that service account permission to publish internal test releases for `de.awels.ratekunst`.
+- [ ] Complete the Play Console requirements, configure testers and roll out the first internal test manually.
 - [ ] Merge the modernization PR into `main`.
-- [ ] Fast-forward `production` to the reviewed `main` commit and push it to publish live.
+- [ ] Confirm a subsequent push to `main` automatically publishes the internal test.
