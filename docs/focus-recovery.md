@@ -42,3 +42,28 @@ Device checks for a release build:
    skip it, and check menu inputs. Replay must still start at step one.
 5. Award points in a landscape round, switch away and return. Scores and the
    round must remain; Skip and scoring must respond after the countdown.
+
+## Custom-set navigation
+
+Opening “Manage custom packs” was reported to freeze the app. No JavaScript
+render loop was found in the list loader. The device failure is not reproduced
+locally. The exact RN 0.72 / native-stack 6 / screens 3.22 combination has a
+[reported default Android transition regression](https://github.com/react-navigation/react-navigation/issues/11438)
+where the outgoing screen is drawn above the incoming screen. This is evidence
+for a transition workaround, not proof of the reported freeze's root cause.
+
+The CustomSets and EditSet routes now use `animation: 'none'` on Android, avoiding
+the default animated enter/exit path. iOS retains its existing transition.
+Existing headers, colors, layout, game orientation and native-stack back handling
+are retained. No redesign is included.
+
+The list reads custom sets in one batch, deduplicates and validates storage IDs,
+skips invalid or missing records individually, and ignores stale responses after
+another focus reload or unmount. Existing storage records are not rewritten.
+Jest covers actual App navigation into the list, creation, editing, return and
+reopening, plus malformed records alongside valid sets. This validates JS flow
+and the native-stack options; it cannot verify Android fragment hit testing.
+
+Device verification still required: repeatedly open the custom-set list, create
+and edit a set, use the header Back and Android Back, and verify both list and
+setup controls respond. Repeat after Home/resume with the keyboard open.

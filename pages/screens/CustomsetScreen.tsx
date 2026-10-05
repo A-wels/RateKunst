@@ -14,34 +14,62 @@ const CustomsetScreen = ({navigation}: any) => {
   const {t} = useLocalization();
   const [customSets, setCustomSets] = React.useState<CustomSetSummary[]>([]);
 
-  const loadSets = React.useCallback(async () => {
-    try {
-      const storedIds = await AsyncStorage.getItem(CUSTOM_SET_INDEX_KEY);
-      const ids: string[] = storedIds ? JSON.parse(storedIds) : [];
-      const summaries = await Promise.all(
-        ids.map(async id => {
-          const value = await AsyncStorage.getItem(id);
-          const [title, ...questions]: string[] = value
-            ? JSON.parse(value)
-            : [];
-          return {
-            id,
-            title: title || t('untitledSet'),
-            count: questions.length,
-          };
-        }),
-      );
-      setCustomSets(summaries);
-    } catch (error) {
-      console.warn('Could not load custom packs', error);
-    }
-  }, [t]);
-
   React.useEffect(() => {
+    let active = true;
+    let request = 0;
+    const loadSets = async () => {
+      const currentRequest = ++request;
+      try {
+        const storedIds = await AsyncStorage.getItem(CUSTOM_SET_INDEX_KEY);
+        const parsed: unknown = storedIds ? JSON.parse(storedIds) : [];
+        const ids = Array.isArray(parsed)
+          ? [
+              ...new Set(
+                parsed.filter(
+                  (id): id is string => typeof id === 'string' && id.length > 0,
+                ),
+              ),
+            ]
+          : [];
+        const entries = await AsyncStorage.multiGet(ids);
+        const summaries: CustomSetSummary[] = [];
+        for (const [id, value] of entries) {
+          if (!value) {
+            continue;
+          }
+          // One damaged legacy record must not hide every other set.
+          try {
+            const set: unknown = JSON.parse(value);
+            if (
+              !Array.isArray(set) ||
+              !set.every(item => typeof item === 'string')
+            ) {
+              continue;
+            }
+            const [title, ...questions] = set as string[];
+            summaries.push({
+              id,
+              title: title || t('untitledSet'),
+              count: questions.length,
+            });
+          } catch {
+            console.warn('Could not parse custom pack', id);
+          }
+        }
+        if (active && currentRequest === request) {
+          setCustomSets(summaries);
+        }
+      } catch (error) {
+        console.warn('Could not load custom packs', error);
+      }
+    };
     loadSets();
     const unsubscribe = navigation.addListener('focus', loadSets);
-    return unsubscribe;
-  }, [loadSets, navigation]);
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [t, navigation]);
 
   const deleteSet = (set: CustomSetSummary) => {
     Alert.alert(

@@ -18,6 +18,8 @@ import {useLocalization} from '../../i18n/LocalizationContext';
 import type {Language} from '../../i18n/LocalizationContext';
 import {colors, radii, spacing} from '../../constants/theme';
 
+type RoundQuestion = {text: string; setTitle: string};
+
 type GameParams = {
   names: string[];
   packIds: string[];
@@ -35,8 +37,9 @@ const GameScreen = ({navigation, route}: any) => {
     params.names.map(() => 0),
   );
   const [scoredThisTurn, setScoredThisTurn] = React.useState<number[]>([]);
-  const [questionPool, setQuestionPool] = React.useState<string[]>([]);
+  const [questionPool, setQuestionPool] = React.useState<RoundQuestion[]>([]);
   const [question, setQuestion] = React.useState('');
+  const [setTitle, setSetTitle] = React.useState('');
   const [letter, setLetter] = React.useState('');
   const [isCountingDown, setIsCountingDown] = React.useState(true);
   const recentQuestions = React.useRef<string[]>([]);
@@ -46,8 +49,11 @@ const GameScreen = ({navigation, route}: any) => {
     getQuestions(params.language).then(packs => {
       const selected = packs
         .filter(pack => params.packIds.includes(pack.id))
-        .flatMap(pack => pack.questions)
-        .filter(Boolean);
+        .flatMap(pack =>
+          pack.questions
+            .filter(Boolean)
+            .map(text => ({text, setTitle: pack.title})),
+        );
       setQuestionPool(selected);
     });
     return () => {
@@ -63,6 +69,7 @@ const GameScreen = ({navigation, route}: any) => {
     const currentSequence = ++sequence.current;
     setIsCountingDown(true);
     setLetter('');
+    setSetTitle('');
     setScoredThisTurn([]);
 
     for (const count of ['3', '2', '1']) {
@@ -74,16 +81,17 @@ const GameScreen = ({navigation, route}: any) => {
     }
 
     const recent = recentQuestions.current;
-    const available = questionPool.filter(item => !recent.includes(item));
+    const available = questionPool.filter(item => !recent.includes(item.text));
     const candidates = available.length > 0 ? available : questionPool;
     const nextQuestion =
       candidates[Math.floor(Math.random() * candidates.length)];
     const nextLetter = letters[Math.floor(Math.random() * letters.length)];
 
-    recentQuestions.current = [...recent, nextQuestion].slice(
+    recentQuestions.current = [...recent, nextQuestion.text].slice(
       -Math.min(20, Math.max(1, questionPool.length - 1)),
     );
-    setQuestion(nextQuestion);
+    setQuestion(nextQuestion.text);
+    setSetTitle(nextQuestion.setTitle);
     setLetter(nextLetter);
     setIsCountingDown(false);
   }, [isCountingDown, questionPool]);
@@ -155,7 +163,9 @@ const GameScreen = ({navigation, route}: any) => {
 
       <View style={styles.gameArea}>
         <View style={styles.questionPanel}>
-          <Text style={styles.label}>{t('question')}</Text>
+          <Text style={styles.label} numberOfLines={2}>
+            {setTitle}
+          </Text>
           <FittedText fontSize={38}>{question}</FittedText>
         </View>
         <View style={styles.letterPanel}>
