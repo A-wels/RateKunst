@@ -39,7 +39,6 @@ Update it in the same commit whenever an item changes state.
 - [x] Pass TypeScript checking.
 - [x] Pass ESLint.
 - [x] Pass Jest tests (3 suites, 11 tests, including persistence regressions).
-- [x] Build the Android release bundle in CI with API 35 (run 33991673867).
 - [x] Prevent setup hydration from overwriting saved players.
 - [x] Migrate legacy numeric selections, including custom packs, to stable IDs.
 - [x] Preserve the last custom-pack edit when leaving the editor; serialize writes.
@@ -49,7 +48,7 @@ Update it in the same commit whenever an item changes state.
 - [x] Target and compile Android API 36 with AGP 8.9.2, Gradle 8.11.1 and the matching Kotlin plugin patch.
 - [x] Replace the legacy plugin's removed Gradle `serviceOf` helper with an equivalent service lookup.
 - [x] Declare the icon-font copy dependency for AGP lint tasks.
-- [ ] Verify the current API 36 Android release bundle in CI.
+- [x] Verify the API 36 Android release bundle in CI: https://github.com/A-wels/RateKunst/actions/runs/37267997885 (type-check, lint, tests and bundleRelease all passed).
 - [ ] Smoke-test layout, scoring, navigation, and language switching on an Android device.
 
 ## Maintenance
