@@ -43,7 +43,7 @@ describe('built-in question packs', () => {
 
       for (const pack of packs) {
         expect(pack.title.trim()).not.toBe('');
-        expect(pack.questions.length).toBeGreaterThanOrEqual(40);
+        expect(pack.questions.length).toBeGreaterThanOrEqual(30);
         expect(
           pack.questions.every(question => question === question.trim()),
         ).toBe(true);

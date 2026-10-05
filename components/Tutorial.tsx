@@ -1,17 +1,11 @@
 import React from 'react';
-import {
-  Modal,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import {ScrollView, StatusBar, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {colors, spacing} from '../constants/theme';
 import {useLocalization, TranslationKey} from '../i18n/LocalizationContext';
 import Button from './Button';
 import FittedText from './FittedText';
+import ForegroundModal from './ForegroundModal';
 
 type Props = {visible: boolean; onClose: () => void};
 const steps: {title: TranslationKey; body: TranslationKey}[] = [
@@ -31,7 +25,10 @@ const Tutorial = ({visible, onClose}: Props) => {
   }, [visible]);
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <ForegroundModal
+      visible={visible}
+      animationType="slide"
+      onRequestClose={onClose}>
       <SafeAreaView style={styles.screen}>
         {visible && (
           <StatusBar
@@ -64,7 +61,7 @@ const Tutorial = ({visible, onClose}: Props) => {
                   <View style={styles.exampleQuestion}>
                     <Text style={styles.exampleLabel}>{t('question')}</Text>
                     <FittedText fontSize={32}>
-                      {t('tutorialCategory')}
+                      {t('tutorialQuestion')}
                     </FittedText>
                   </View>
                   <View style={styles.exampleLetter}>
@@ -100,7 +97,7 @@ const Tutorial = ({visible, onClose}: Props) => {
           </View>
         </View>
       </SafeAreaView>
-    </Modal>
+    </ForegroundModal>
   );
 };
 

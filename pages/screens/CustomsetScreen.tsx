@@ -94,7 +94,7 @@ const CustomsetScreen = ({navigation}: any) => {
             <View style={styles.setText}>
               <Text style={styles.setTitle}>{item.title}</Text>
               <Text style={styles.setCount}>
-                {t('categoryCount', {count: item.count})}
+                {t('questionCount', {count: item.count})}
               </Text>
             </View>
             <View style={styles.actions}>

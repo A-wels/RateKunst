@@ -1,7 +1,7 @@
 # Interface design
 
 RateKunst is a small game companion. Its interface should help people prepare a
-round, read the category and letter, and award points quickly.
+round, read the question and letter, and award points quickly.
 
 ## Decisions
 
@@ -13,7 +13,7 @@ round, read the category and letter, and award points quickly.
 - Ordinary sentence case and moderate font weights. No slogans, oversized hero
   headings, decorative icons, emoji, gradients, shadows or ornamental badges.
 - Plain form sections and lists instead of a dashboard of rounded cards.
-  Category and letter use softly tinted cream and peach display windows.
+  Question and letter use softly tinted cream and peach display windows.
 - Buttons have labels, pressed feedback and a minimum 48 dp touch target.
   Topic rows expose checkbox state to TalkBack and show a checked or empty box.
   Player removal uses a trash icon with a localized accessible label. These
@@ -23,7 +23,7 @@ round, read the category and letter, and award points quickly.
 - Topics are selected in a searchable full-screen native modal. Selection is
   saved immediately, including when leaving with Android Back. Search filtering
   never removes a selected topic.
-- Narrow forms scroll; landscape scoring scrolls horizontally. Category and
+- Narrow forms scroll; landscape scoring scrolls horizontally. Question and
   letter text fill bounded display windows. Native font fitting uses both width
   and height, including groups such as X / Y / Z; no fixed line height or three-line
   truncation prevents shrinking. The full text is also exposed to TalkBack.

@@ -106,7 +106,7 @@ it('persists picker changes through close, language changes and game launch', as
   await act(async () => press('Standard'));
   press('Fertig');
   expect(
-    tree!.root.findByType(PackPicker).findByType(Modal).props.visible,
+    tree!.root.findByType(PackPicker).findAllByType(Modal).length > 0,
   ).toBe(false);
   await act(async () => press('Switch to English'));
   press('Start round');
@@ -149,7 +149,7 @@ it('clears search when closing the picker, including Android back', async () => 
     tree!.root.findByType(PackPicker).findByType(Modal).props.onRequestClose(),
   );
   expect(
-    tree!.root.findByType(PackPicker).findByType(Modal).props.visible,
+    tree!.root.findByType(PackPicker).findAllByType(Modal).length > 0,
   ).toBe(false);
   press('Reopen');
   expect(tree!.root.findByType(TextInput).props.value).toBe('');

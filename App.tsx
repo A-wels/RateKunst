@@ -14,6 +14,7 @@ import {
   useLocalization,
 } from './i18n/LocalizationContext';
 import {colors} from './constants/theme';
+import {useInputRecovery} from './hooks/useInputRecovery';
 
 const navigationTheme = {
   ...DefaultTheme,
@@ -62,6 +63,7 @@ const LanguageSwitch = () => {
 
 const AppNavigator = () => {
   const {t} = useLocalization();
+  useInputRecovery();
 
   return (
     <NavigationContainer theme={navigationTheme}>

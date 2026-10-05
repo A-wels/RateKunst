@@ -102,7 +102,7 @@ const EditPage = ({route}: any) => {
     });
   }, [hasLoaded, questionsText, setId, t, title]);
 
-  const categoryCount = questionsText
+  const questionCount = questionsText
     .split('\n')
     .map(line => line.trim())
     .filter(Boolean).length;
@@ -128,7 +128,7 @@ const EditPage = ({route}: any) => {
               )}
             </Text>
             <Text style={styles.countText}>
-              {t('categoryCount', {count: categoryCount})}
+              {t('questionCount', {count: questionCount})}
             </Text>
           </View>
 
@@ -151,12 +151,12 @@ const EditPage = ({route}: any) => {
 
           <View style={[styles.fieldGroup, styles.questionsGroup]}>
             <View style={styles.questionLabelRow}>
-              <Text style={styles.label}>{t('categories')}</Text>
-              <Text style={styles.hint}>{t('categoriesHint')}</Text>
+              <Text style={styles.label}>{t('questions')}</Text>
+              <Text style={styles.hint}>{t('questionsHint')}</Text>
             </View>
             <TextInput
-              accessibilityLabel={t('categories')}
-              accessibilityHint={t('categoriesHint')}
+              accessibilityLabel={t('questions')}
+              accessibilityHint={t('questionsHint')}
               style={styles.questionsInput}
               value={questionsText}
               editable={hasLoaded}
@@ -164,7 +164,7 @@ const EditPage = ({route}: any) => {
                 dirty.current = true;
                 setQuestionsText(value);
               }}
-              placeholder={t('categoriesPlaceholder')}
+              placeholder={t('questionsPlaceholder')}
               placeholderTextColor={colors.textMuted}
               multiline
               textAlignVertical="top"
