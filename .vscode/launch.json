@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Android",
+      "type": "node-terminal",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "command": "$env:JAVA_HOME = \"$env:USERPROFILE\\.jdks\\jdk-21.0.12.1+1\"; $env:ANDROID_HOME = \"$env:LOCALAPPDATA\\Android\\Sdk\"; $env:ANDROID_SDK_ROOT = $env:ANDROID_HOME; $env:Path = \"$env:JAVA_HOME\\bin;$env:ANDROID_HOME\\platform-tools;$env:ANDROID_HOME\\emulator;$env:Path\"; node scripts/patch-react-native-gradle-plugin.js; npm run android"
+    }
+  ]
+}
