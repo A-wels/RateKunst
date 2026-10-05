@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Alert,
+  StatusBar,
   ScrollView,
   StyleSheet,
   Text,
@@ -137,6 +138,7 @@ const GameScreen = ({navigation, route}: any) => {
     <SafeAreaView
       style={styles.screen}
       edges={['top', 'left', 'right', 'bottom']}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <View style={styles.topBar}>
         <Button label={t('leave')} variant="text" onPress={leaveGame} />
         <View style={styles.roundTitle}>
@@ -158,7 +160,7 @@ const GameScreen = ({navigation, route}: any) => {
         </View>
         <View style={styles.letterPanel}>
           <Text style={styles.label}>{t('letter')}</Text>
-          <FittedText fontSize={72} color={colors.primary} singleLine>
+          <FittedText fontSize={72} color={colors.letter} singleLine>
             {letter}
           </FittedText>
         </View>
@@ -217,18 +219,25 @@ const styles = StyleSheet.create({
   },
   roundTitle: {flex: 1, alignItems: 'center'},
   target: {color: colors.textMuted, fontSize: 14, textAlign: 'center'},
-  gameArea: {flex: 1, flexDirection: 'row', paddingVertical: spacing.sm},
+  gameArea: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: spacing.sm,
+    paddingVertical: spacing.sm,
+  },
   questionPanel: {
     flex: 3,
+    backgroundColor: colors.questionSurface,
+    borderRadius: radii.control,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
   letterPanel: {
     flex: 1,
+    backgroundColor: colors.letterSurface,
+    borderRadius: radii.control,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.sm,
-    borderLeftWidth: 1,
-    borderLeftColor: colors.border,
   },
   label: {
     color: colors.textMuted,
@@ -244,16 +253,21 @@ const styles = StyleSheet.create({
   scoreHint: {color: colors.textMuted, fontSize: 13, marginBottom: spacing.sm},
   scoreRow: {gap: spacing.sm, paddingRight: spacing.sm},
   playerButton: {
+    backgroundColor: colors.playerSurface,
+    borderTopColor: colors.playerEdge,
     width: 152,
     minHeight: 72,
     padding: spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radii.control,
-    backgroundColor: colors.surface,
+    borderTopWidth: 3,
     overflow: 'hidden',
   },
-  playerButtonScored: {backgroundColor: colors.primarySoft},
+  playerButtonScored: {
+    backgroundColor: colors.primarySoft,
+    borderTopColor: colors.primary,
+  },
   playerButtonPressed: {backgroundColor: colors.border},
   playerName: {maxWidth: '100%', color: colors.text, fontSize: 16},
   score: {

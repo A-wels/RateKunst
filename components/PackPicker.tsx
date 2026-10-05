@@ -2,6 +2,7 @@ import React from 'react';
 import {
   FlatList,
   Modal,
+  StatusBar,
   Pressable,
   StyleSheet,
   Text,
@@ -12,6 +13,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {colors, radii, spacing} from '../constants/theme';
 import {useLocalization} from '../i18n/LocalizationContext';
 import Button from './Button';
+import CheckboxMark from './CheckboxMark';
 
 export type PackLabel = {label: string; value: string};
 
@@ -46,6 +48,12 @@ const PackPicker = ({
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.screen}>
+        {visible && (
+          <StatusBar
+            barStyle="dark-content"
+            backgroundColor={colors.background}
+          />
+        )}
         <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.title}>
             {t('choosePacks')}
@@ -89,9 +97,7 @@ const PackPicker = ({
                     pressed && styles.pressed,
                   ]}>
                   <Text style={styles.packName}>{item.label}</Text>
-                  <Text style={styles.selection}>
-                    {selected ? t('selected') : t('select')}
-                  </Text>
+                  <CheckboxMark checked={selected} />
                 </Pressable>
               );
             }}
@@ -142,10 +148,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  selectedRow: {backgroundColor: colors.primarySoft},
+  selectedRow: {backgroundColor: colors.selectionSoft},
   pressed: {backgroundColor: colors.surface},
   packName: {flex: 1, color: colors.text, fontSize: 16, lineHeight: 23},
-  selection: {color: colors.primary, fontSize: 14},
   empty: {color: colors.textMuted, fontSize: 16, paddingVertical: spacing.lg},
   footer: {
     flexDirection: 'row',

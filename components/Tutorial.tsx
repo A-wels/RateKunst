@@ -1,5 +1,12 @@
 import React from 'react';
-import {Modal, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {
+  Modal,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {colors, spacing} from '../constants/theme';
 import {useLocalization, TranslationKey} from '../i18n/LocalizationContext';
@@ -26,6 +33,12 @@ const Tutorial = ({visible, onClose}: Props) => {
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.screen}>
+        {visible && (
+          <StatusBar
+            barStyle="dark-content"
+            backgroundColor={colors.background}
+          />
+        )}
         <View style={styles.content}>
           <View style={styles.topBar}>
             <Text style={styles.progress}>
@@ -56,7 +69,7 @@ const Tutorial = ({visible, onClose}: Props) => {
                   </View>
                   <View style={styles.exampleLetter}>
                     <Text style={styles.exampleLabel}>{t('letter')}</Text>
-                    <FittedText fontSize={64} color={colors.primary} singleLine>
+                    <FittedText fontSize={64} color={colors.letter} singleLine>
                       B
                     </FittedText>
                   </View>
@@ -113,15 +126,17 @@ const styles = StyleSheet.create({
   example: {
     height: 160,
     flexDirection: 'row',
-    backgroundColor: colors.surface,
-    padding: spacing.md,
+    gap: spacing.sm,
   },
-  exampleQuestion: {flex: 2, paddingRight: spacing.md},
+  exampleQuestion: {
+    flex: 2,
+    padding: spacing.md,
+    backgroundColor: colors.questionSurface,
+  },
   exampleLetter: {
     flex: 1,
-    paddingLeft: spacing.md,
-    borderLeftWidth: 1,
-    borderLeftColor: colors.border,
+    padding: spacing.md,
+    backgroundColor: colors.letterSurface,
   },
   exampleLabel: {
     color: colors.textMuted,
