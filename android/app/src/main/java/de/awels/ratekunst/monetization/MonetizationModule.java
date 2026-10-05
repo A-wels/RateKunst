@@ -279,7 +279,8 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     consentBusy = true;
     final int revision = ++consentRevision;
     MobileAds.setRequestConfiguration(new RequestConfiguration.Builder()
-        .setMaxAdContentRating(BuildConfig.ADMOB_MAX_AD_CONTENT_RATING)
+        .setMaxAdContentRating(ageGroup.equals("under16")
+            ? RequestConfiguration.MAX_AD_CONTENT_RATING_G : BuildConfig.ADMOB_MAX_AD_CONTENT_RATING)
         .setAgeRestrictedTreatment(ageGroup.equals("adult") ? AgeRestrictedTreatment.UNSPECIFIED
             : ageGroup.equals("teen") ? AgeRestrictedTreatment.TEEN : AgeRestrictedTreatment.CHILD).build());
     consent.requestConsentInfoUpdate(activity, new ConsentRequestParameters.Builder()

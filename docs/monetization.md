@@ -28,7 +28,8 @@ No additional React Native packages or billing server are required.
 - A neutral age-group prompt follows the tutorial. **Under 16**, **16–17** and
   **18 or older** choose UMP/ad treatment; no birth date is collected. Changes
   remain available under Settings. Deferring the choice keeps ads off.
-- Under 16 gets conservative CHILD / under-age-of-consent treatment; 16–17 gets
+- Under 16 gets conservative CHILD / under-age-of-consent treatment and a G-only
+  ad-content limit regardless of the configured app limit; 16–17 gets
   TEEN treatment; adult requests use UNSPECIFIED and the user's UMP consent.
   The selected age group stays in app storage; an age-treatment signal is sent
   with ad requests. UMP privacy options are available when required.
