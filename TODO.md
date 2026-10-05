@@ -49,8 +49,7 @@ Update it in the same commit whenever an item changes state.
 - [x] Target and compile Android API 36 with AGP 8.9.2, Gradle 8.11.1 and the matching Kotlin plugin patch.
 - [x] Replace the legacy plugin's removed Gradle `serviceOf` helper with an equivalent service lookup.
 - [x] Declare the icon-font copy dependency for AGP lint tasks.
-- [x] Verify the API 36 Android release bundle in CI: https://github.com/A-wels/RateKunst/actions/runs/37267997885 (type-check, lint, tests and bundleRelease all passed).
-- [ ] Verify the release bundle after the `de.awels.ratekunst` package migration.
+- [x] Verify the API 36 release bundle after the `de.awels.ratekunst` package migration: https://github.com/A-wels/RateKunst/actions/runs/37273223445 (type-check, lint, all 11 tests and bundleRelease passed with development signing).
 - [ ] Smoke-test layout, scoring, navigation, and language switching on an Android device.
 
 ## Maintenance
@@ -61,9 +60,9 @@ Update it in the same commit whenever an item changes state.
 ## One-time owner actions
 
 - [ ] Create a new Play Console app and register `de.awels.ratekunst` through the first manual AAB upload with Play App Signing.
-- [ ] Add the new RateKunst upload key as `ANDROID_UPLOAD_KEYSTORE_BASE64`.
-- [ ] Add `ANDROID_UPLOAD_KEY_ALIAS`, `ANDROID_UPLOAD_KEY_PASSWORD`, and `ANDROID_UPLOAD_STORE_PASSWORD`.
-- [ ] Add the Play service account JSON as `PLAY_SERVICE_ACCOUNT_JSON`.
+- [x] Add the new RateKunst upload key as `ANDROID_UPLOAD_KEYSTORE_BASE64` (owner confirmed repository secrets configured).
+- [x] Add `ANDROID_UPLOAD_KEY_ALIAS`, `ANDROID_UPLOAD_KEY_PASSWORD`, and `ANDROID_UPLOAD_STORE_PASSWORD` (owner confirmed).
+- [x] Add the Play service account JSON as `PLAY_SERVICE_ACCOUNT_JSON` (owner confirmed).
 - [ ] Grant that service account permission to publish internal test releases for `de.awels.ratekunst`.
 - [ ] Complete the Play Console requirements, configure testers and roll out the first internal test manually.
 - [ ] Merge the modernization PR into `main`.
