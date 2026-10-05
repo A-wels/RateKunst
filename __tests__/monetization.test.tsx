@@ -16,6 +16,7 @@ import {
 import {MonetizationStatus, nativeMonetization} from '../monetization/native';
 import {LocalizationProvider} from '../i18n/LocalizationContext';
 import AdBanner from '../components/AdBanner';
+import AdAgePrompt from '../components/AdAgePrompt';
 import GameScreen from '../pages/screens/GameScreen';
 
 jest.mock('../monetization/native', () => ({
@@ -45,7 +46,12 @@ let tree: renderer.ReactTestRenderer | undefined;
 let monetization: ReturnType<typeof useMonetization>;
 const Probe = () => {
   monetization = useMonetization();
-  return <AdBanner />;
+  return (
+    <>
+      <AdBanner />
+      <AdAgePrompt defer={false} />
+    </>
+  );
 };
 let restorePlatform: () => void;
 
@@ -217,4 +223,27 @@ it('records a win once when returning to the menu and ignores subsequent score t
     alert.mockRestore();
     jest.useRealTimers();
   }
+});
+
+it('defers the age prompt until purchase ownership is checked', async () => {
+  native.initialize.mockResolvedValue({
+    ...ready,
+    purchaseChecked: false,
+    adsReady: false,
+    ageGroup: '',
+  });
+  await mount();
+  const ageChoices = () =>
+    tree!.root
+      .findAllByType(Pressable)
+      .filter(node => node.props.accessibilityLabel === 'Unter 16');
+  expect(ageChoices()).toHaveLength(0);
+  act(() =>
+    DeviceEventEmitter.emit('RateKunstMonetizationChanged', {
+      ...ready,
+      adsReady: false,
+      ageGroup: '',
+    }),
+  );
+  expect(ageChoices()).toHaveLength(1);
 });

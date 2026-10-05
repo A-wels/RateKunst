@@ -8,7 +8,7 @@ import Button from './Button';
 import ForegroundModal from './ForegroundModal';
 
 const AdAgePrompt = ({defer}: {defer: boolean}) => {
-  const {available, ageGroup, adsRemoved, setAgeGroup, busy} =
+  const {available, ageGroup, adsRemoved, purchaseChecked, setAgeGroup, busy} =
     useMonetization();
   const {colors} = useTheme();
   const {t} = useLocalization();
@@ -22,7 +22,14 @@ const AdAgePrompt = ({defer}: {defer: boolean}) => {
   };
   return (
     <ForegroundModal
-      visible={available && !ageGroup && !adsRemoved && !defer && !dismissed}
+      visible={
+        available &&
+        purchaseChecked &&
+        !ageGroup &&
+        !adsRemoved &&
+        !defer &&
+        !dismissed
+      }
       onRequestClose={() => setDismissed(true)}>
       <SafeAreaView
         style={[styles.screen, {backgroundColor: colors.background}]}>

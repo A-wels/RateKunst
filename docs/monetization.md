@@ -76,6 +76,11 @@ can replace this without changing the non-consumable product.
 
 ## app-ads.txt verification (screenshot)
 
+At implementation time, `https://a-wels.de/app-ads.txt` was checked directly: it
+returned **HTTP 200** and already contained the exact expected publisher line.
+If AdMob still rejects verification, check the developer website host in the
+Play listing and request a new crawl rather than changing the correct record.
+
 The screenshot shows publisher ID `pub-4579090895960312` and an app-ads.txt
 verification failure. Publish this exact line at the root of the **developer
 website host listed on the Play store listing**:
