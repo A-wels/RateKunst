@@ -7,22 +7,21 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import {MultiSelect} from 'react-native-element-dropdown';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import Button from '../../components/Button';
+import PackPicker, {PackLabel} from '../../components/PackPicker';
 
 import {getQuestionLabels} from '../../utils/questionloader';
 import {loadGameSetup} from '../../utils/gameSetup';
 import {useLocalization} from '../../i18n/LocalizationContext';
 import {colors, radii, spacing} from '../../constants/theme';
 
-type PackLabel = {label: string; value: string};
-
 const StartScreen = ({navigation}: any) => {
   const {language, t} = useLocalization();
+  const [isChoosingPacks, setIsChoosingPacks] = React.useState(false);
   const [name, setName] = React.useState('');
   const [names, setNames] = React.useState<string[]>([]);
   const [questionPacks, setQuestionPacks] = React.useState<PackLabel[]>([]);
@@ -147,131 +146,92 @@ const StartScreen = ({navigation}: any) => {
     });
   };
 
+  const selectedLabels = questionPacks
+    .filter(pack => selectedItems.includes(pack.value))
+    .map(pack => pack.label);
+
   return (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled">
-        <View style={styles.hero}>
-          <Text style={styles.eyebrow}>{t('homeEyebrow')}</Text>
-          <Text style={styles.heroTitle}>{t('homeTitle')}</Text>
-          <Text style={styles.heroSubtitle}>{t('homeSubtitle')}</Text>
-        </View>
+    <SafeAreaView style={styles.screen} edges={['left', 'right', 'bottom']}>
+      <KeyboardAvoidingView
+        style={styles.screen}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled">
+          <Text accessibilityRole="header" style={styles.title}>
+            {t('startMenu')}
+          </Text>
 
-        <View style={styles.card}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionIcon}>
-              <AntDesign name="appstore-o" size={20} color={colors.accent} />
-            </View>
-            <View style={styles.sectionHeadingText}>
-              <Text style={styles.sectionTitle}>{t('packs')}</Text>
-              <Text style={styles.sectionMeta}>
-                {t('selectedCount', {count: selectedItems.length})}
-              </Text>
-            </View>
-          </View>
-          <MultiSelect
-            style={styles.dropdown}
-            containerStyle={styles.dropdownContainer}
-            placeholderStyle={styles.dropdownPlaceholder}
-            selectedTextStyle={styles.dropdownText}
-            inputSearchStyle={styles.searchInput}
-            itemTextStyle={styles.dropdownText}
-            activeColor={colors.accentSoft}
-            data={questionPacks}
-            labelField="label"
-            valueField="value"
-            placeholder={t('choosePacks')}
-            value={selectedItems}
-            search
-            searchPlaceholder={t('search')}
-            onChange={updateSelectedItems}
-            renderLeftIcon={() => (
-              <AntDesign
-                style={styles.dropdownIcon}
-                color={colors.textMuted}
-                name="folderopen"
-                size={19}
+          <View style={styles.section}>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>
+              {t('players')}
+            </Text>
+            <View style={styles.playerInputRow}>
+              <TextInput
+                accessibilityLabel={t('playerName')}
+                style={styles.textInput}
+                placeholder={t('playerName')}
+                placeholderTextColor={colors.textMuted}
+                value={name}
+                editable={hasLoaded}
+                maxLength={26}
+                returnKeyType="done"
+                onSubmitEditing={addPlayer}
+                onChangeText={setName}
               />
-            )}
-            renderSelectedItem={(
-              item: PackLabel,
-              unselect?: (item: PackLabel) => void,
-            ) => (
-              <TouchableOpacity
-                onPress={() => unselect?.(item)}
-                style={styles.packChip}>
-                <Text style={styles.packChipText}>{item.label}</Text>
-                <AntDesign name="close" size={14} color={colors.accent} />
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-
-        <View style={styles.card}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionIcon}>
-              <AntDesign name="team" size={20} color={colors.accent} />
+              <Button
+                label={t('add')}
+                accessibilityLabel={t('addPlayer')}
+                onPress={addPlayer}
+                disabled={!hasLoaded || !name.trim()}
+              />
             </View>
-            <View style={styles.sectionHeadingText}>
-              <Text style={styles.sectionTitle}>{t('players')}</Text>
-              <Text style={styles.sectionMeta}>{names.length}/12</Text>
-            </View>
-          </View>
-
-          <View style={styles.playerInputRow}>
-            <TextInput
-              style={styles.textInput}
-              placeholder={t('playerName')}
-              placeholderTextColor={colors.textMuted}
-              value={name}
-              maxLength={26}
-              returnKeyType="done"
-              onSubmitEditing={addPlayer}
-              onChangeText={setName}
-            />
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={t('addPlayer')}
-              style={styles.addButton}
-              onPress={addPlayer}>
-              <AntDesign name="plus" size={22} color={colors.black} />
-            </TouchableOpacity>
-          </View>
-
-          {names.length === 0 ? (
-            <Text style={styles.emptyText}>{t('noPlayers')}</Text>
-          ) : (
-            <View style={styles.playerChips}>
-              {names.map((player, index) => (
-                <View key={`${player}-${index}`} style={styles.playerChip}>
-                  <Text numberOfLines={1} style={styles.playerChipText}>
-                    {player}
-                  </Text>
-                  <TouchableOpacity
-                    accessibilityRole="button"
-                    accessibilityLabel={`${t('delete')} ${player}`}
-                    onPress={() =>
-                      setNames(current => current.filter((_, i) => i !== index))
-                    }>
-                    <AntDesign
-                      name="close"
-                      size={15}
-                      color={colors.textMuted}
+            {names.length === 0 ? (
+              <Text style={styles.helper}>{t('noPlayers')}</Text>
+            ) : (
+              <View style={styles.playerList}>
+                {names.map((player, index) => (
+                  <View key={`${player}-${index}`} style={styles.playerRow}>
+                    <Text style={styles.playerName}>{player}</Text>
+                    <Button
+                      label={t('remove')}
+                      accessibilityLabel={`${t('remove')} ${player}`}
+                      variant="text"
+                      onPress={() =>
+                        setNames(current =>
+                          current.filter((_, i) => i !== index),
+                        )
+                      }
                     />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-          )}
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+
+          <View style={styles.section}>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>
+              {t('packs')}
+            </Text>
+            <Text style={styles.helper}>
+              {selectedLabels.length > 0
+                ? selectedLabels.join(', ')
+                : t('noPacksSelected')}
+            </Text>
+            <Button
+              label={t('choosePacks')}
+              disabled={!hasLoaded}
+              onPress={() => setIsChoosingPacks(true)}
+            />
+          </View>
 
           <View style={styles.pointsRow}>
             <Text style={styles.pointsLabel}>{t('pointsToWin')}</Text>
             <TextInput
+              accessibilityLabel={t('pointsToWin')}
               style={styles.pointsInput}
               value={pointsToWinDisplay}
+              editable={hasLoaded}
               placeholder="10"
               placeholderTextColor={colors.textMuted}
               keyboardType="number-pad"
@@ -279,24 +239,28 @@ const StartScreen = ({navigation}: any) => {
               onChangeText={updatePoints}
             />
           </View>
-        </View>
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => navigation.navigate('CustomSets')}>
-          <AntDesign name="edit" size={18} color={colors.text} />
-          <Text style={styles.secondaryButtonText}>{t('editCustomSets')}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          disabled={!hasLoaded}
-          style={styles.startButton}
-          onPress={startGame}>
-          <Text style={styles.startButtonText}>{t('start')}</Text>
-          <AntDesign name="arrowright" size={21} color={colors.white} />
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <Button
+            label={t('start')}
+            variant="primary"
+            disabled={!hasLoaded}
+            onPress={startGame}
+          />
+          <Button
+            label={t('editCustomSets')}
+            variant="text"
+            onPress={() => navigation.navigate('CustomSets')}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
+      <PackPicker
+        visible={isChoosingPacks}
+        packs={questionPacks}
+        selectedIds={selectedItems}
+        onChange={updateSelectedItems}
+        onClose={() => setIsChoosingPacks(false)}
+      />
+    </SafeAreaView>
   );
 };
 
@@ -304,177 +268,72 @@ const styles = StyleSheet.create({
   screen: {flex: 1, backgroundColor: colors.background},
   content: {
     width: '100%',
-    maxWidth: 760,
+    maxWidth: 640,
     alignSelf: 'center',
-    padding: spacing.lg,
-    paddingBottom: 48,
+    padding: spacing.md,
+    paddingBottom: spacing.lg,
     gap: spacing.md,
   },
-  hero: {paddingVertical: spacing.sm},
-  eyebrow: {
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-  },
-  heroTitle: {
+  title: {
     color: colors.text,
-    fontSize: 30,
-    lineHeight: 36,
-    fontWeight: '800',
-    marginTop: spacing.sm,
+    fontSize: 24,
+    fontWeight: '500',
+    marginVertical: spacing.sm,
   },
-  heroSubtitle: {
+  section: {paddingVertical: spacing.sm, gap: spacing.sm},
+  sectionTitle: {color: colors.text, fontSize: 18, fontWeight: '500'},
+  helper: {
     color: colors.textMuted,
-    fontSize: 16,
-    lineHeight: 23,
-    marginTop: spacing.sm,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.large,
-    padding: spacing.md,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.md,
-  },
-  sectionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.accentSoft,
-  },
-  sectionHeadingText: {flex: 1, marginLeft: 12},
-  sectionTitle: {color: colors.text, fontSize: 18, fontWeight: '700'},
-  sectionMeta: {color: colors.textMuted, fontSize: 13, marginTop: 2},
-  dropdown: {
-    minHeight: 54,
-    borderRadius: radii.medium,
-    paddingHorizontal: 14,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  dropdownContainer: {
-    backgroundColor: colors.surfaceRaised,
-    borderColor: colors.border,
-    borderRadius: radii.medium,
-    overflow: 'hidden',
-  },
-  dropdownPlaceholder: {fontSize: 15, color: colors.textMuted},
-  dropdownText: {fontSize: 15, color: colors.text},
-  dropdownIcon: {marginRight: 10},
-  searchInput: {
-    height: 44,
-    borderColor: colors.border,
-    borderRadius: 12,
-    color: colors.text,
     fontSize: 15,
+    lineHeight: 22,
+    marginBottom: spacing.sm,
   },
-  packChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    marginTop: spacing.sm,
-    marginRight: spacing.sm,
-    paddingHorizontal: 11,
-    paddingVertical: 8,
-    borderRadius: radii.pill,
-    backgroundColor: colors.accentSoft,
-    borderWidth: 1,
-    borderColor: '#28695F',
-  },
-  packChipText: {color: colors.text, fontSize: 13, fontWeight: '600'},
-  playerInputRow: {flexDirection: 'row', gap: spacing.sm},
+  playerInputRow: {flexDirection: 'row', gap: spacing.sm, alignItems: 'center'},
   textInput: {
     flex: 1,
-    height: 50,
-    paddingHorizontal: 14,
-    borderRadius: radii.medium,
-    backgroundColor: colors.surfaceRaised,
+    minWidth: 0,
+    minHeight: 48,
+    paddingHorizontal: 12,
+    borderRadius: radii.control,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.inputBorder,
     color: colors.text,
     fontSize: 16,
   },
-  addButton: {
-    width: 50,
-    height: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radii.medium,
-    backgroundColor: colors.accent,
-  },
-  emptyText: {color: colors.textMuted, fontSize: 14, marginTop: spacing.md},
-  playerChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  playerChip: {
-    maxWidth: '100%',
+  playerList: {marginTop: spacing.sm},
+  playerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: radii.pill,
-    backgroundColor: colors.surfaceRaised,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  playerChipText: {
-    maxWidth: 220,
+  playerName: {
+    flex: 1,
     color: colors.text,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    lineHeight: 23,
+    paddingVertical: spacing.sm,
   },
   pointsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: spacing.lg,
-    paddingTop: spacing.md,
+    gap: spacing.md,
+    paddingVertical: spacing.md,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  pointsLabel: {color: colors.text, fontSize: 15, fontWeight: '600'},
+  pointsLabel: {flex: 1, color: colors.text, fontSize: 16},
   pointsInput: {
-    width: 72,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: colors.surfaceRaised,
+    width: 80,
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
+    borderRadius: radii.control,
     color: colors.text,
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 18,
     textAlign: 'center',
   },
-  secondaryButton: {
-    minHeight: 50,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    borderRadius: radii.medium,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  secondaryButtonText: {color: colors.text, fontSize: 15, fontWeight: '700'},
-  startButton: {
-    minHeight: 58,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    borderRadius: radii.medium,
-    backgroundColor: colors.primary,
-  },
-  startButtonText: {color: colors.white, fontSize: 18, fontWeight: '800'},
 });
 
 export default StartScreen;

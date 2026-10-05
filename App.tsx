@@ -1,12 +1,7 @@
 import React from 'react';
-import {
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import {NavigationContainer} from '@react-navigation/native';
+import {StatusBar, StyleSheet, Text, Pressable, View} from 'react-native';
+import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import StartScreen from './pages/screens/StartScreen';
@@ -20,14 +15,28 @@ import {
 } from './i18n/LocalizationContext';
 import {colors} from './constants/theme';
 
+const navigationTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: colors.background,
+    card: colors.background,
+    text: colors.text,
+    primary: colors.primary,
+    border: colors.border,
+  },
+};
+
 const Stack = createNativeStackNavigator();
 
 const LanguageSwitch = () => {
   const {language, setLanguage} = useLocalization();
   const option = (value: Language) => (
-    <TouchableOpacity
+    <Pressable
       accessibilityRole="button"
       accessibilityLabel={value === 'de' ? 'Deutsch' : 'English'}
+      accessibilityState={{selected: language === value}}
+      android_ripple={{color: colors.border}}
       onPress={() => setLanguage(value)}
       style={[
         styles.languageOption,
@@ -40,7 +49,7 @@ const LanguageSwitch = () => {
         ]}>
         {value.toUpperCase()}
       </Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 
   return (
@@ -55,14 +64,14 @@ const AppNavigator = () => {
   const {t} = useLocalization();
 
   return (
-    <NavigationContainer>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+    <NavigationContainer theme={navigationTheme}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       <Stack.Navigator
         screenOptions={{
           headerStyle: {backgroundColor: colors.background},
           headerTintColor: colors.text,
           headerShadowVisible: false,
-          headerTitleStyle: {fontSize: 19, fontWeight: '700'},
+          headerTitleStyle: {fontSize: 20, fontWeight: '500'},
           contentStyle: {backgroundColor: colors.background},
         }}>
         <Stack.Screen
@@ -94,34 +103,26 @@ const AppNavigator = () => {
 };
 
 const App = (): JSX.Element => (
-  <LocalizationProvider>
-    <AppNavigator />
-  </LocalizationProvider>
+  <SafeAreaProvider>
+    <LocalizationProvider>
+      <AppNavigator />
+    </LocalizationProvider>
+  </SafeAreaProvider>
 );
 
 const styles = StyleSheet.create({
-  languageSwitch: {
-    flexDirection: 'row',
-    padding: 3,
-    borderRadius: 12,
-    backgroundColor: colors.surface,
-  },
+  languageSwitch: {flexDirection: 'row'},
   languageOption: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 9,
+    minWidth: 48,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
-  languageOptionActive: {
-    backgroundColor: colors.primary,
-  },
-  languageText: {
-    color: colors.textMuted,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  languageTextActive: {
-    color: colors.white,
-  },
+  languageOptionActive: {borderBottomColor: colors.primary},
+  languageText: {color: colors.textMuted, fontSize: 14},
+  languageTextActive: {color: colors.primary, fontWeight: '500'},
 });
 
 export default App;

@@ -4,11 +4,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
+  Pressable,
   View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import Button from '../../components/Button';
 
 import letters from '../../constants/letters';
 import {getQuestions} from '../../utils/questionloader';
@@ -137,28 +137,24 @@ const GameScreen = ({navigation, route}: any) => {
       style={styles.screen}
       edges={['top', 'left', 'right', 'bottom']}>
       <View style={styles.topBar}>
-        <TouchableOpacity style={styles.iconButton} onPress={leaveGame}>
-          <AntDesign name="close" size={22} color={colors.text} />
-        </TouchableOpacity>
+        <Button label={t('leave')} variant="text" onPress={leaveGame} />
         <View style={styles.roundTitle}>
-          <Text style={styles.logo}>{t('appName')}</Text>
           <Text style={styles.target}>
             {t('firstTo', {count: params.pointsToWin})}
           </Text>
         </View>
-        <TouchableOpacity
+        <Button
+          label={t('skip')}
           disabled={isCountingDown}
-          style={[styles.skipButton, isCountingDown && styles.buttonDisabled]}
-          onPress={loadNextQuestion}>
-          <Text style={styles.skipText}>{t('skip')}</Text>
-          <AntDesign name="arrowright" size={18} color={colors.black} />
-        </TouchableOpacity>
+          onPress={loadNextQuestion}
+        />
       </View>
 
       <View style={styles.gameArea}>
-        <View style={styles.questionCard}>
-          <Text style={styles.cardLabel}>{t('question').toUpperCase()}</Text>
+        <View style={styles.questionPanel}>
+          <Text style={styles.label}>{t('question')}</Text>
           <Text
+            accessibilityLiveRegion="polite"
             adjustsFontSizeToFit
             minimumFontScale={0.65}
             numberOfLines={3}
@@ -166,9 +162,9 @@ const GameScreen = ({navigation, route}: any) => {
             {question}
           </Text>
         </View>
-        <View style={styles.letterCard}>
-          <Text style={styles.cardLabel}>{t('letter').toUpperCase()}</Text>
-          <Text style={styles.letter}>{letter || '·'}</Text>
+        <View style={styles.letterPanel}>
+          <Text style={styles.label}>{t('letter')}</Text>
+          <Text style={styles.letter}>{letter}</Text>
         </View>
       </View>
 
@@ -181,13 +177,23 @@ const GameScreen = ({navigation, route}: any) => {
           {params.names.map((name, index) => {
             const alreadyScored = scoredThisTurn.includes(index);
             return (
-              <TouchableOpacity
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('playerScore', {
+                  name,
+                  score: scores[index],
+                  target: params.pointsToWin,
+                })}
+                accessibilityHint={t('tapScore')}
+                accessibilityState={{disabled: isCountingDown || alreadyScored}}
+                android_ripple={{color: colors.border}}
                 key={`${name}-${index}`}
                 disabled={isCountingDown || alreadyScored}
                 onPress={() => awardPoint(index)}
-                style={[
-                  styles.playerCard,
-                  alreadyScored && styles.playerCardScored,
+                style={({pressed}) => [
+                  styles.playerButton,
+                  alreadyScored && styles.playerButtonScored,
+                  pressed && styles.playerButtonPressed,
                 ]}>
                 <Text numberOfLines={1} style={styles.playerName}>
                   {name}
@@ -196,7 +202,7 @@ const GameScreen = ({navigation, route}: any) => {
                   {scores[index]}
                   <Text style={styles.scoreGoal}> / {params.pointsToWin}</Text>
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </ScrollView>
@@ -206,104 +212,81 @@ const GameScreen = ({navigation, route}: any) => {
 };
 
 const styles = StyleSheet.create({
-  screen: {flex: 1, backgroundColor: colors.background, padding: spacing.md},
-  topBar: {height: 58, flexDirection: 'row', alignItems: 'center'},
-  iconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  roundTitle: {flex: 1, alignItems: 'center'},
-  logo: {color: colors.text, fontSize: 21, fontWeight: '800'},
-  target: {color: colors.textMuted, fontSize: 12, marginTop: 2},
-  skipButton: {
-    minWidth: 128,
-    height: 44,
-    paddingHorizontal: spacing.md,
+  screen: {flex: 1, backgroundColor: colors.background, padding: spacing.sm},
+  topBar: {
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: spacing.sm,
-    borderRadius: 14,
-    backgroundColor: colors.warning,
   },
-  skipText: {color: colors.black, fontSize: 14, fontWeight: '800'},
-  buttonDisabled: {opacity: 0.45},
+  roundTitle: {flex: 1, alignItems: 'center'},
+  target: {color: colors.textMuted, fontSize: 14, textAlign: 'center'},
   gameArea: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'stretch',
-    gap: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
   },
-  questionCard: {
+  questionPanel: {
     flex: 3,
     justifyContent: 'center',
-    borderRadius: radii.large,
-    padding: spacing.lg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
   },
-  letterCard: {
+  letterPanel: {
     flex: 1,
-    minWidth: 150,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radii.large,
-    padding: spacing.lg,
-    backgroundColor: colors.accentSoft,
-    borderWidth: 1,
-    borderColor: '#28695F',
+    paddingHorizontal: spacing.sm,
+    borderLeftWidth: 1,
+    borderLeftColor: colors.border,
   },
-  cardLabel: {
-    position: 'absolute',
-    top: spacing.md,
-    left: spacing.lg,
+  label: {
     color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1.2,
+    fontSize: 14,
+    marginBottom: spacing.xs,
+    textAlign: 'center',
   },
   question: {
     color: colors.text,
-    fontSize: 38,
-    lineHeight: 45,
-    fontWeight: '800',
+    fontSize: 32,
+    lineHeight: 39,
+    fontWeight: '500',
     textAlign: 'center',
+    flexShrink: 1,
   },
-  letter: {color: colors.accent, fontSize: 72, fontWeight: '900'},
-  scoreArea: {height: 108},
-  scoreHint: {color: colors.textMuted, fontSize: 11, marginBottom: spacing.sm},
-  scoreRow: {gap: spacing.sm, paddingRight: spacing.md},
-  playerCard: {
-    width: 150,
-    height: 78,
-    paddingHorizontal: 14,
+  letter: {
+    color: colors.primary,
+    fontSize: 64,
+    fontWeight: '500',
+    flexShrink: 1,
+  },
+  scoreArea: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing.sm,
+  },
+  scoreHint: {color: colors.textMuted, fontSize: 13, marginBottom: spacing.sm},
+  scoreRow: {gap: spacing.sm, paddingRight: spacing.sm},
+  playerButton: {
+    width: 152,
+    minHeight: 72,
+    padding: spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radii.medium,
-    backgroundColor: colors.surfaceRaised,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radii.control,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
   },
-  playerCardScored: {
-    backgroundColor: colors.accentSoft,
-    borderColor: colors.accent,
-  },
-  playerName: {
-    maxWidth: '100%',
+  playerButtonScored: {backgroundColor: colors.primarySoft},
+  playerButtonPressed: {backgroundColor: colors.border},
+  playerName: {maxWidth: '100%', color: colors.text, fontSize: 16},
+  score: {
     color: colors.text,
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '500',
+    marginTop: spacing.xs,
   },
-  score: {color: colors.accent, fontSize: 23, fontWeight: '900', marginTop: 3},
-  scoreGoal: {color: colors.textMuted, fontSize: 13, fontWeight: '600'},
+  scoreGoal: {color: colors.textMuted, fontSize: 14, fontWeight: '400'},
 });
 
 export default GameScreen;
