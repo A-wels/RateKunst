@@ -1,5 +1,12 @@
 import React from 'react';
-import {StatusBar, StyleSheet, Text, Pressable, View} from 'react-native';
+import {
+  StatusBar,
+  StyleSheet,
+  Text,
+  Pressable,
+  View,
+  Platform,
+} from 'react-native';
 import {DefaultTheme, NavigationContainer} from '@react-navigation/native';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
@@ -92,12 +99,19 @@ const AppNavigator = () => {
         <Stack.Screen
           name="CustomSets"
           component={CustomsetScreen}
-          options={{title: t('customSets')}}
+          options={{
+            title: t('customSets'),
+            // Avoid RN 0.72 / screens 3.22's broken default Android transition.
+            animation: Platform.OS === 'android' ? 'none' : 'default',
+          }}
         />
         <Stack.Screen
           name="EditSet"
           component={EditPage}
-          options={{title: t('editSet')}}
+          options={{
+            title: t('editSet'),
+            animation: Platform.OS === 'android' ? 'none' : 'default',
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

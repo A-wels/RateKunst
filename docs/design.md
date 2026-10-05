@@ -53,3 +53,10 @@ informs the touch targets, contrast and accessible control labels.
 
 The chosen treatment applies these principles to this game's actual tasks rather
 than reproducing a generic dashboard or landing-page template.
+
+The question window labels each drawn question with its source set's title.
+Built-in titles follow the round's language; custom titles stay user-authored.
+Question text and source title travel together through random selection, so
+identical prompts from different sets retain their correct source. The title
+clears during the countdown and is bounded to two lines in the existing label
+area. The existing palette and screen layout are unchanged.
