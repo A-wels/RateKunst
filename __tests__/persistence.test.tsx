@@ -68,6 +68,27 @@ describe('storage compatibility', () => {
     expect(playerWrites.every(([, value]) => value === '["Ada"]')).toBe(true);
   });
 
+  it('persists migrated custom selections before their index can change', async () => {
+    await AsyncStorage.multiSet([
+      ['customSet', '[0,2]'],
+      ['@customSets', '["a","b"]'],
+      ['a', '["Pack A","Category A"]'],
+      ['b', '["Pack B","Category B"]'],
+    ]);
+    await act(async () => {
+      tree = renderer.create(
+        <LocalizationProvider>
+          <StartScreen navigation={navigation} />
+        </LocalizationProvider>,
+      );
+    });
+    expect(await AsyncStorage.getItem('customSet')).toBe(
+      '["standard","custom:a"]',
+    );
+    await AsyncStorage.setItem('@customSets', '["b"]');
+    expect((await loadGameSetup()).packIds).toEqual(['standard', 'custom:a']);
+  });
+
   it('persists the last editor change after immediate navigation', async () => {
     await AsyncStorage.multiSet([
       ['@customSets', '["a"]'],

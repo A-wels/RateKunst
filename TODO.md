@@ -38,7 +38,7 @@ Update it in the same commit whenever an item changes state.
 
 - [x] Pass TypeScript checking.
 - [x] Pass ESLint.
-- [x] Pass Jest tests (3 suites, 10 tests, including persistence regressions).
+- [x] Pass Jest tests (3 suites, 11 tests, including persistence regressions).
 - [x] Build the Android release bundle in CI with API 35 (run 33991673867).
 - [x] Prevent setup hydration from overwriting saved players.
 - [x] Migrate legacy numeric selections, including custom packs, to stable IDs.

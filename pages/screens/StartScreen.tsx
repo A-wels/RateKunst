@@ -40,6 +40,11 @@ const StartScreen = ({navigation}: any) => {
         setNames(setup.names);
         setSelectedItems(setup.packIds);
         setPointsToWinDisplay(setup.pointsToWin);
+        // Persist stable IDs immediately, before a custom pack can be deleted
+        // and change the meaning of an old numeric index on the next launch.
+        AsyncStorage.setItem('customSet', JSON.stringify(setup.packIds)).catch(
+          error => console.warn('Could not migrate selected packs', error),
+        );
         setHasLoaded(true);
       })
       .catch(error => console.warn('Could not load game setup', error));
