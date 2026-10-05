@@ -5,14 +5,19 @@ round, read the category and letter, and award points quickly.
 
 ## Decisions
 
-- White background, dark text and the platform's system font. One blue accent
-  identifies actions; red is reserved for deletion and storage failures.
+- A warm white background, dark brown text and the platform's system font.
+  A peach header and softly tinted game windows give the app a game feel without
+  a broad palette. All player fields share the same warm surface. Buttons,
+  checkboxes and awarded points use one darker peach accent for contrast.
+  Red is reserved for deletion and storage failures.
 - Ordinary sentence case and moderate font weights. No slogans, oversized hero
   headings, decorative icons, emoji, gradients, shadows or ornamental badges.
 - Plain form sections and lists instead of a dashboard of rounded cards.
-  Category and letter are separated by space and a single divider.
+  Category and letter use softly tinted cream and peach display windows.
 - Buttons have labels, pressed feedback and a minimum 48 dp touch target.
-  Topic rows expose checkbox state to TalkBack and display selection in text.
+  Topic rows expose checkbox state to TalkBack and show a checked or empty box.
+  Player removal uses a trash icon with a localized accessible label. These
+  functional symbols are drawn with native views, without icon fonts or emoji.
 - Players and custom sets are lists. Edit, remove and delete actions are explicit.
   Custom-set deletion still requires confirmation.
 - Topics are selected in a searchable full-screen native modal. Selection is

@@ -3,8 +3,8 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Match native dialogs, text selection and launch colors to the app. -->
-        <item name="colorAccent">#2457A7</item>
-        <item name="android:windowBackground">#FFFFFF</item>
+        <item name="colorAccent">#A74726</item>
+        <item name="android:windowBackground">#FFFCF8</item>
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
     </style>
 

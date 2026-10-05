@@ -65,10 +65,10 @@ const AppNavigator = () => {
 
   return (
     <NavigationContainer theme={navigationTheme}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.header} />
       <Stack.Navigator
         screenOptions={{
-          headerStyle: {backgroundColor: colors.background},
+          headerStyle: {backgroundColor: colors.header},
           headerTintColor: colors.text,
           headerShadowVisible: false,
           headerTitleStyle: {fontSize: 20, fontWeight: '500'},
@@ -120,9 +120,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  languageOptionActive: {borderBottomColor: colors.primary},
-  languageText: {color: colors.textMuted, fontSize: 14},
-  languageTextActive: {color: colors.primary, fontWeight: '500'},
+  languageOptionActive: {borderBottomColor: colors.headerAccent},
+  languageText: {color: colors.headerMuted, fontSize: 14},
+  languageTextActive: {color: colors.text, fontWeight: '500'},
 });
 
 export default App;

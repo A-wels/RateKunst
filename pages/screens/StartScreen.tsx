@@ -13,6 +13,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Button from '../../components/Button';
+import DeleteButton from '../../components/DeleteButton';
 import Tutorial from '../../components/Tutorial';
 import {useTutorial} from '../../hooks/useTutorial';
 import PackPicker, {PackLabel} from '../../components/PackPicker';
@@ -168,7 +169,7 @@ const StartScreen = ({navigation}: any) => {
             {t('startMenu')}
           </Text>
 
-          <View style={styles.section}>
+          <View style={[styles.section, styles.playersSection]}>
             <Text accessibilityRole="header" style={styles.sectionTitle}>
               {t('players')}
             </Text>
@@ -206,10 +207,8 @@ const StartScreen = ({navigation}: any) => {
                 {names.map((player, index) => (
                   <View key={`${player}-${index}`} style={styles.playerRow}>
                     <Text style={styles.playerName}>{player}</Text>
-                    <Button
-                      label={t('remove')}
+                    <DeleteButton
                       accessibilityLabel={`${t('remove')} ${player}`}
-                      variant="text"
                       onPress={() =>
                         setNames(current =>
                           current.filter((_, i) => i !== index),
@@ -222,7 +221,7 @@ const StartScreen = ({navigation}: any) => {
             )}
           </View>
 
-          <View style={styles.section}>
+          <View style={[styles.section, styles.packsSection]}>
             <Text accessibilityRole="header" style={styles.sectionTitle}>
               {t('packs')}
             </Text>
@@ -299,7 +298,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginVertical: spacing.sm,
   },
-  section: {paddingVertical: spacing.sm, gap: spacing.sm},
+  section: {
+    paddingVertical: spacing.sm,
+    paddingLeft: 12,
+    borderLeftWidth: 3,
+    gap: spacing.sm,
+  },
+  playersSection: {borderLeftColor: colors.playerEdge},
+  packsSection: {borderLeftColor: colors.primary},
   sectionTitle: {color: colors.text, fontSize: 18, fontWeight: '500'},
   helper: {
     color: colors.textMuted,
@@ -317,12 +323,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: radii.control,
     borderWidth: 1,
+    backgroundColor: colors.white,
     borderColor: colors.inputBorder,
     color: colors.text,
     fontSize: 16,
   },
   playerList: {marginTop: spacing.sm},
   playerRow: {
+    borderLeftColor: colors.playerEdge,
+    borderLeftWidth: 3,
+    paddingLeft: spacing.sm,
+    marginBottom: spacing.xs,
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
@@ -341,14 +352,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.md,
     paddingVertical: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    backgroundColor: colors.letterSurface,
+    paddingHorizontal: 12,
+    borderRadius: radii.control,
   },
   pointsLabel: {flex: 1, color: colors.text, fontSize: 16},
   pointsInput: {
     width: 80,
     minHeight: 48,
     borderWidth: 1,
+    backgroundColor: colors.white,
     borderColor: colors.inputBorder,
     borderRadius: radii.control,
     color: colors.text,
