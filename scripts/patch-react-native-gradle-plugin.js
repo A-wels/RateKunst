@@ -25,7 +25,14 @@ const patched = original
     'implementation("com.android.tools.build:gradle:8.9.2")',
   )
   .replace('apiVersion = "1.5"', 'apiVersion = "1.8"')
-  .replace('languageVersion = "1.5"', 'languageVersion = "1.8"');
+  .replace('languageVersion = "1.5"', 'languageVersion = "1.8"')
+  // Gradle 8.11 removed serviceOf; the legacy plugin uses it only to resolve
+  // its own test runtime classpath. Keep the equivalent service lookup.
+  .replace('import org.gradle.configurationcache.extensions.serviceOf\n', '')
+  .replace(
+    'serviceOf<ModuleRegistry>()',
+    '(project as org.gradle.api.internal.project.ProjectInternal).services.get(ModuleRegistry::class.java)',
+  );
 
 if (patched === original) {
   const alreadyPatched =
@@ -34,7 +41,8 @@ if (patched === original) {
       'implementation("com.android.tools.build:gradle:8.9.2")',
     ) &&
     original.includes('apiVersion = "1.8"') &&
-    original.includes('languageVersion = "1.8"');
+    original.includes('languageVersion = "1.8"') &&
+    !original.includes('serviceOf<ModuleRegistry>()');
   if (!alreadyPatched) {
     throw new Error(
       'React Native Gradle plugin layout changed; patch needs review',
