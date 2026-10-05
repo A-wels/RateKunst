@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   FlatList,
-  Modal,
   StatusBar,
   Pressable,
   StyleSheet,
@@ -14,6 +13,7 @@ import {colors, radii, spacing} from '../constants/theme';
 import {useLocalization} from '../i18n/LocalizationContext';
 import Button from './Button';
 import CheckboxMark from './CheckboxMark';
+import ForegroundModal from './ForegroundModal';
 
 export type PackLabel = {label: string; value: string};
 
@@ -46,7 +46,10 @@ const PackPicker = ({
   );
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+    <ForegroundModal
+      visible={visible}
+      animationType="slide"
+      onRequestClose={onClose}>
       <SafeAreaView style={styles.screen}>
         {visible && (
           <StatusBar
@@ -110,7 +113,7 @@ const PackPicker = ({
           </View>
         </View>
       </SafeAreaView>
-    </Modal>
+    </ForegroundModal>
   );
 };
 

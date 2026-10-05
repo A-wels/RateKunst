@@ -34,7 +34,7 @@ const press = async (label: string) => {
   expect(button).toBeDefined();
   await act(async () => button!.props.onPress());
 };
-const visible = () => tree!.root.findByType(Modal).props.visible;
+const visible = () => tree!.root.findAllByType(Modal).length > 0;
 const textIncludes = (value: string) =>
   tree!.root.findAllByType(Text).some(node => node.props.children === value);
 
@@ -62,7 +62,7 @@ it('shows on first launch, persists skipping and preserves saved players', async
 it('can go back, finish and replay from the first step', async () => {
   await mount();
   await press('Weiter');
-  expect(textIncludes('Kategorie und Buchstabe')).toBe(true);
+  expect(textIncludes('Frage und Buchstabe')).toBe(true);
   await press('Zurück');
   expect(textIncludes('Eine Runde vorbereiten')).toBe(true);
   await press('Weiter');
@@ -82,7 +82,7 @@ it('localizes the tutorial and treats Android Back as skipping', async () => {
   await mount();
   expect(textIncludes('Prepare a round')).toBe(true);
   await press('Next');
-  expect(textIncludes('Category and letter')).toBe(true);
+  expect(textIncludes('Question and letter')).toBe(true);
   expect(textIncludes('Animal')).toBe(true);
   await act(async () => tree!.root.findByType(Modal).props.onRequestClose());
   expect(visible()).toBe(false);

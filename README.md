@@ -10,7 +10,7 @@ integrierte Packs stehen vollständig auf Deutsch und Englisch zur Verfügung.
 Alle eingebauten Packs verwenden dieselbe bilinguale Datenstruktur. Beim ersten
 Start erscheint eine überspringbare Spielanleitung, die im Menü erneut geöffnet
 werden kann. Die Oberfläche verwendet schlichte Listen und beschriftete Aktionen;
-Kategorien und Buchstabengruppen werden an ihre Anzeigebereiche angepasst.
+Fragen und Buchstabengruppen werden an ihre Anzeigebereiche angepasst.
 
 ## Verfügbarkeit
 
