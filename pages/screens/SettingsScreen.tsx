@@ -155,16 +155,40 @@ const SettingsScreen = () => {
                 <Text style={styles.hint}>{t('removeAdsHint')}</Text>
                 <Button
                   label={
-                    monetization.purchaseAvailable
+                    monetization.productLoading
+                      ? t('storeLoading')
+                      : monetization.purchaseAvailable
                       ? `${t('removeAds')} (${monetization.price})`
                       : t('storeUnavailable')
                   }
                   variant="primary"
                   disabled={
-                    monetization.busy || !monetization.purchaseAvailable
+                    monetization.busy ||
+                    monetization.productLoading ||
+                    !monetization.purchaseAvailable
                   }
                   onPress={purchase}
                 />
+                {!monetization.purchaseAvailable && (
+                  <>
+                    {monetization.productError && (
+                      <Text style={styles.hint}>
+                        {t('productUnavailableHint')}
+                      </Text>
+                    )}
+                    <Button
+                      label={t('refreshProducts')}
+                      disabled={
+                        monetization.busy || monetization.productLoading
+                      }
+                      onPress={() => {
+                        monetization.refreshProducts().catch(() => {
+                          Alert.alert(t('adsTitle'), t('storeError'));
+                        });
+                      }}
+                    />
+                  </>
+                )}
               </>
             )}
             <Button
@@ -231,6 +255,16 @@ const SettingsScreen = () => {
                     <Text selectable style={styles.label}>
                       {[
                         `${t('adVersion')}: ${diagnostics.version}`,
+                        ...(diagnostics.productId
+                          ? [`${t('adProductId')}: ${diagnostics.productId}`]
+                          : []),
+                        ...(diagnostics.purchaseOptionId
+                          ? [
+                              `${t('adPurchaseOption')}: ${
+                                diagnostics.purchaseOptionId
+                              }`,
+                            ]
+                          : []),
                         `${t('adOwnership')}: ${yesNo(
                           monetization.purchaseChecked,
                         )}`,
@@ -268,6 +302,7 @@ const SettingsScreen = () => {
                     {(
                       [
                         ['adBillingError', diagnostics.billingError],
+                        ['adProductError', diagnostics.productError || ''],
                         ['adConsentError', diagnostics.consentError],
                         ['adBannerError', diagnostics.bannerError],
                         ['adInterstitialError', diagnostics.interstitialError],

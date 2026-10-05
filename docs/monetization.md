@@ -83,8 +83,17 @@ IDs, Android application ID or the Play public licensing key.
 1. In AdMob configure the UMP European regulations message / privacy options for
    **de.awels.ratekunst**. The supplied app, banner and interstitial IDs are configured.
 2. In Play Console create and activate the **one-time product** `remove_ads`,
-   with a regular **buy** purchase option and your chosen price. Do not configure
+   with the regular **buy** purchase option ID **`standard`** and your chosen price. Do not configure
    a subscription or consume the product. The price is loaded from Google Play.
+   Activate the product/option and make its price available in the tester's
+   Play country. The app selects the eligible `standard` option, preferring its
+   regular offer; it never silently chooses a different named option or rental.
+   An unnamed sole legacy default offer is supported for older Play responses.
+   Product details refresh on foreground/restore even while Billing is already
+   connected. Settings also offers **Reload purchase offer** when unavailable.
+   Diagnostic product errors include BillingResult and per-product unfetched
+   status codes; ownership errors remain separate. Tokens/details are fetched
+   fresh at checkout and never cached for a later purchase.
 3. Set any necessary overrides above and distribute a signed internal test build. Add
    license testers and test cancelled, pending, completed and restored purchases,
    reinstall/restoration, offline operation, refunds, the second-round boundary,

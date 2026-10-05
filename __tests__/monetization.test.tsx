@@ -28,6 +28,7 @@ jest.mock('../monetization/native', () => ({
     setAgeGroup: jest.fn(),
     privacyOptions: jest.fn(),
     retryAds: jest.fn(),
+    refreshProducts: jest.fn(),
     setGameActive: jest.fn(),
     showInterstitial: jest.fn(),
     addListener: jest.fn(),
@@ -103,9 +104,8 @@ const complete = async () => {
 it('shows a footer outside games, hides it during gameplay and removes it after purchase', async () => {
   await mount();
   const advertised = () =>
-    tree!.root
-      .findAllByType(Text)
-      .some(node => node.props.children === 'Werbung');
+    tree!.root.findAll(node => String(node.type) === 'RateKunstBanner').length >
+    0;
   expect(advertised()).toBe(true);
   act(() => monetization.setGameActive(true));
   expect(advertised()).toBe(false);
@@ -305,4 +305,35 @@ it('shows consent and ad load errors locally and retries without resetting age o
   expect(native.setAgeGroup).not.toHaveBeenCalled();
   expect(native.privacyOptions).not.toHaveBeenCalled();
   expect(native.purchase).not.toHaveBeenCalled();
+});
+
+it('reloads an unavailable purchase offer and enables the purchase at the returned Play price', async () => {
+  native.initialize.mockResolvedValue({
+    ...ready,
+    purchaseAvailable: false,
+    price: '',
+    productError: 'remove_ads status=4',
+  });
+  native.refreshProducts.mockResolvedValue(ready);
+  await act(async () => {
+    tree = renderer.create(
+      <LocalizationProvider>
+        <MonetizationProvider>
+          <SettingsScreen />
+        </MonetizationProvider>
+      </LocalizationProvider>,
+    );
+  });
+  const button = (label: string) =>
+    tree!.root
+      .findAllByType(Pressable)
+      .find(node => node.props.accessibilityLabel === label);
+  expect(button('Kauf momentan nicht verfügbar')?.props.disabled).toBe(true);
+  await act(async () => button('Kaufangebot erneut laden')!.props.onPress());
+  expect(native.refreshProducts).toHaveBeenCalledTimes(1);
+  expect(button('Werbung dauerhaft entfernen (1,99 €)')?.props.disabled).toBe(
+    false,
+  );
+  expect(native.purchase).not.toHaveBeenCalled();
+  expect(native.setAgeGroup).not.toHaveBeenCalled();
 });

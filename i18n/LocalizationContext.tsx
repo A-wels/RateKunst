@@ -92,7 +92,6 @@ const translations = {
     saveFailed: 'Speicherfehler',
     questionCount: '{{count}} Fragen',
     untitledSet: 'Unbenanntes Set',
-    advertisement: 'Werbung',
     adsTitle: 'Werbung & Käufe',
     removeAds: 'Werbung dauerhaft entfernen',
     removeAdsHint:
@@ -106,6 +105,13 @@ const translations = {
     storeError:
       'Der Kaufdienst ist momentan nicht verfügbar. Bitte später erneut versuchen.',
     storeUnavailable: 'Kauf momentan nicht verfügbar',
+    storeLoading: 'Kaufangebot wird geladen …',
+    refreshProducts: 'Kaufangebot erneut laden',
+    productUnavailableHint:
+      'Google Play stellt das Kaufangebot derzeit nicht bereit. Du kannst es erneut laden. Weitere Angaben stehen in der Werbediagnose.',
+    adProductId: 'Produkt-ID',
+    adPurchaseOption: 'Kaufoptions-ID',
+    adProductError: 'Fehler bei Produktabfrage',
     privacyOptions: 'Datenschutz für Werbung',
     adDiagnostics: 'Werbediagnose',
     hideAdDiagnostics: 'Werbediagnose schließen',
@@ -242,7 +248,6 @@ const translations = {
     saveFailed: 'Storage error',
     questionCount: '{{count}} questions',
     untitledSet: 'Untitled pack',
-    advertisement: 'Advertisement',
     adsTitle: 'Ads & purchases',
     removeAds: 'Remove ads permanently',
     removeAdsHint:
@@ -255,6 +260,13 @@ const translations = {
       'Payment is pending. Ad-free unlocks when payment completes.',
     storeError: 'The purchase service is unavailable. Please try again later.',
     storeUnavailable: 'Purchase currently unavailable',
+    storeLoading: 'Loading purchase offer …',
+    refreshProducts: 'Reload purchase offer',
+    productUnavailableHint:
+      'Google Play is not providing the purchase offer right now. You can reload it. More details are available in Ad diagnostics.',
+    adProductId: 'Product ID',
+    adPurchaseOption: 'Purchase option ID',
+    adProductError: 'Product query error',
     privacyOptions: 'Ad privacy settings',
     adDiagnostics: 'Ad diagnostics',
     hideAdDiagnostics: 'Close ad diagnostics',

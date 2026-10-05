@@ -10,6 +10,9 @@ export type MonetizationDiagnostics = {
   consentStatus: number;
   consentFormAvailable: boolean;
   billingError: string;
+  productId?: string;
+  purchaseOptionId?: string;
+  productError?: string;
   consentError: string;
   bannerState: 'idle' | 'loading' | 'loaded' | 'failed';
   bannerSize: string;
@@ -23,6 +26,8 @@ export type MonetizationStatus = {
   adsReady: boolean;
   purchaseAvailable: boolean;
   price: string;
+  productLoading?: boolean;
+  productError?: string;
   ageGroup: AgeGroup | '';
   privacyOptionsRequired: boolean;
   diagnostics?: MonetizationDiagnostics;
@@ -34,6 +39,7 @@ export type NativeMonetization = {
   setAgeGroup: (group: AgeGroup) => Promise<MonetizationStatus>;
   privacyOptions: () => Promise<MonetizationStatus>;
   retryAds: () => Promise<MonetizationStatus>;
+  refreshProducts: () => Promise<MonetizationStatus>;
   setGameActive: (active: boolean) => void;
   showInterstitial: () => Promise<boolean>;
   addListener: (event: string) => void;
