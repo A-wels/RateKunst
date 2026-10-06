@@ -76,6 +76,13 @@ it('can go back, finish and replay from the first step', async () => {
         ),
       ),
   ).toBe(true);
+  expect(
+    tree!.root
+      .findAllByType(Text)
+      .some(node =>
+        String(node.props.children).includes('„Neustart“ im Gewinnerdialog'),
+      ),
+  ).toBe(true);
   await press('Weiter');
   expect(textIncludes('Eigene Themen und Sprache')).toBe(true);
   await press('Los geht’s');
@@ -98,6 +105,13 @@ it('localizes the tutorial and treats Android Back as skipping', async () => {
     tree!.root
       .findAllByType(Text)
       .some(node => String(node.props.children).includes('Hold their score')),
+  ).toBe(true);
+  expect(
+    tree!.root
+      .findAllByType(Text)
+      .some(node =>
+        String(node.props.children).includes('“Restart” in the winner dialog'),
+      ),
   ).toBe(true);
   await act(async () => tree!.root.findByType(Modal).props.onRequestClose());
   expect(visible()).toBe(false);
