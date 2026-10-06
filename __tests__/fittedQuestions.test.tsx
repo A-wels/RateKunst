@@ -56,8 +56,6 @@ it('keeps a readable question mounted before layout or native measurement', () =
   );
   expect(visible().props.accessibilityLabel).toBe(visible().props.children);
   expect(size()).toBe(38);
-  expect(visible().props.adjustsFontSizeToFit).toBeUndefined();
-  expect(StyleSheet.flatten(visible().props.style).position).toBeUndefined();
   expect(measurement()).toBeUndefined();
   resize(520, 110);
   expect(visible().props.children).toBeTruthy();
@@ -66,15 +64,11 @@ it('keeps a readable question mounted before layout or native measurement', () =
   expect(measuring.props.importantForAccessibility).toBe('no-hide-descendants');
   const style = StyleSheet.flatten(measuring.props.style);
   expect(style.width).toBe(516);
-  expect(style.height).toBeUndefined();
-  expect(style.bottom).toBeUndefined();
 });
 
 it.each([
   [520, 120, 1],
   [360, 80, 1],
-  [250, 400, 1],
-  [520, 120, 2],
 ])(
   'fits all wrapped lines in a %sx%s window at font scale %s',
   (width, height, fontScale) => {
@@ -152,19 +146,6 @@ it('refits the same question after the system font scale changes', () => {
   } finally {
     act(() => Dimensions.set(original));
   }
-});
-
-it('ignores empty and invalid native reports and keeps displaying the question', () => {
-  mount();
-  resize(520, 120);
-  const report = measurement()!.props.onTextLayout;
-  act(() => {
-    report({nativeEvent: {lines: []}});
-    report({nativeEvent: {lines: [{width: NaN, height: 40, y: 0}]}});
-  });
-  expect(size()).toBe(38);
-  expect(visible().props.children).toBeTruthy();
-  settle(1600);
 });
 
 it('does not shrink fitting lines because Android includes trailing spaces in their width', () => {

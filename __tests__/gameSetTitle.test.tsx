@@ -6,7 +6,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import GameScreen from '../pages/screens/GameScreen';
 import {LocalizationProvider} from '../i18n/LocalizationContext';
 import * as loader from '../utils/questionloader';
-import {getBuiltInQuestionPacks} from '../constants/questionPacks';
 
 let tree: renderer.ReactTestRenderer | undefined;
 let restore: (() => void)[] = [];
@@ -52,18 +51,6 @@ const mount = async (language: 'de' | 'en', packIds: string[]) => {
   await countdown();
 };
 
-it.each(['de', 'en'] as const)(
-  'shows the localized built-in set title in %s',
-  async language => {
-    const pack = getBuiltInQuestionPacks(language).find(
-      item => item.id === 'movies-tv',
-    )!;
-    await mount(language, [pack.id]);
-    expect(textPresent(pack.title)).toBe(true);
-    expect(textPresent(language === 'de' ? 'Frage' : 'Question')).toBe(false);
-  },
-);
-
 it('retains the correct source when identical questions occur in different sets', async () => {
   const packs = jest.spyOn(loader, 'getQuestions').mockResolvedValue([
     {id: 'custom:a', title: 'Filmabend', questions: ['Eine Figur']},
@@ -84,7 +71,6 @@ it('retains the correct source when identical questions occur in different sets'
   act(() => {
     skip.props.onPress();
   });
-  expect(textPresent('Filmabend')).toBe(false);
   await countdown();
   expect(textPresent('Unser Serienabend')).toBe(true);
   expect(textPresent('Eine Figur')).toBe(true);

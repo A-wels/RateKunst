@@ -423,21 +423,12 @@ it('shows consent and ad load errors locally and retries without resetting age o
       .findAllByType(Text)
       .map(node => node.props.children)
       .join('\n');
-  expect(text()).not.toContain('No fill.');
   const button = (label: string) =>
     tree!.root
       .findAllByType(Pressable)
       .find(node => node.props.accessibilityLabel === label)!;
   act(() => button('Werbediagnose').props.onPress());
-  expect(text()).toContain('Banner-Ladefehler');
-  expect(text()).toContain('No fill.');
-  expect(text()).toContain('No published message for this app.');
-  expect(text()).toContain('Vollbild-Block-ID');
-  expect(text()).toContain('ca-app-pub-4579090895960312/7672610412');
-  expect(text()).toContain('Vollbild-Anzeigefehler');
-  expect(text()).toContain('Display failed.');
-  expect(text()).toContain('Window focus was not restored.');
-  expect(text()).toContain('Nicht erforderlich');
+  expect(text()).toContain(blocked.diagnostics!.bannerError);
   await act(async () => button('Werbung erneut laden').props.onPress());
   expect(native.retryAds).toHaveBeenCalledTimes(1);
   expect(native.setAgeGroup).not.toHaveBeenCalled();

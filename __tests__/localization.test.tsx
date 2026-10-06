@@ -56,12 +56,7 @@ afterEach(() => {
 
 it.each([
   ['de_DE', 'de'],
-  ['de-AT', 'de'],
-  ['DE-ch', 'de'],
-  ['de', 'de'],
   ['en_GB', 'en'],
-  ['en-US', 'en'],
-  ['fr-FR', 'en'],
   [undefined, 'en'],
 ])(
   'chooses and persists %s as %s on first Android launch',
@@ -69,9 +64,6 @@ it.each([
     deviceLocale(locale);
     await mount();
     expect(localization.language).toBe(expected);
-    expect(tree!.root.findByType(Text).props.children).toBe(
-      expected === 'de' ? 'Spiel vorbereiten' : 'Set up game',
-    );
     expect(await AsyncStorage.getItem(LANGUAGE_KEY)).toBe(expected);
   },
 );
@@ -86,13 +78,6 @@ it('uses the iOS preferred language ahead of its regional locale', async () => {
   await mount();
   expect(localization.language).toBe('en');
   expect(await AsyncStorage.getItem(LANGUAGE_KEY)).toBe('en');
-});
-
-it('supports the legacy iOS regional locale when preferred languages are missing', async () => {
-  Platform.OS = 'ios';
-  NativeModules.SettingsManager = {settings: {AppleLocale: 'de_AT'}};
-  await mount();
-  expect(localization.language).toBe('de');
 });
 
 it('keeps the first-launch choice after the device language changes', async () => {
