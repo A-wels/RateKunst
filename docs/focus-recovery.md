@@ -81,27 +81,47 @@ Device checks for a release build:
 5. Award points in a landscape round, switch away and return. Scores and the
    round must remain; Skip and scoring must respond after the countdown.
 
-## Custom-set navigation
+## Android navigation uses React views
 
-Opening “Manage custom packs” was reported to freeze the app. No JavaScript
-render loop was found in the list loader. The device failure is not reproduced
-locally. The exact RN 0.72 / native-stack 6 / screens 3.22 combination has a
-[reported default Android transition regression](https://github.com/react-navigation/react-navigation/issues/11438)
-where the outgoing screen is drawn above the incoming screen. This is evidence
-for a transition workaround, not proof of the reported freeze's root cause.
+Recreating scroll content alone did not resolve the user's intermittent input
+failure. The Android navigation path now uses `@react-navigation/stack` 6 with
+`detachInactiveScreens: false`. Screen content and headers are ordinary React
+views, bypassing react-native-screens 3.22's native ScreenStack fragments,
+CoordinatorLayout and toolbar/content split. Card animations, overlays and
+navigation gestures are disabled on Android. iOS retains the native stack.
+This is an architectural workaround, not a reproduction or a confirmed diagnosis
+of the user's exact device failure.
 
-The CustomSets and EditSet routes now use `animation: 'none'` on Android, avoiding
-the default animated enter/exit path. iOS retains its existing transition.
-Existing headers, colors, layout, game orientation and native-stack back handling
-are retained. No redesign is included.
+The earlier native-stack animation workaround only covered selected routes;
+Game, including its replace/restart transition, still used the default native
+transition. The Android stack change covers every route and restart. Hidden
+routes retain their parent state but cannot intercept the active card's input.
+React Navigation still owns route keys, focus/blur events, Back handling and
+`replace`/`popToTop`; navigation is not remounted on app resume.
 
-The list reads custom sets in one batch, deduplicates and validates storage IDs,
-skips invalid or missing records individually, and ignores stale responses after
-another focus reload or unmount. Existing storage records are not rewritten.
-Jest covers actual App navigation into the list, creation, editing, return and
-reopening, plus malformed records alongside valid sets. This validates JS flow
-and the native-stack options; it cannot verify Android fragment hit testing.
+Gesture Handler is initialized before App registration and owns the app's root
+view as required by the JavaScript stack. Its version is pinned to the existing
+RN 0.72 compatibility range. `RateKunstDisplay` applies sensor landscape only
+while Game is the current route, reapplying it after a host resume and restoring
+unspecified orientation outside Game. This is separate from the native ad
+`gameActive` flag so an interstitial break cannot rotate the screen or reset the
+round. A missing Activity at an early route update is handled at host resume.
 
-Device verification still required: repeatedly open the custom-set list, create
-and edit a set, use the header Back and Android Back, and verify both list and
-setup controls respond. Repeat after Home/resume with the keyboard open.
+Tests exercise the actual Android App stack: preserve a partially typed player
+name while visiting Settings and over repeated/batched resumes, return and add
+the player, start a round, preserve a score through resume, correct it, win and
+restart with zero scores, and return home. They verify the native screen
+containers are absent, route-owned orientation updates, listener cleanup, and
+screen identity across resumes. The custom-set create/edit/reopen and one-step
+system Back tests remain. Image fixtures now match RN's numeric asset IDs for
+the stack's built-in Back icon. Tutorial tests reflect the shorter DE/EN copy
+already edited on main; that copy is not overwritten.
+
+Device verification remains necessary: repeat app switching, shade and lock
+cycles with a name field focused, while scrolling, and in a landscape round;
+then test winning Restart, header/system Back, custom-set editing, consent and
+interstitial dismissal. The native bundle build validates compilation and linking
+but does not prove physical-device hit testing.
+
+References: [React Navigation stack](https://reactnavigation.org/docs/6.x/stack-navigator/)
+and [Gesture Handler setup](https://docs.swmansion.com/react-native-gesture-handler/docs/2.x/fundamentals/installation/).
