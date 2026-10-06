@@ -68,18 +68,38 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'org.webkit:android-jsc:+'
 
+// Public integration identifiers; configure through Gradle properties or CI variables.
+// Release defaults belong to RateKunst; debug builds override them with test inventory.
+def setting = { name, fallback -> project.findProperty(name) ?: System.getenv(name) ?: fallback }
+def quoted = { value -> '"' + value.replace('\\', '\\\\').replace('"', '\\"') + '"' }
+def admobAppId = setting('ADMOB_APP_ID', 'ca-app-pub-4579090895960312~2264456781')
+def admobBannerId = setting('ADMOB_BANNER_ID', 'ca-app-pub-4579090895960312/2477133216')
+def admobInterstitialId = setting('ADMOB_INTERSTITIAL_ID', 'ca-app-pub-4579090895960312/7672610412')
+def billingPublicKey = setting('PLAY_BILLING_PUBLIC_KEY', file('play-billing-public-key.txt').text).replaceAll('\\s', '')
+if (!(admobAppId ==~ /ca-app-pub-\d{16}~\d{10}/)) throw new GradleException('ADMOB_APP_ID must be an AdMob app ID containing ~')
+for (id in [admobBannerId, admobInterstitialId]) {
+    if (!(id ==~ /ca-app-pub-\d{16}\/\d{10}/)) throw new GradleException('AdMob ad-unit IDs must contain /')
+}
+def adRating = setting('ADMOB_MAX_AD_CONTENT_RATING', 'G')
+if (!(adRating in ['G', 'PG', 'T', 'MA'])) throw new GradleException('Invalid ADMOB_MAX_AD_CONTENT_RATING')
+
 android {
     ndkVersion rootProject.ext.ndkVersion
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.RateKunst"
+    namespace "de.awels.ratekunst"
     defaultConfig {
-        applicationId "com.RateDepp"
+        applicationId "de.awels.ratekunst"
+        manifestPlaceholders = [admobAppId: admobAppId]
+        buildConfigField 'String', 'ADMOB_BANNER_ID', quoted(admobBannerId)
+        buildConfigField 'String', 'ADMOB_INTERSTITIAL_ID', quoted(admobInterstitialId)
+        buildConfigField 'String', 'ADMOB_MAX_AD_CONTENT_RATING', quoted(adRating)
+        buildConfigField 'String', 'PLAY_BILLING_PUBLIC_KEY', quoted(billingPublicKey)
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
-        versionName "1.0.4"
+        versionCode project.hasProperty('versionCode') ? project.property('versionCode').toInteger() : 7
+        versionName project.hasProperty('versionName') ? project.property('versionName') : "1.0.4"
     }
     signingConfigs {
         debug {
@@ -100,19 +120,26 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            manifestPlaceholders = [admobAppId: 'ca-app-pub-3940256099942544~3347511713']
+            buildConfigField 'String', 'ADMOB_BANNER_ID', quoted('ca-app-pub-3940256099942544/6300978111')
+            buildConfigField 'String', 'ADMOB_INTERSTITIAL_ID', quoted('ca-app-pub-3940256099942544/1033173712')
         }
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-            signingConfig signingConfigs.release
+            signingConfig project.hasProperty('MYAPP_UPLOAD_STORE_FILE') ? signingConfigs.release : signingConfigs.debug
         }
     }
 }
 
 dependencies {
+    implementation("androidx.activity:activity:1.9.3")
+    testImplementation("junit:junit:4.13.2")
+    implementation("com.google.android.gms:play-services-ads:25.5.0")
+    implementation("com.google.android.ump:user-messaging-platform:4.0.0")
+    implementation("com.android.billingclient:billing:8.3.0")
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
@@ -130,4 +157,3 @@ dependencies {
 }
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle"); applyNativeModulesAppBuildGradle(project)
-apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"

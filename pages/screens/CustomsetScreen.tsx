@@ -1,218 +1,191 @@
-// Placeholder screen for the game
-
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {useThemedStyles} from '../../theme/ThemeContext';
+import {Alert, FlatList, StyleSheet, Text, View} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Button from '../../components/Button';
 
-const CustomsetScreen = ({ navigation, route }) => {
-    const [customSets, setCustomSets] = React.useState([]);
-    const [customSetIDs, setCustomSetIDs] = React.useState([]);
+import {CUSTOM_SET_INDEX_KEY} from '../../utils/questionloader';
+import {useLocalization} from '../../i18n/LocalizationContext';
+import {ThemeColors, spacing} from '../../constants/theme';
 
+type CustomSetSummary = {id: string; title: string; count: number};
 
-    // when customSetIDs changes, load custom sets from local storage
-    React.useEffect(() => {
-        // load custom sets from local storage
-        const getData = async () => {
-            try {
-                setCustomSets([]);
-                customSetIDs.forEach(async (id) => {
-                    const value = await AsyncStorage.getItem(id);
-                    if (value !== null) {
-                        // value previously stored
-                        // first line is title
-                        const title = JSON.parse(value)[0];
-                        // add to customSets
-                        setCustomSets(customSets => [...customSets, { id: id, title: title }]);
-                    }
-                });
-            } catch (e) {
-                console.log("Error while loading custom sets: " + e);
+const CustomsetScreen = ({navigation}: any) => {
+  const {t} = useLocalization();
+  const styles = useThemedStyles(createStyles);
+  const [customSets, setCustomSets] = React.useState<CustomSetSummary[]>([]);
+
+  React.useEffect(() => {
+    let active = true;
+    let request = 0;
+    const loadSets = async () => {
+      const currentRequest = ++request;
+      try {
+        const storedIds = await AsyncStorage.getItem(CUSTOM_SET_INDEX_KEY);
+        const parsed: unknown = storedIds ? JSON.parse(storedIds) : [];
+        const ids = Array.isArray(parsed)
+          ? [
+              ...new Set(
+                parsed.filter(
+                  (id): id is string => typeof id === 'string' && id.length > 0,
+                ),
+              ),
+            ]
+          : [];
+        const entries = await AsyncStorage.multiGet(ids);
+        const summaries: CustomSetSummary[] = [];
+        for (const [id, value] of entries) {
+          if (!value) {
+            continue;
+          }
+          // One damaged legacy record must not hide every other set.
+          try {
+            const set: unknown = JSON.parse(value);
+            if (
+              !Array.isArray(set) ||
+              !set.every(item => typeof item === 'string')
+            ) {
+              continue;
             }
+            const [title, ...questions] = set as string[];
+            summaries.push({
+              id,
+              title: title || t('untitledSet'),
+              count: questions.length,
+            });
+          } catch {
+            console.warn('Could not parse custom pack', id);
+          }
         }
-        getData();
-    }, [customSetIDs]);
-
-    React.useEffect(() => {
-        // load custom sets on mount from local storage. Also reload when page is focused
-        const unsubscribe = navigation.addListener('focus', () => {
-            const getData = async () => {
-                try {
-                    const jsonValue = await AsyncStorage.getItem('@customSets');
-                    const data = jsonValue != null ? JSON.parse(jsonValue) : [];
-                    setCustomSetIDs(data);
-                } catch (e) {
-                    console.log("Error while loading custom sets: " + e);
-                }
-            }
-            getData();
+        if (active && currentRequest === request) {
+          setCustomSets(summaries);
         }
-        );
+      } catch (error) {
+        console.warn('Could not load custom packs', error);
+      }
+    };
+    loadSets();
+    const unsubscribe = navigation.addListener('focus', loadSets);
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, [t, navigation]);
 
-    }, []);
+  const deleteSet = (set: CustomSetSummary) => {
+    Alert.alert(
+      t('deleteSetTitle'),
+      t('deleteSetMessage', {title: set.title}),
+      [
+        {text: t('cancel'), style: 'cancel'},
+        {
+          text: t('delete'),
+          style: 'destructive',
+          onPress: async () => {
+            const remaining = customSets.filter(item => item.id !== set.id);
+            await Promise.all([
+              AsyncStorage.removeItem(set.id),
+              AsyncStorage.setItem(
+                CUSTOM_SET_INDEX_KEY,
+                JSON.stringify(remaining.map(item => item.id)),
+              ),
+            ]);
+            setCustomSets(remaining);
+          },
+        },
+      ],
+    );
+  };
 
-    const editSet = (id: string) => {
-        // navigate to edit set screen
-        navigation.navigate('Set Bearbeiten', { id: id, });
-    }
-
-    const addCustomSetButton = () => (
-        <View style={styles.item}>
-            <View style={styles.row}>
-                <TouchableOpacity style={styles.button} onPress={() => { navigation.navigate('Set Bearbeiten', { id: 0, }) }}>
-                    <AntDesign name="pluscircle" size={32} color="white" />
-                </TouchableOpacity>
+  return (
+    <SafeAreaView style={styles.screen} edges={['left', 'right', 'bottom']}>
+      <FlatList
+        data={customSets}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.content}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Button
+              label={t('newSet')}
+              variant="primary"
+              onPress={() => navigation.navigate('EditSet', {id: null})}
+            />
+          </View>
+        }
+        ListEmptyComponent={
+          <View style={styles.empty}>
+            <Text style={styles.emptyTitle}>{t('noCustomSets')}</Text>
+            <Text style={styles.emptyBody}>{t('noCustomSetsBody')}</Text>
+          </View>
+        }
+        renderItem={({item}) => (
+          <View style={styles.setRow}>
+            <View style={styles.setText}>
+              <Text style={styles.setTitle}>{item.title}</Text>
+              <Text style={styles.setCount}>
+                {t('questionCount', {count: item.count})}
+              </Text>
             </View>
-        </View>
-    );
-
-    const Item = ({ title, id }) => (
-        <View style={styles.item}>
-            <View style={styles.row}>
-                <TouchableOpacity style={styles.button} onPress={() => { editSet(id) }}>
-                    <AntDesign name="edit" size={24} color="white" />
-                </TouchableOpacity>
-                <Text style={styles.title}>{title}</Text>
-                <TouchableOpacity style={styles.button} onPress={() => { alertDeleteSet(title, id) }}>
-                    <AntDesign name="delete" size={24} color="white" />
-                </TouchableOpacity>
+            <View style={styles.actions}>
+              <Button
+                label={t('edit')}
+                accessibilityLabel={`${t('edit')} ${item.title}`}
+                variant="text"
+                onPress={() => navigation.navigate('EditSet', {id: item.id})}
+              />
+              <Button
+                label={t('delete')}
+                accessibilityLabel={`${t('delete')} ${item.title}`}
+                variant="danger"
+                onPress={() => deleteSet(item)}
+              />
             </View>
-        </View>
-    );
-
-    const deleteCustomSet = (id) => {
-        // delete custom set from database
-        // remove from customSets
-        setCustomSets(customSets.filter(item => item.id !== id));
-        // remove from customSetIDs
-        setCustomSetIDs(customSetIDs.filter(item => item !== id));
-        // remove question set from local storage
-        const removeValue = async () => {
-            try {
-                await AsyncStorage.removeItem(id);
-            } catch (e) {
-                console.log("Error while deleting custom set: " + e);
-            }
-        }
-        removeValue();
-        // remove id from @customSets list in local storage
-        const removeID = async () => {
-            try {
-                const jsonValue = await AsyncStorage.getItem('@customSets');
-                const data = jsonValue != null ? JSON.parse(jsonValue) : [];
-                const newData = data.filter(item => item !== id);
-                await AsyncStorage.setItem('@customSets', JSON.stringify(newData));
-            } catch (e) {
-                console.log("Error while deleting custom set: " + e);
-            }
-        }
-        removeID();
-    }
-    const alertDeleteSet = (title, id) => {
-        // delete custom set from database after confirmation
-        Alert.alert(
-            'Löschen',
-            `Möchtest du das Set: ${title} wirklich löschen?`,
-            [
-                {
-                    text: 'Abbrechen',
-                    style: 'cancel'
-                },
-                {
-                    text: 'Löschen', onPress: () => {
-                        // delete set from database
-                        deleteCustomSet(id);
-                    }
-                }
-            ],
-            { cancelable: false }
-        );
-    }
-
-    return (
-        <SafeAreaView style={[styles.container]}>
-            {/* FlatList of custom sets. Last item is a button to add a new set */}
-            {/* Show Flatlist only if customSets is not empty, otherwise show Button to add set */}
-            {customSets.length > 0 &&
-                <FlatList
-                    data={customSets}
-                    renderItem={({ item }) => <Item key={item.id} title={item.title} id={item.id} />}
-                    keyExtractor={item => item.id}
-                    ListFooterComponent={addCustomSetButton}
-                />}
-            {customSets.length < 1 &&
-                <View style={styles.item}>
-                    <View style={styles.row}>
-                        <TouchableOpacity style={styles.button} onPress={() => { navigation.navigate('Set Bearbeiten', { id: 0, }) }}>
-                            <AntDesign name="pluscircle" size={48} color="white" />
-                            <Text style={styles.textAddSet}>Neues Set erstellen</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>}
-
-
-
-
-        </SafeAreaView>
-    );
-
-
+          </View>
+        )}
+      />
+    </SafeAreaView>
+  );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#1f1f23',
-        alignItems: 'center',
-        justifyContent: 'center',
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    screen: {flex: 1, backgroundColor: colors.background},
+    content: {
+      flexGrow: 1,
+      width: '100%',
+      maxWidth: 640,
+      alignSelf: 'center',
+      padding: spacing.md,
     },
-    textAddSet: {
-        fontSize: 24,
-        paddingTop: 10,
+    header: {alignItems: 'flex-start', marginBottom: spacing.lg},
+    empty: {paddingVertical: spacing.lg},
+    emptyTitle: {color: colors.onSurface, fontSize: 18, fontWeight: '500'},
+    emptyBody: {
+      color: colors.onSurfaceVariant,
+      fontSize: 16,
+      lineHeight: 24,
+      marginTop: spacing.sm,
     },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white'
+    setRow: {
+      paddingVertical: spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.outlineVariant,
     },
-    button: {
-        backgroundColor: '#1f1f23',
-        borderRadius: 10,
-        padding: 10,
-        alignItems: 'center',
+    setText: {gap: spacing.xs},
+    setTitle: {
+      color: colors.onSurface,
+      fontSize: 18,
+      fontWeight: '500',
+      lineHeight: 25,
     },
-    row: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 20,
-        marginBottom: 20,
+    setCount: {color: colors.onSurfaceVariant, fontSize: 14},
+    actions: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'flex-end',
+      marginTop: spacing.sm,
     },
-    item: {
-    },
-
-    text: {
-        color: '#1f1f23',
-        fontSize: 18,
-        fontWeight: 'bold',
-        textAlign: 'center',
-    },
-    textField: {
-        flex: 0.75,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    letter: {
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    smallTitle: {
-        color: '#1f1f23',
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'left'
-    },
-
-});
+  });
 
 export default CustomsetScreen;
