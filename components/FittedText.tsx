@@ -1,6 +1,6 @@
 import React from 'react';
 import {useTheme} from '../theme/ThemeContext';
-import {StyleSheet, Text, View} from 'react-native';
+import ParagraphFittedText from './ParagraphFittedText';
 import SingleLineFittedText from './SingleLineFittedText';
 
 type Props = {
@@ -10,8 +10,7 @@ type Props = {
   singleLine?: boolean;
 };
 
-// Paragraphs retain native fitting against the bounded question window.
-// Single-line letters use measured glyph dimensions rather than Android auto-fit.
+// Fit questions and letter groups using measured native glyph dimensions.
 const FittedText = ({children, fontSize, color, singleLine = false}: Props) => {
   const {colors} = useTheme();
   const textColor = color ?? colors.onSurface;
@@ -20,29 +19,10 @@ const FittedText = ({children, fontSize, color, singleLine = false}: Props) => {
       {children}
     </SingleLineFittedText>
   ) : (
-    <View style={styles.window}>
-      <Text
-        key={children}
-        accessibilityLiveRegion="polite"
-        accessibilityLabel={children}
-        adjustsFontSizeToFit
-        minimumFontScale={0.1}
-        style={[styles.text, {fontSize, color: textColor}]}>
-        {children}
-      </Text>
-    </View>
+    <ParagraphFittedText fontSize={fontSize} color={textColor}>
+      {children}
+    </ParagraphFittedText>
   );
 };
-
-const styles = StyleSheet.create({
-  window: {flex: 1, minHeight: 0},
-  text: {
-    ...StyleSheet.absoluteFillObject,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    includeFontPadding: false,
-    fontWeight: '500',
-  },
-});
 
 export default FittedText;
