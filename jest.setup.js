@@ -22,3 +22,17 @@ jest.mock(
   'react-native-safe-area-context',
   () => require('react-native-safe-area-context/jest/mock').default,
 );
+
+// Existing UI tests exercise a German device. Locale-specific tests override
+// the public I18nManager constants explicitly, including English/unknown cases.
+const {NativeModules} = require('react-native');
+const i18nConstants = NativeModules.I18nManager.getConstants();
+NativeModules.I18nManager.getConstants = () => ({
+  ...i18nConstants,
+  localeIdentifier: 'de_DE',
+});
+NativeModules.SettingsManager = {
+  getConstants: () => ({
+    settings: {AppleLanguages: ['de-DE'], AppleLocale: 'de_DE'},
+  }),
+};

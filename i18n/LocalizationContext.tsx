@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React from 'react';
-import {NativeModules} from 'react-native';
+import {I18nManager, NativeModules, Platform} from 'react-native';
 
 export type Language = 'de' | 'en';
 
@@ -345,12 +345,20 @@ type LocalizationValue = {
 };
 
 const getDeviceLanguage = (): Language => {
+  const settings =
+    Platform.OS === 'ios'
+      ? NativeModules.SettingsManager?.getConstants?.()?.settings ??
+        NativeModules.SettingsManager?.settings
+      : undefined;
   const locale =
-    NativeModules.I18nManager?.localeIdentifier ??
-    NativeModules.SettingsManager?.settings?.AppleLocale ??
-    NativeModules.SettingsManager?.settings?.AppleLanguages?.[0] ??
-    'de';
-  return String(locale).toLowerCase().startsWith('en') ? 'en' : 'de';
+    Platform.OS === 'ios'
+      ? settings?.AppleLanguages?.[0] ?? settings?.AppleLocale
+      : I18nManager.getConstants().localeIdentifier;
+  const code =
+    typeof locale === 'string'
+      ? locale.trim().toLowerCase().split(/[-_]/)[0]
+      : '';
+  return code === 'de' ? 'de' : 'en';
 };
 
 const LocalizationContext = React.createContext<LocalizationValue | undefined>(
@@ -360,33 +368,45 @@ const LocalizationContext = React.createContext<LocalizationValue | undefined>(
 export const LocalizationProvider = ({children}: React.PropsWithChildren) => {
   const [language, setLanguageState] =
     React.useState<Language>(getDeviceLanguage);
+  const initialLanguage = React.useRef(language);
   const languageChosen = React.useRef(false);
+  const saveQueue = React.useRef<Promise<void>>(Promise.resolve());
+  const persistLanguage = React.useCallback((next: Language) => {
+    // Preserve write order if the user changes language during first-launch
+    // hydration or switches rapidly, including immediately before leaving.
+    saveQueue.current = saveQueue.current
+      .then(() => AsyncStorage.setItem(LANGUAGE_KEY, next))
+      .catch(error => console.warn('Could not persist language', error));
+  }, []);
 
   React.useEffect(() => {
     let active = true;
     AsyncStorage.getItem(LANGUAGE_KEY)
       .then(saved => {
-        if (
-          active &&
-          !languageChosen.current &&
-          (saved === 'de' || saved === 'en')
-        ) {
+        if (!active || languageChosen.current) {
+          return;
+        }
+        if (saved === 'de' || saved === 'en') {
           setLanguageState(saved);
+        } else {
+          // Device language is a one-time default, not an ongoing override.
+          persistLanguage(initialLanguage.current);
         }
       })
       .catch(error => console.warn('Could not load language', error));
     return () => {
       active = false;
     };
-  }, []);
+  }, [persistLanguage]);
 
-  const setLanguage = React.useCallback((nextLanguage: Language) => {
-    languageChosen.current = true;
-    setLanguageState(nextLanguage);
-    AsyncStorage.setItem(LANGUAGE_KEY, nextLanguage).catch(error =>
-      console.warn('Could not persist language', error),
-    );
-  }, []);
+  const setLanguage = React.useCallback(
+    (nextLanguage: Language) => {
+      languageChosen.current = true;
+      setLanguageState(nextLanguage);
+      persistLanguage(nextLanguage);
+    },
+    [persistLanguage],
+  );
 
   const t = React.useCallback(
     (key: TranslationKey, variables: Record<string, string | number> = {}) => {
