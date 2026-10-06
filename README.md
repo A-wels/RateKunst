@@ -17,7 +17,10 @@ Fragen und Buchstabengruppen werden an ihre Anzeigebereiche angepasst.
 Unter **Einstellungen** stehen **System**, **Hell** und **Dunkel** zur Auswahl.
 Standardmäßig folgt die gesamte Oberfläche dem Gerätedesign und reagiert auch
 während der Nutzung auf Änderungen. Eine manuelle Auswahl wird lokal gespeichert.
-Die Sprache lässt sich dort ebenfalls ändern; der DE/EN-Schalter bleibt im Menü.
+Beim ersten Start folgt die Sprache der Gerätesprache: Deutsch für deutsche
+Gerätesprachen, sonst Englisch. Die Auswahl wird gespeichert und bleibt bei
+späteren Änderungen der Gerätesprache erhalten. Die Sprache lässt sich in den
+Einstellungen ändern; der DE/EN-Schalter bleibt im Menü.
 Die native React-Native-Oberfläche verwendet Material-Farbrollen mit warmen
 Pfirsich-/Orange-Akzenten und eigenen Hell-/Dunkel-Paletten, einschließlich der
 Navigation, Eingaben, Spielansicht, Auswahldialoge und Spielanleitung.
