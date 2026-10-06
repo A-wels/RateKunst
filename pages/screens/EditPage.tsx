@@ -1,9 +1,9 @@
+import ScrollView from '../../components/RecoverableScrollView';
 import React from 'react';
 import {useTheme, useThemedStyles} from '../../theme/ThemeContext';
 import {
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,

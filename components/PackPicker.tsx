@@ -1,3 +1,4 @@
+import RecoverableScrollView from './RecoverableScrollView';
 import React from 'react';
 import AdBanner from './AdBanner';
 import {useTheme, useThemedStyles} from '../theme/ThemeContext';
@@ -77,6 +78,9 @@ const PackPicker = ({
             returnKeyType="search"
           />
           <FlatList
+            renderScrollComponent={scrollProps => (
+              <RecoverableScrollView {...scrollProps} />
+            )}
             data={filteredPacks}
             keyExtractor={item => item.value}
             keyboardShouldPersistTaps="handled"

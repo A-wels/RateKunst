@@ -3,6 +3,13 @@
 RateKunst is a small game companion. Its interface should help people prepare a
 round, read the question and letter, and award points quickly.
 
+A short tap on a player awards one point. Holding their score removes one point,
+clamped at zero, without advancing the question or restarting the countdown.
+Correction remains available during the countdown and through TalkBack's
+decrement action. An accidental winning point can be corrected in the winner
+dialog; only returning to the menu records a completed game. The tutorial and
+on-screen score hint explain the gesture in German and English.
+
 ## Decisions
 
 - A warm white background, dark brown text and the platform's system font.

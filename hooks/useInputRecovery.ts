@@ -1,10 +1,12 @@
 import React from 'react';
 import {AppState, Platform, UIManager} from 'react-native';
 
-// The legacy renderer's native responder can keep intercepting the content
-// after a gesture is interrupted. Release that intercept on return. This does
-// not remount screens or change form/game state.
+const InputRecoveryContext = React.createContext(0);
+
+// Release native interception and give scroll containers a new gesture stream.
+// Their parent screens retain form, navigation and game state.
 export const useInputRecovery = () => {
+  const [generation, setGeneration] = React.useState(0);
   React.useEffect(() => {
     if (Platform.OS !== 'android') {
       return;
@@ -23,6 +25,7 @@ export const useInputRecovery = () => {
         clearJSResponder?: () => void;
       };
       manager.clearJSResponder?.();
+      setGeneration(current => current + 1);
     };
     const subscriptions = [
       AppState.addEventListener('blur', markInterrupted),
@@ -37,4 +40,15 @@ export const useInputRecovery = () => {
     ];
     return () => subscriptions.forEach(subscription => subscription.remove());
   }, []);
+  return generation;
 };
+
+export const InputRecoveryProvider = ({children}: React.PropsWithChildren) =>
+  React.createElement(
+    InputRecoveryContext.Provider,
+    {value: useInputRecovery()},
+    children,
+  );
+
+export const useInputRecoveryGeneration = () =>
+  React.useContext(InputRecoveryContext);

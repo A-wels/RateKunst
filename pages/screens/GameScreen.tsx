@@ -1,10 +1,10 @@
+import ScrollView from '../../components/RecoverableScrollView';
 import React from 'react';
 import {useMonetization} from '../../monetization/MonetizationContext';
 import {useTheme, useThemedStyles} from '../../theme/ThemeContext';
 import {
   Alert,
   StatusBar,
-  ScrollView,
   StyleSheet,
   Text,
   Pressable,
@@ -115,6 +115,18 @@ const GameScreen = ({navigation, route}: any) => {
     }
   }, [isCountingDown, loadNextQuestion, question, questionPool.length]);
 
+  const removePoint = (index: number) => {
+    if (roundEnded.current) {
+      return;
+    }
+    setScores(current =>
+      current.map((score, scoreIndex) =>
+        scoreIndex === index ? Math.max(0, score - 1) : score,
+      ),
+    );
+    setScoredThisTurn(current => current.filter(player => player !== index));
+  };
+
   const awardPoint = (index: number) => {
     if (
       roundEnded.current ||
@@ -144,6 +156,16 @@ const GameScreen = ({navigation, route}: any) => {
                 completeRound();
               }
               navigation.popToTop();
+            },
+          },
+          {
+            text: t('correctPoint'),
+            onPress: () => {
+              if (finished.current) {
+                return;
+              }
+              roundEnded.current = false;
+              removePoint(index);
             },
           },
         ],
@@ -221,12 +243,23 @@ const GameScreen = ({navigation, route}: any) => {
                   score: scores[index],
                   target: params.pointsToWin,
                 })}
-                accessibilityHint={t('tapScore')}
-                accessibilityState={{disabled: isCountingDown || alreadyScored}}
+                accessibilityHint={t('scoreActionsHint')}
+                accessibilityState={{disabled: roundEnded.current}}
+                accessibilityActions={
+                  scores[index] > 0 && !roundEnded.current
+                    ? [{name: 'decrement', label: t('removePoint')}]
+                    : []
+                }
+                onAccessibilityAction={event => {
+                  if (event.nativeEvent.actionName === 'decrement') {
+                    removePoint(index);
+                  }
+                }}
                 android_ripple={{color: colors.outlineVariant}}
                 key={`${name}-${index}`}
-                disabled={isCountingDown || alreadyScored}
+                disabled={roundEnded.current}
                 onPress={() => awardPoint(index)}
+                onLongPress={() => removePoint(index)}
                 style={({pressed}) => [
                   styles.playerButton,
                   alreadyScored && styles.playerButtonScored,

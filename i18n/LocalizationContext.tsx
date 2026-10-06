@@ -26,7 +26,7 @@ const translations = {
       'Zum Beispiel: Bär. Bei „SCH / Q“ passen Antworten mit SCH oder Q am Anfang.',
     tutorialScoreTitle: 'Punkte vergeben',
     tutorialScoreBody:
-      'Tippe auf den Namen der Person mit der richtigen Antwort. Sie erhält einen Punkt und die nächste Frage beginnt. Mit „Überspringen“ gibt es eine neue Frage ohne Punkt. Wer zuerst die Zielpunktzahl erreicht, gewinnt.',
+      'Tippe auf den Namen der Person mit der richtigen Antwort. Sie erhält einen Punkt und die nächste Frage beginnt. Halte ihren Punktestand gedrückt, um einen falsch vergebenen Punkt abzuziehen, auch während des Countdowns. Der Punktestand bleibt mindestens null. Mit „Überspringen“ gibt es eine neue Frage ohne Punkt. Wer zuerst die Zielpunktzahl erreicht, gewinnt. Einen versehentlichen Siegpunkt kannst du im Gewinnerdialog mit „Punkt korrigieren“ zurücknehmen.',
     tutorialPacksTitle: 'Eigene Themen und Sprache',
     tutorialPacksBody:
       'Unter „Eigene Sets verwalten“ kannst du Fragen sammeln: eine pro Zeile. Wähle dein Set anschließend bei den Themenpacks aus. DE und EN wechseln die Oberfläche und alle eingebauten Packs. Deine eigenen Texte bleiben so, wie du sie geschrieben hast. Diese Anleitung kannst du im Menü jederzeit erneut öffnen.',
@@ -66,7 +66,11 @@ const translations = {
     letter: 'Buchstabe',
     skip: 'Überspringen',
     scoreTarget: 'Ziel: {{count}} Punkte',
-    tapScore: 'Tippen für einen Punkt',
+    tapScore: 'Tippen: +1 · Gedrückt halten: −1',
+    scoreActionsHint:
+      'Tippen vergibt einen Punkt. Gedrückt halten zieht einen Punkt ab.',
+    removePoint: 'Einen Punkt abziehen',
+    correctPoint: 'Punkt korrigieren',
     winnerTitle: 'Gewonnen!',
     winnerMessage: '{{name}} gewinnt die Runde.',
     backToMenu: 'Zurück zum Menü',
@@ -185,7 +189,7 @@ const translations = {
       'For example: Bear. For “X / Y / Z”, your answer can start with X, Y or Z.',
     tutorialScoreTitle: 'Award points',
     tutorialScoreBody:
-      'Tap the name of the player with the correct answer. They earn one point and the next question begins. “Skip” starts a new question without awarding a point. The first player to reach the target score wins.',
+      'Tap the name of the player with the correct answer. They earn one point and the next question begins. Hold their score to remove an incorrectly awarded point, even during the countdown. Scores never go below zero. “Skip” starts a new question without awarding a point. The first player to reach the target score wins. Undo an accidental winning point with “Correct point” in the winner dialog.',
     tutorialPacksTitle: 'Your own topics and language',
     tutorialPacksBody:
       'Use “Manage custom packs” to collect questions: one per line. Then select your pack in the topic picker. DE and EN switch the interface and all built-in packs. Your own text stays as you wrote it. You can reopen this guide from the menu at any time.',
@@ -225,7 +229,10 @@ const translations = {
     letter: 'Letter',
     skip: 'Skip',
     scoreTarget: 'Target: {{count}} points',
-    tapScore: 'Tap to score a point',
+    tapScore: 'Tap: +1 · Hold: −1',
+    scoreActionsHint: 'Tap to award a point. Hold to remove a point.',
+    removePoint: 'Remove one point',
+    correctPoint: 'Correct point',
     winnerTitle: 'Winner!',
     winnerMessage: '{{name}} wins the round.',
     backToMenu: 'Back to menu',

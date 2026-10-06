@@ -32,7 +32,7 @@ import {
 import {ThemeColors} from './constants/theme';
 import {ThemeProvider, useTheme, useThemedStyles} from './theme/ThemeContext';
 import SettingsScreen from './pages/screens/SettingsScreen';
-import {useInputRecovery} from './hooks/useInputRecovery';
+import {InputRecoveryProvider} from './hooks/useInputRecovery';
 
 const Stack = createNativeStackNavigator();
 
@@ -85,7 +85,6 @@ const AppNavigator = () => {
       notification: colors.error,
     },
   };
-  useInputRecovery();
   const {setGameActive} = useMonetization();
   const navigationRef = React.useRef<any>(null);
   const syncGame = () =>
@@ -160,7 +159,9 @@ const App = (): JSX.Element => (
     <ThemeProvider>
       <LocalizationProvider>
         <MonetizationProvider>
-          <AppNavigator />
+          <InputRecoveryProvider>
+            <AppNavigator />
+          </InputRecoveryProvider>
         </MonetizationProvider>
       </LocalizationProvider>
     </ThemeProvider>

@@ -67,6 +67,15 @@ it('can go back, finish and replay from the first step', async () => {
   expect(textIncludes('Eine Runde vorbereiten')).toBe(true);
   await press('Weiter');
   await press('Weiter');
+  expect(
+    tree!.root
+      .findAllByType(Text)
+      .some(node =>
+        String(node.props.children).includes(
+          'Halte ihren Punktestand gedrückt',
+        ),
+      ),
+  ).toBe(true);
   await press('Weiter');
   expect(textIncludes('Eigene Themen und Sprache')).toBe(true);
   await press('Los geht’s');
@@ -84,6 +93,12 @@ it('localizes the tutorial and treats Android Back as skipping', async () => {
   await press('Next');
   expect(textIncludes('Question and letter')).toBe(true);
   expect(textIncludes('Animal')).toBe(true);
+  await press('Next');
+  expect(
+    tree!.root
+      .findAllByType(Text)
+      .some(node => String(node.props.children).includes('Hold their score')),
+  ).toBe(true);
   await act(async () => tree!.root.findByType(Modal).props.onRequestClose());
   expect(visible()).toBe(false);
   expect(await AsyncStorage.getItem(TUTORIAL_SEEN_KEY)).toBe('1');

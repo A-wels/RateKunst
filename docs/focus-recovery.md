@@ -31,6 +31,22 @@ The app also releases the legacy UIManager's native responder intercept when
 returning from an Android blur/background event. Screens, forms and rounds
 are not remounted or reset.
 
+The native-responder release alone did not resolve the reported app-switch
+failure: scrolling and the header language switch worked, while buttons and
+inputs inside the scroll content remained unresponsive. The pinned RN 0.72
+ScrollView owns additional JavaScript touch/momentum capture flags, separate
+from UIManager's native responder. An interrupted stream or unmatched momentum
+event can retain those flags. This is a plausible failure path, not a device
+reproduction of the user's exact failure.
+
+`InputRecoveryProvider` advances a generation after Android blur/background and
+return, including batched transitions. `RecoverableScrollView` replaces only
+the affected scroll containers and their controls, restoring the last observed
+offset. Screen components and the navigator stay mounted: setup drafts, scores,
+countdowns, custom-set text and selected packs remain in their parent state.
+Virtualized lists use the same ref-forwarding scroll component. iOS retains its
+usual ScrollView. No private RN fields are modified or framework files patched.
+
 Tutorial and question-pack dialogs release their native windows when hidden or
 backgrounded. Returning creates a fresh window, including when rapid lifecycle
 events are batched. The tutorial step, search and selected packs remain in the
@@ -47,6 +63,9 @@ Jest covers notification-shade blur/focus, background/active ordering, listener
 cleanup, repeated and batched resumes, retained search/selection/tutorial step,
 and closed dialogs staying unmounted. The Android release build checks the
 native Activity code. These checks do not replace Android device testing.
+The additional recovery tests verify fresh scroll instances, retained screen
+identity, draft input and scroll offset over repeated/batched resumes, and score
+correction after a blur/focus without resetting the round.
 
 Device checks for a release build:
 

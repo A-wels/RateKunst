@@ -219,7 +219,18 @@ it('records a win once when returning to the menu and ignores subsequent score t
     act(() => score.props.onPress());
     act(() => score.props.onPress());
     expect(alert).toHaveBeenCalledTimes(1);
-    const onReturn = alert.mock.calls[0][2]![0].onPress!;
+    const correction = alert.mock.calls[0][2]!.find(
+      button => button.text === 'Punkt korrigieren',
+    )!.onPress!;
+    act(() => correction());
+    expect(score.props.accessibilityLabel).toBe('Alex, 0 von 1 Punkten');
+    expect(navigation.popToTop).not.toHaveBeenCalled();
+    expect(
+      await AsyncStorage.getItem('@ratekunst/completed-rounds'),
+    ).toBeNull();
+    act(() => score.props.onPress());
+    expect(alert).toHaveBeenCalledTimes(2);
+    const onReturn = alert.mock.calls[1][2]![0].onPress!;
     await act(async () => {
       onReturn();
       onReturn();
