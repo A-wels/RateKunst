@@ -63,9 +63,9 @@ const ParagraphFittedText = ({children, fontSize, color}: Props) => {
     ) {
       return;
     }
-    const fits = lines.every(
-      line => line.width <= width && line.y + line.height <= height,
-    );
+    // Native wrapping already bounds the ink width. Android's line.width can
+    // include trailing spaces beyond that bound; they must not shrink the text.
+    const fits = lines.every(line => line.y + line.height <= height);
     if (fits && fit.size === fontSize) {
       setFit({...fit, complete: true});
       return;

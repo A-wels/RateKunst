@@ -5,7 +5,9 @@ in normal layout, including before the first layout/text measurement arrives.
 An invisible, inaccessible copy wraps at the question window's actual width
 without a constrained height. Native `onTextLayout` reports every line; a
 bounded binary search chooses the largest font size that fits the available
-height, within 0.5 points of the requested size (minimum 4 points).
+height, within 0.5 points of the requested size (minimum 4 points). Native
+wrapping bounds the ink width; reported line width can include trailing spaces
+outside that bound and does not trigger shrinking.
 
 The previous paragraph filled its window absolutely and relied on Android's
 `adjustsFontSizeToFit`. With both dimensions exact, RN 0.72's bundled Yoga can

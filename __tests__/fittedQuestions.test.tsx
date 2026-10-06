@@ -166,3 +166,20 @@ it('ignores empty and invalid native reports and keeps displaying the question',
   expect(visible().props.children).toBeTruthy();
   settle(1600);
 });
+
+it('does not shrink fitting lines because Android includes trailing spaces in their width', () => {
+  mount();
+  resize(520, 120);
+  act(() =>
+    measurement()!.props.onTextLayout({
+      nativeEvent: {
+        lines: [
+          {text: 'Etwas, das man auf eine ', width: 530, height: 45, y: 0},
+          {text: 'Party mitbringt', width: 270, height: 45, y: 45},
+        ],
+      },
+    }),
+  );
+  expect(size()).toBe(38);
+  expect(measurement()).toBeUndefined();
+});
