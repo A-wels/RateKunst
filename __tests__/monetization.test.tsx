@@ -18,6 +18,7 @@ import {LocalizationProvider} from '../i18n/LocalizationContext';
 import AdBanner from '../components/AdBanner';
 import AdAgePrompt from '../components/AdAgePrompt';
 import GameScreen from '../pages/screens/GameScreen';
+import FittedText from '../components/FittedText';
 import SettingsScreen from '../pages/screens/SettingsScreen';
 
 jest.mock('../monetization/native', () => ({
@@ -219,18 +220,7 @@ it('records a win once when returning to the menu and ignores subsequent score t
     act(() => score.props.onPress());
     act(() => score.props.onPress());
     expect(alert).toHaveBeenCalledTimes(1);
-    const correction = alert.mock.calls[0][2]!.find(
-      button => button.text === 'Punkt korrigieren',
-    )!.onPress!;
-    act(() => correction());
-    expect(score.props.accessibilityLabel).toBe('Alex, 0 von 1 Punkten');
-    expect(navigation.popToTop).not.toHaveBeenCalled();
-    expect(
-      await AsyncStorage.getItem('@ratekunst/completed-rounds'),
-    ).toBeNull();
-    act(() => score.props.onPress());
-    expect(alert).toHaveBeenCalledTimes(2);
-    const onReturn = alert.mock.calls[1][2]![0].onPress!;
+    const onReturn = alert.mock.calls[0][2]![0].onPress!;
     await act(async () => {
       onReturn();
       onReturn();
@@ -240,6 +230,135 @@ it('records a win once when returning to the menu and ignores subsequent score t
     alert.mockRestore();
     jest.useRealTimers();
   }
+});
+
+it('restarts with the same setup and zero scores, counting each win once and waiting for the due ad', async () => {
+  jest.useFakeTimers({
+    doNotFake: ['nextTick', 'setImmediate', 'clearImmediate'],
+  });
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const params = {
+    names: ['Ada', 'Linus'],
+    packIds: ['standard'],
+    language: 'de',
+    pointsToWin: 1,
+  };
+  const navigation = {popToTop: jest.fn(), replace: jest.fn()};
+  const Game = () => {
+    const [round, setRound] = React.useState(0);
+    navigation.replace.mockImplementation(() => setRound(value => value + 1));
+    return <GameScreen key={round} navigation={navigation} route={{params}} />;
+  };
+  const score = (name: string) =>
+    tree!.root
+      .findAllByType(Pressable)
+      .find(node => node.props.accessibilityLabel?.startsWith(`${name},`))!;
+  const countdown = async () => {
+    for (let i = 0; i < 3; i++) {
+      await act(async () => jest.advanceTimersByTime(520));
+    }
+  };
+  try {
+    await act(async () => {
+      tree = renderer.create(
+        <LocalizationProvider>
+          <MonetizationProvider>
+            <Probe />
+            <Game />
+          </MonetizationProvider>
+        </LocalizationProvider>,
+      );
+    });
+    act(() => monetization.setGameActive(true));
+    await countdown();
+    act(() => score('Ada').props.onPress());
+    const firstButtons = alert.mock.calls[0][2]!;
+    expect(firstButtons.map(button => button.text)).toEqual([
+      'Zurück zum Menü',
+      'Neustart',
+    ]);
+    await act(async () => {
+      await firstButtons[1].onPress!();
+      await firstButtons[1].onPress!();
+      firstButtons[0].onPress!();
+    });
+    expect(navigation.replace).toHaveBeenCalledTimes(1);
+    expect(navigation.replace).toHaveBeenCalledWith('Game', params);
+    expect(navigation.popToTop).not.toHaveBeenCalled();
+    expect(await AsyncStorage.getItem('@ratekunst/completed-rounds')).toBe('1');
+    expect(native.showInterstitial).not.toHaveBeenCalled();
+    expect(score('Ada').props.accessibilityLabel).toBe('Ada, 0 von 1 Punkten');
+    expect(score('Linus').props.accessibilityLabel).toBe(
+      'Linus, 0 von 1 Punkten',
+    );
+    expect(tree!.root.findAllByType(FittedText)[0].props.children).toBe('3');
+    act(() => score('Linus').props.onPress());
+    expect(alert).toHaveBeenCalledTimes(1); // New round has its own countdown.
+    await countdown();
+    let dismissAd!: (shown: boolean) => void;
+    native.showInterstitial.mockImplementationOnce(
+      () =>
+        new Promise(resolve => {
+          dismissAd = resolve;
+        }),
+    );
+    act(() => score('Linus').props.onPress());
+    let restarting!: Promise<void>;
+    await act(async () => {
+      restarting = alert.mock.calls[1][2]![1]
+        .onPress!() as unknown as Promise<void>;
+    });
+    expect(await AsyncStorage.getItem('@ratekunst/completed-rounds')).toBe('2');
+    expect(native.showInterstitial).toHaveBeenCalledTimes(1);
+    expect(navigation.replace).toHaveBeenCalledTimes(1);
+    expect(monetization.gameActive).toBe(true);
+    expect(
+      tree!.root.findAll(node => String(node.type) === 'RateKunstBanner'),
+    ).toHaveLength(0);
+    expect(native.setGameActive).toHaveBeenLastCalledWith(false);
+    await act(async () => {
+      dismissAd(true);
+      await restarting;
+    });
+    expect(navigation.replace).toHaveBeenCalledTimes(2);
+    expect(native.setGameActive).toHaveBeenLastCalledWith(true);
+    expect(score('Linus').props.accessibilityLabel).toBe(
+      'Linus, 0 von 1 Punkten',
+    );
+    await countdown();
+    act(() => score('Ada').props.onPress());
+    await act(async () => alert.mock.calls[2][2]![0].onPress!());
+    expect(await AsyncStorage.getItem('@ratekunst/completed-rounds')).toBe('3');
+    expect(navigation.popToTop).toHaveBeenCalledTimes(1);
+  } finally {
+    alert.mockRestore();
+    jest.useRealTimers();
+  }
+});
+
+it('does not reactivate an old game when navigation changes while a restart ad is open', async () => {
+  await AsyncStorage.setItem('@ratekunst/completed-rounds', '1');
+  await mount();
+  act(() => monetization.setGameActive(true));
+  let dismissAd!: (shown: boolean) => void;
+  native.showInterstitial.mockImplementationOnce(
+    () =>
+      new Promise(resolve => {
+        dismissAd = resolve;
+      }),
+  );
+  let restarting!: Promise<void>;
+  await act(async () => {
+    restarting = monetization.restartRound();
+  });
+  expect(native.showInterstitial).toHaveBeenCalledTimes(1);
+  act(() => monetization.setGameActive(false));
+  await act(async () => {
+    dismissAd(true);
+    await restarting;
+  });
+  expect(monetization.gameActive).toBe(false);
+  expect(native.setGameActive).toHaveBeenLastCalledWith(false);
 });
 
 it('defers the age prompt until purchase ownership is checked', async () => {

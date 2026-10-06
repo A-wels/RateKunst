@@ -24,7 +24,8 @@ type MonetizationValue = MonetizationStatus & {
   gameActive: boolean;
   busy: boolean;
   setGameActive: (active: boolean) => void;
-  completeRound: () => void;
+  completeRound: () => Promise<void>;
+  restartRound: () => Promise<void>;
   purchase: () => Promise<void>;
   restore: () => Promise<void>;
   setAgeGroup: (group: AgeGroup) => Promise<void>;
@@ -39,7 +40,8 @@ const MonetizationContext = React.createContext<MonetizationValue>({
   gameActive: false,
   busy: false,
   setGameActive: () => {},
-  completeRound: () => {},
+  completeRound: async () => {},
+  restartRound: async () => {},
   purchase: async () => {},
   restore: async () => {},
   setAgeGroup: async () => {},
@@ -56,6 +58,7 @@ export const MonetizationProvider = ({children}: React.PropsWithChildren) => {
   statusRef.current = status;
   const activeGame = React.useRef(false);
   const gameEpoch = React.useRef(0);
+  const navigationRevision = React.useRef(0);
   const pendingBreak = React.useRef(false);
   const writeQueue = React.useRef<Promise<void>>(Promise.resolve());
   const showing = React.useRef(false);
@@ -92,7 +95,7 @@ export const MonetizationProvider = ({children}: React.PropsWithChildren) => {
     };
   }, []);
 
-  const showAtBreak = React.useCallback(() => {
+  const showAtBreak = React.useCallback(async () => {
     if (
       !pendingBreak.current ||
       activeGame.current ||
@@ -108,7 +111,7 @@ export const MonetizationProvider = ({children}: React.PropsWithChildren) => {
     // Attempt only at this completed-round transition. Never show a delayed ad
     // when inventory loads later or when a new game starts.
     showing.current = true;
-    native
+    await native
       .showInterstitial()
       .catch(error => console.warn('Could not show interstitial', error))
       .finally(() => {
@@ -118,6 +121,7 @@ export const MonetizationProvider = ({children}: React.PropsWithChildren) => {
 
   const setGameActive = React.useCallback(
     (active: boolean) => {
+      navigationRevision.current++;
       activeGame.current = active;
       setGameActiveState(active);
       native?.setGameActive(active);
@@ -133,7 +137,7 @@ export const MonetizationProvider = ({children}: React.PropsWithChildren) => {
 
   const completeRound = React.useCallback(() => {
     if (!native || statusRef.current.adsRemoved) {
-      return;
+      return Promise.resolve();
     }
     const completedEpoch = gameEpoch.current;
     writeQueue.current = writeQueue.current
@@ -149,13 +153,32 @@ export const MonetizationProvider = ({children}: React.PropsWithChildren) => {
           !statusRef.current.adsRemoved
         ) {
           pendingBreak.current = true;
-          showAtBreak();
+          await showAtBreak();
         }
       })
       .catch(error =>
         console.warn('Could not save completed round count', error),
       );
+    return writeQueue.current;
   }, [showAtBreak]);
+
+  const restartRound = React.useCallback(async () => {
+    // Keep the game layout (and its hidden banner) while allowing a due
+    // interstitial at this round boundary. Start gameplay after dismissal.
+    const revision = navigationRevision.current;
+    activeGame.current = false;
+    native?.setGameActive(false);
+    try {
+      await completeRound();
+    } finally {
+      if (mounted.current && navigationRevision.current === revision) {
+        activeGame.current = true;
+        gameEpoch.current++;
+        pendingBreak.current = false;
+        native?.setGameActive(true);
+      }
+    }
+  }, [completeRound]);
 
   const runAction = React.useCallback(
     async (action: () => Promise<MonetizationStatus>) => {
@@ -182,6 +205,7 @@ export const MonetizationProvider = ({children}: React.PropsWithChildren) => {
     busy,
     setGameActive,
     completeRound,
+    restartRound,
     purchase: () =>
       native ? runAction(() => native!.purchase()) : Promise.resolve(),
     restore: () =>

@@ -34,8 +34,9 @@ const delay = (milliseconds: number) =>
 
 const GameScreen = ({navigation, route}: any) => {
   const {t} = useLocalization();
-  const {completeRound} = useMonetization();
+  const {completeRound, restartRound} = useMonetization();
   const finished = React.useRef(false);
+  const mounted = React.useRef(true);
   const roundEnded = React.useRef(false);
   const {colors, mode} = useTheme();
   const styles = useThemedStyles(createStyles);
@@ -51,6 +52,13 @@ const GameScreen = ({navigation, route}: any) => {
   const [isCountingDown, setIsCountingDown] = React.useState(true);
   const recentQuestions = React.useRef<string[]>([]);
   const sequence = React.useRef(0);
+
+  React.useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   React.useEffect(() => {
     getQuestions(params.language).then(packs => {
@@ -151,21 +159,25 @@ const GameScreen = ({navigation, route}: any) => {
           {
             text: t('backToMenu'),
             onPress: () => {
-              if (!finished.current) {
-                finished.current = true;
-                completeRound();
+              if (finished.current) {
+                return;
               }
+              finished.current = true;
+              completeRound();
               navigation.popToTop();
             },
           },
           {
-            text: t('correctPoint'),
-            onPress: () => {
+            text: t('restart'),
+            onPress: async () => {
               if (finished.current) {
                 return;
               }
-              roundEnded.current = false;
-              removePoint(index);
+              finished.current = true;
+              await restartRound();
+              if (mounted.current) {
+                navigation.replace('Game', params);
+              }
             },
           },
         ],

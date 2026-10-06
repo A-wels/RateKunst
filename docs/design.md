@@ -6,9 +6,12 @@ round, read the question and letter, and award points quickly.
 A short tap on a player awards one point. Holding their score removes one point,
 clamped at zero, without advancing the question or restarting the countdown.
 Correction remains available during the countdown and through TalkBack's
-decrement action. An accidental winning point can be corrected in the winner
-dialog; only returning to the menu records a completed game. The tutorial and
-on-screen score hint explain the gesture in German and English.
+decrement action. The winner dialog offers returning to the menu or restarting
+directly with the same players, question packs, language and target score. Both
+actions record the completed game once. Restart replaces the game screen,
+resetting all scores, question history and countdown state; a due interstitial
+finishes before the new round starts, with no banner during the transition. The
+tutorial and on-screen score hint explain the gestures in German and English.
 
 ## Decisions
 
