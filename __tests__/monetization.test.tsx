@@ -260,6 +260,7 @@ it('shows consent and ad load errors locally and retries without resetting age o
     diagnostics: {
       version: '1.1.12 (100012)',
       bannerId: 'ca-app-pub-4579090895960312/2477133216',
+      interstitialId: 'ca-app-pub-4579090895960312/7672610412',
       adContentRating: 'G',
       ageProtected: false,
       consentBusy: false,
@@ -272,6 +273,8 @@ it('shows consent and ad load errors locally and retries without resetting age o
       bannerError: 'com.google.android.gms.ads / 3: No fill.',
       interstitialState: 'loaded',
       interstitialError: '',
+      interstitialShowError: 'com.google.android.gms.ads / 0: Display failed.',
+      interstitialSkipReason: 'Window focus was not restored.',
     },
   };
   native.initialize.mockResolvedValue(blocked);
@@ -299,6 +302,11 @@ it('shows consent and ad load errors locally and retries without resetting age o
   expect(text()).toContain('Banner-Ladefehler');
   expect(text()).toContain('No fill.');
   expect(text()).toContain('No published message for this app.');
+  expect(text()).toContain('Vollbild-Block-ID');
+  expect(text()).toContain('ca-app-pub-4579090895960312/7672610412');
+  expect(text()).toContain('Vollbild-Anzeigefehler');
+  expect(text()).toContain('Display failed.');
+  expect(text()).toContain('Window focus was not restored.');
   expect(text()).toContain('Nicht erforderlich');
   await act(async () => button('Werbung erneut laden').props.onPress());
   expect(native.retryAds).toHaveBeenCalledTimes(1);

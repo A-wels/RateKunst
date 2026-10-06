@@ -15,6 +15,10 @@ No additional React Native packages or billing server are required.
   winner dialog returns to the menu. Quitting a round does not count. The counter
   persists across app launches. Unavailable ads are skipped, with no delayed ad
   popping up during play. Starting another round invalidates a delayed counter write.
+  A loaded ad can wait up to one second for Android to restore window focus after
+  the winner dialog closes. A new game, backgrounding or a consent change cancels
+  that display attempt; missing inventory is never shown later when it loads.
+  A failed preload is retried at the next game start as well as on menu return.
 - `remove_ads` is a **one-time, non-consumable** product. It removes all ads forever
   for the owning Google Play account; there is no subscription and no consumption.
 - Purchases are checked on startup/foreground and can be restored from Settings.
@@ -41,7 +45,8 @@ No additional React Native packages or billing server are required.
 
 Open Settings → Ad diagnostics. The panel reports the installed version, purchase
 check, UMP status/form availability, age treatment, content limit, banner ad-unit
-ID, banner state/measured size, interstitial state and SDK error codes/messages.
+ID, banner state/measured size, interstitial ad-unit ID/state and SDK error codes/messages.
+Interstitial load errors, display errors and skipped display reasons are separate.
 It does not include purchase receipts, purchase tokens or device identifiers and
 is neither persisted nor uploaded. Share a screenshot of this panel when ads fail.
 The retry button rechecks ownership and UMP and creates a fresh banner request;

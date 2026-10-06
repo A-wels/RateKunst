@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Base64;
 import androidx.annotation.NonNull;
 import com.android.billingclient.api.*;
@@ -42,8 +43,10 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   private InterstitialAd interstitial;
   private Promise purchasePromise;
   private int consentRevision;
+  private int gameBreakRevision;
   private String billingError = "", consentError = "", bannerError = "", interstitialError = "";
   private String bannerState = "idle", interstitialState = "idle", bannerSize = "";
+  private String interstitialShowError = "", interstitialSkipReason = "";
 
   public MonetizationModule(ReactApplicationContext context) {
     super(context);
@@ -77,6 +80,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     WritableMap diagnostics = Arguments.createMap();
     diagnostics.putString("version", BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")");
     diagnostics.putString("bannerId", BuildConfig.ADMOB_BANNER_ID);
+    diagnostics.putString("interstitialId", BuildConfig.ADMOB_INTERSTITIAL_ID);
     diagnostics.putString("adContentRating", maxAdContentRating(ageGroup, BuildConfig.ADMOB_MAX_AD_CONTENT_RATING));
     diagnostics.putBoolean("ageProtected", needsAgeProtection(ageGroup));
     diagnostics.putBoolean("consentBusy", consentBusy);
@@ -92,6 +96,8 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     diagnostics.putString("bannerError", bannerError);
     diagnostics.putString("interstitialState", interstitialState);
     diagnostics.putString("interstitialError", interstitialError);
+    diagnostics.putString("interstitialShowError", interstitialShowError);
+    diagnostics.putString("interstitialSkipReason", interstitialSkipReason);
     value.putMap("diagnostics", diagnostics);
     return value;
   }
@@ -490,9 +496,13 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
 
   @ReactMethod public void setGameActive(boolean active) {
     main.post(() -> {
+      if (active) gameBreakRevision++;
       gameActive = active;
       refreshBanners();
-      if (!active) { gatherConsent(); loadInterstitial(); }
+      if (!active) gatherConsent();
+      // Retry a failed preload at game start as well as at the menu. Loading
+      // during a game is allowed; display is still restricted to game breaks.
+      loadInterstitial();
     });
   }
 
@@ -522,31 +532,59 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
 
   @ReactMethod public void showInterstitial(Promise promise) {
     main.post(() -> {
-      Activity activity = getCurrentActivity();
-      if (!canLoadAds() || gameActive || interstitialShowing || interstitial == null
-          || activity == null || activity.isFinishing() || !activity.hasWindowFocus()) {
-        promise.resolve(false); loadInterstitial(); return;
-      }
-      InterstitialAd ad = interstitial;
-      interstitial = null;
-      interstitialShowing = true;
-      refreshBanners();
-      ad.setFullScreenContentCallback(new FullScreenContentCallback() {
-        private void finished(boolean shown) {
-          interstitialShowing = false;
-          refreshBanners(); loadInterstitial(); promise.resolve(shown);
-        }
-        @Override public void onAdDismissedFullScreenContent() { finished(true); }
-        @Override public void onAdFailedToShowFullScreenContent(@NonNull AdError error) { finished(false); }
-      });
-      ad.show(activity);
+      interstitialShowError = "";
+      interstitialSkipReason = "";
+      showInterstitialAtBreak(promise, new InterstitialBreak(gameBreakRevision,
+          consentRevision, SystemClock.uptimeMillis() + 1000));
     });
+  }
+
+  private void showInterstitialAtBreak(Promise promise, InterstitialBreak gameBreak) {
+    Activity activity = getCurrentActivity();
+    boolean eligible = canLoadAds() && !gameActive && !interstitialShowing && interstitial != null
+        && activity != null && !activity.isFinishing() && !activity.isDestroyed();
+    InterstitialBreak.Decision decision = gameBreak.decide(SystemClock.uptimeMillis(),
+        gameBreakRevision, consentRevision, eligible, activity != null && activity.hasWindowFocus());
+    if (decision == InterstitialBreak.Decision.WAIT) {
+      // The winner alert's button callback can run before Android restores
+      // focus. Wait only for that dismissal, with a deadline and cancellation.
+      main.postDelayed(() -> showInterstitialAtBreak(promise, gameBreak), 50);
+      return;
+    }
+    if (decision == InterstitialBreak.Decision.SKIP) {
+      interstitialSkipReason = !eligible ? "No eligible loaded ad at the completed-game break."
+          : "Game break cancelled or window focus was not restored within one second.";
+      publish();
+      promise.resolve(false); loadInterstitial(); return;
+    }
+    InterstitialAd ad = interstitial;
+    interstitial = null;
+    interstitialShowing = true;
+    refreshBanners();
+    ad.setFullScreenContentCallback(new FullScreenContentCallback() {
+      private void finished(boolean shown) {
+        interstitialShowing = false;
+        interstitialState = "idle";
+        refreshBanners(); loadInterstitial(); promise.resolve(shown);
+      }
+      @Override public void onAdShowedFullScreenContent() { publish(); }
+      @Override public void onAdDismissedFullScreenContent() { finished(true); }
+      @Override public void onAdFailedToShowFullScreenContent(@NonNull AdError error) {
+        interstitialShowError = adError(error);
+        publish();
+        finished(false);
+      }
+    });
+    ad.show(activity);
   }
 
   @Override public void onHostResume() {
     main.post(() -> { if (!destroyed) { connect(null); for (BannerView view : banners) view.resumeAd(); } });
   }
-  @Override public void onHostPause() { for (BannerView view : banners) view.pauseAd(); }
+  @Override public void onHostPause() {
+    gameBreakRevision++;
+    for (BannerView view : banners) view.pauseAd();
+  }
   @Override public void onHostDestroy() { for (BannerView view : banners) view.destroyAd(); }
   @Override public void invalidate() {
     destroyed = true;

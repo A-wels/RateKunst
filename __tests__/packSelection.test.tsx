@@ -31,6 +31,29 @@ const press = (label: string) => {
   act(() => button!.props.onPress());
 };
 
+it('selects and persists Standard on first boot but preserves a later empty selection', async () => {
+  const mount = async () => {
+    await act(async () => {
+      tree = renderer.create(
+        <LocalizationProvider>
+          <StartScreen navigation={navigation} />
+        </LocalizationProvider>,
+      );
+    });
+  };
+  await mount();
+  expect(tree!.root.findByType(PackPicker).props.selectedIds).toEqual([
+    'standard',
+  ]);
+  expect(await AsyncStorage.getItem('customSet')).toBe('["standard"]');
+  press('Themenpacks auswählen');
+  await act(async () => press('Standard'));
+  expect(await AsyncStorage.getItem('customSet')).toBe('[]');
+  act(() => tree!.unmount());
+  await mount();
+  expect(tree!.root.findByType(PackPicker).props.selectedIds).toEqual([]);
+});
+
 it('filters packs without losing hidden selections, and announces checkbox state', async () => {
   const Harness = () => {
     const [selectedIds, onChange] = React.useState(['standard']);

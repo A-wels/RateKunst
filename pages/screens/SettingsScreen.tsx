@@ -297,6 +297,9 @@ const SettingsScreen = () => {
                           diagnostics.interstitialState,
                         )}`,
                         `${t('adBannerId')}: ${diagnostics.bannerId}`,
+                        `${t('adInterstitialId')}: ${
+                          diagnostics.interstitialId || '—'
+                        }`,
                       ].join('\n')}
                     </Text>
                     {(
@@ -306,6 +309,14 @@ const SettingsScreen = () => {
                         ['adConsentError', diagnostics.consentError],
                         ['adBannerError', diagnostics.bannerError],
                         ['adInterstitialError', diagnostics.interstitialError],
+                        [
+                          'adInterstitialShowError',
+                          diagnostics.interstitialShowError || '',
+                        ],
+                        [
+                          'adInterstitialSkipReason',
+                          diagnostics.interstitialSkipReason || '',
+                        ],
                       ] as [TranslationKey, string][]
                     )
                       .filter(([, message]) => message)

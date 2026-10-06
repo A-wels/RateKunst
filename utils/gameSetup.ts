@@ -53,7 +53,7 @@ export const loadGameSetup = async () => {
       ? names.filter((name): name is string => typeof name === 'string')
       : [],
     packIds: migrateSelectedPacks(
-      parse(savedPacks),
+      savedPacks === null ? ['standard'] : parse(savedPacks),
       Array.isArray(customIds)
         ? customIds.filter((id): id is string => typeof id === 'string')
         : [],

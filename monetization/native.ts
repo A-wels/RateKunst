@@ -4,6 +4,7 @@ export type AgeGroup = 'under16' | 'teen' | 'adult';
 export type MonetizationDiagnostics = {
   version: string;
   bannerId: string;
+  interstitialId?: string;
   adContentRating: string;
   ageProtected: boolean;
   consentBusy: boolean;
@@ -19,6 +20,8 @@ export type MonetizationDiagnostics = {
   bannerError: string;
   interstitialState: 'idle' | 'loading' | 'loaded' | 'failed';
   interstitialError: string;
+  interstitialShowError?: string;
+  interstitialSkipReason?: string;
 };
 export type MonetizationStatus = {
   adsRemoved: boolean;
