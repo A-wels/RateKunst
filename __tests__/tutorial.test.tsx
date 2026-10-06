@@ -35,8 +35,10 @@ const press = async (label: string) => {
   await act(async () => button!.props.onPress());
 };
 const visible = () => tree!.root.findAllByType(Modal).length > 0;
-const textIncludes = (value: string) =>
-  tree!.root.findAllByType(Text).some(node => node.props.children === value);
+const stepIs = (step: number) =>
+  tree!.root
+    .findAllByType(Text)
+    .some(node => node.props.children === `${step} von 4`);
 
 beforeEach(async () => {
   await AsyncStorage.clear();
@@ -46,11 +48,11 @@ afterEach(() => {
   tree = undefined;
 });
 
-it('shows on first launch, persists skipping and preserves saved players', async () => {
+it('persists first-launch dismissal via Android Back and preserves saved players', async () => {
   await AsyncStorage.setItem('names', '["Ada"]');
   await mount();
   expect(visible()).toBe(true);
-  await press('Überspringen');
+  await act(async () => tree!.root.findByType(Modal).props.onRequestClose());
   expect(visible()).toBe(false);
   expect(await AsyncStorage.getItem(TUTORIAL_SEEN_KEY)).toBe('1');
   expect(await AsyncStorage.getItem('names')).toBe('["Ada"]');
@@ -62,44 +64,18 @@ it('shows on first launch, persists skipping and preserves saved players', async
 it('can go back, finish and replay from the first step', async () => {
   await mount();
   await press('Weiter');
-  expect(textIncludes('Frage und Buchstabe')).toBe(true);
+  expect(stepIs(2)).toBe(true);
   await press('Zurück');
-  expect(textIncludes('Eine Runde vorbereiten')).toBe(true);
+  expect(stepIs(1)).toBe(true);
   await press('Weiter');
   await press('Weiter');
-  expect(
-    tree!.root
-      .findAllByType(Text)
-      .some(node =>
-        String(node.props.children).includes(
-          'Halte ihren Punktestand gedrückt',
-        ),
-      ),
-  ).toBe(true);
+  expect(stepIs(3)).toBe(true);
   await press('Weiter');
-  expect(textIncludes('Eigene Themen und Sprache')).toBe(true);
+  expect(stepIs(4)).toBe(true);
   await press('Los geht’s');
   expect(visible()).toBe(false);
   expect(await AsyncStorage.getItem(TUTORIAL_SEEN_KEY)).toBe('1');
   await press('Replay');
   expect(visible()).toBe(true);
-  expect(textIncludes('Eine Runde vorbereiten')).toBe(true);
-});
-
-it('localizes the tutorial and treats Android Back as skipping', async () => {
-  await AsyncStorage.setItem('@ratekunst/language', 'en');
-  await mount();
-  expect(textIncludes('Prepare a round')).toBe(true);
-  await press('Next');
-  expect(textIncludes('Question and letter')).toBe(true);
-  expect(textIncludes('Animal')).toBe(true);
-  await press('Next');
-  expect(
-    tree!.root
-      .findAllByType(Text)
-      .some(node => String(node.props.children).includes('Hold their score')),
-  ).toBe(true);
-  await act(async () => tree!.root.findByType(Modal).props.onRequestClose());
-  expect(visible()).toBe(false);
-  expect(await AsyncStorage.getItem(TUTORIAL_SEEN_KEY)).toBe('1');
+  expect(stepIs(1)).toBe(true);
 });

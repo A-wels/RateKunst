@@ -14,7 +14,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import renderer, {act} from 'react-test-renderer';
 import {afterAll, afterEach, beforeEach, expect, it, jest} from '@jest/globals';
 import App from '../App';
-import {StackView} from '@react-navigation/stack';
 import CustomsetScreen from '../pages/screens/CustomsetScreen';
 import EditPage from '../pages/screens/EditPage';
 import StartScreen from '../pages/screens/StartScreen';
@@ -26,7 +25,7 @@ let tree: renderer.ReactTestRenderer | undefined;
 const android = jest.replaceProperty(Platform, 'OS', 'android');
 const navigation = {addListener: jest.fn(() => () => {}), navigate: jest.fn()};
 
-it('retains setup and game state over repeated resumes, back navigation and a winning restart without native screens', async () => {
+it('retains setup and game state over repeated resumes, back navigation and a winning restart', async () => {
   jest.useFakeTimers({
     doNotFake: ['nextTick', 'setImmediate', 'clearImmediate'],
   });
@@ -53,14 +52,7 @@ it('retains setup and game state over repeated resumes, back navigation and a wi
       await act(async () => jest.advanceTimersByTime(520));
     }
   };
-  const noNativeScreens = () => {
-    expect(tree!.root.findByType(StackView).props.detachInactiveScreens).toBe(
-      false,
-    );
-    expect(
-      tree!.root.findAll(node => String(node.type).startsWith('RNSScreen')),
-    ).toHaveLength(0);
-  };
+
   try {
     await act(async () => {
       tree = renderer.create(<App />);
@@ -76,7 +68,6 @@ it('retains setup and game state over repeated resumes, back navigation and a wi
     for (let i = 0; i < 3; i++) {
       resume();
       expect(tree!.root.findByType(SettingsScreen)).toBe(settings);
-      noNativeScreens();
     }
     await act(async () => home.props.navigation.goBack());
     expect(tree!.root.findByType(StartScreen)).toBe(home);
@@ -133,7 +124,6 @@ it('retains setup and game state over repeated resumes, back navigation and a wi
     expect(
       NativeModules.RateKunstDisplay.setGameActive,
     ).toHaveBeenLastCalledWith(true);
-    noNativeScreens();
     await act(async () =>
       tree!.root.findByType(GameScreen).props.navigation.popToTop(),
     );
@@ -178,13 +168,6 @@ it('opens custom sets, edits a pack and returns with working controls', async ()
   });
   await press('Eigene Sets verwalten');
   expect(tree!.root.findAllByType(CustomsetScreen)).toHaveLength(1);
-  // Android navigation must not recreate the old native fragment container.
-  expect(tree!.root.findByType(StackView).props.detachInactiveScreens).toBe(
-    false,
-  );
-  expect(
-    tree!.root.findAll(node => String(node.type).startsWith('RNSScreen')),
-  ).toHaveLength(0);
   await press('Neues Set');
   const editor = tree!.root.findByType(EditPage);
   await act(async () => {

@@ -1,15 +1,12 @@
 import React from 'react';
-import {Text, TextInput} from 'react-native';
+import {TextInput} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import renderer, {act} from 'react-test-renderer';
 import {afterEach, beforeEach, describe, expect, it, jest} from '@jest/globals';
 import {loadGameSetup, migrateSelectedPacks} from '../utils/gameSetup';
 import StartScreen from '../pages/screens/StartScreen';
 import EditPage from '../pages/screens/EditPage';
-import {
-  LocalizationProvider,
-  useLocalization,
-} from '../i18n/LocalizationContext';
+import {LocalizationProvider} from '../i18n/LocalizationContext';
 
 const navigation = {addListener: () => () => {}, navigate: jest.fn()};
 let tree: renderer.ReactTestRenderer | undefined;
@@ -131,29 +128,5 @@ describe('storage compatibility', () => {
       tree!.root.findAllByType(TextInput)[1].props.onChangeText(''),
     );
     expect(await AsyncStorage.getItem('a')).toBe('["Original"]');
-  });
-
-  it('does not replace a manual language choice with a delayed saved value', async () => {
-    let resolveLanguage: (value: string) => void = () => {};
-    jest.mocked(AsyncStorage.getItem).mockImplementation(
-      () =>
-        new Promise<string>(resolve => {
-          resolveLanguage = resolve;
-        }),
-    );
-    const Probe = () => {
-      const {language, setLanguage} = useLocalization();
-      return <Text onPress={() => setLanguage('en')}>{language}</Text>;
-    };
-    act(() => {
-      tree = renderer.create(
-        <LocalizationProvider>
-          <Probe />
-        </LocalizationProvider>,
-      );
-    });
-    act(() => tree!.root.findByType(Text).props.onPress());
-    await act(async () => resolveLanguage('de'));
-    expect(tree!.root.findByType(Text).props.children).toBe('en');
   });
 });

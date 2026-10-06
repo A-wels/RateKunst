@@ -7,6 +7,10 @@
 RateKunst ist ein Spiel für Android. Die Spieler müssen möglichst schnell Antworten finden, welche zu den genannten Themen passen.
 Die App enthält zehn vorgefertigte Themenpacks sowie eigene Sets. Oberfläche und
 integrierte Packs stehen vollständig auf Deutsch und Englisch zur Verfügung.
+Die Packs enthalten insgesamt 922 Fragen pro Sprache. Die Themen reichen von
+Alltag und Essen bis zu Fantasy, Spielen und schwarzem Humor. Neue Fragen sollen
+viele mögliche Antworten zulassen und überwiegend ohne spezielles Fachwissen
+oder Kenntnis einzelner Serien und Spiele funktionieren.
 Alle eingebauten Packs verwenden dieselbe bilinguale Datenstruktur. Beim ersten
 Start erscheint eine überspringbare Spielanleitung, die im Menü erneut geöffnet
 werden kann. Die Oberfläche verwendet schlichte Listen und beschriftete Aktionen;
@@ -53,6 +57,11 @@ npm run typecheck
 npm run lint
 npm test -- --runInBand
 ```
+
+Die Tests prüfen Spielabläufe, Navigation, Speicherung, Darstellung sowie Werbung
+und Käufe. Bei Fragen prüfen sie spielbare, duplikatfreie Packs und die Zuordnung
+zwischen Deutsch und Englisch. Feste Formulierungen und interne Komponentenstrukturen
+werden nicht als eigenständige Anforderungen getestet.
 
 ## Interne Tests veröffentlichen
 
