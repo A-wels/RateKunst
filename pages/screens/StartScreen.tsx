@@ -1,3 +1,4 @@
+import ScrollView from '../../components/RecoverableScrollView';
 import React from 'react';
 import AdAgePrompt from '../../components/AdAgePrompt';
 import {useTheme, useThemedStyles} from '../../theme/ThemeContext';
@@ -5,7 +6,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,

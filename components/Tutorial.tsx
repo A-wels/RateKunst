@@ -1,7 +1,8 @@
+import ScrollView from './RecoverableScrollView';
 import React from 'react';
 import AdBanner from './AdBanner';
 import {useTheme, useThemedStyles} from '../theme/ThemeContext';
-import {ScrollView, StatusBar, StyleSheet, Text, View} from 'react-native';
+import {StatusBar, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {ThemeColors, spacing} from '../constants/theme';
 import {useLocalization, TranslationKey} from '../i18n/LocalizationContext';

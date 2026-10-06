@@ -3,6 +3,7 @@ import {
   AppState,
   Modal,
   Pressable,
+  ScrollView,
   Platform,
   Text,
   TextInput,
@@ -15,7 +16,12 @@ import ForegroundModal from '../components/ForegroundModal';
 import PackPicker from '../components/PackPicker';
 import Tutorial from '../components/Tutorial';
 import {LocalizationProvider} from '../i18n/LocalizationContext';
-import {useInputRecovery} from '../hooks/useInputRecovery';
+import {
+  InputRecoveryProvider,
+  useInputRecovery,
+} from '../hooks/useInputRecovery';
+import StartScreen from '../pages/screens/StartScreen';
+import GameScreen from '../pages/screens/GameScreen';
 
 let tree: renderer.ReactTestRenderer | undefined;
 let listeners: Map<string, Set<(state: any) => void>>;
@@ -72,6 +78,95 @@ it('releases the content responder after a notification shade or background inte
   expect([...listeners.values()].every(handlers => handlers.size === 0)).toBe(
     true,
   );
+});
+
+it('recreates interrupted scroll content while keeping the screen, draft input and offset', async () => {
+  await AsyncStorage.setItem('@ratekunst/tutorial-seen', '1');
+  await act(async () => {
+    tree = renderer.create(
+      <InputRecoveryProvider>
+        <LocalizationProvider>
+          <StartScreen navigation={{addListener: () => () => {}}} />
+        </LocalizationProvider>
+      </InputRecoveryProvider>,
+    );
+  });
+  const input = () =>
+    tree!.root
+      .findAllByType(TextInput)
+      .find(node => node.props.accessibilityLabel === 'Name eingeben')!;
+  act(() => input().props.onChangeText('Ada'));
+  const screen = tree!.root.findByType(StartScreen);
+  let scroll = tree!.root.findByType(ScrollView);
+  act(() =>
+    scroll.props.onScroll({nativeEvent: {contentOffset: {x: 0, y: 180}}}),
+  );
+  for (let i = 0; i < 2; i++) {
+    // Include batched pause/resume to ensure an interrupted stream is replaced.
+    act(() => {
+      listeners.get('change')?.forEach(listener => listener('background'));
+      listeners.get('change')?.forEach(listener => listener('active'));
+    });
+    const next = tree!.root.findByType(ScrollView);
+    expect(next).not.toBe(scroll);
+    expect(next.props.contentOffset).toEqual({x: 0, y: 180});
+    expect(tree!.root.findByType(StartScreen)).toBe(screen);
+    expect(input().props.value).toBe('Ada');
+    scroll = next;
+  }
+  await act(async () =>
+    tree!.root
+      .findAllByType(Pressable)
+      .find(node => node.props.accessibilityLabel === 'Spieler hinzufügen')!
+      .props.onPress(),
+  );
+  expect(await AsyncStorage.getItem('names')).toBe('["Ada"]');
+});
+
+it('retains the current round and score through blur/focus and allows correction afterward', async () => {
+  jest.useFakeTimers({
+    doNotFake: ['nextTick', 'setImmediate', 'clearImmediate'],
+  });
+  try {
+    await act(async () => {
+      tree = renderer.create(
+        <InputRecoveryProvider>
+          <LocalizationProvider>
+            <GameScreen
+              navigation={{popToTop: jest.fn()}}
+              route={{
+                params: {
+                  names: ['Ada'],
+                  packIds: ['standard'],
+                  pointsToWin: 10,
+                  language: 'de',
+                },
+              }}
+            />
+          </LocalizationProvider>
+        </InputRecoveryProvider>,
+      );
+    });
+    for (let i = 0; i < 3; i++) {
+      await act(async () => jest.advanceTimersByTime(520));
+    }
+    const score = () =>
+      tree!.root
+        .findAllByType(Pressable)
+        .find(node => node.props.accessibilityLabel?.startsWith('Ada,'))!;
+    act(() => score().props.onPress());
+    const screen = tree!.root.findByType(GameScreen);
+    const scroll = tree!.root.findByType(ScrollView);
+    emit('blur');
+    emit('focus');
+    expect(tree!.root.findByType(ScrollView)).not.toBe(scroll);
+    expect(tree!.root.findByType(GameScreen)).toBe(screen);
+    expect(score().props.accessibilityLabel).toBe('Ada, 1 von 10 Punkten');
+    act(() => score().props.onLongPress());
+    expect(score().props.accessibilityLabel).toBe('Ada, 0 von 10 Punkten');
+  } finally {
+    jest.useRealTimers();
+  }
 });
 
 it('recreates the native window even when background/resume events are batched', () => {

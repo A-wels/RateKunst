@@ -1,3 +1,4 @@
+import RecoverableScrollView from '../../components/RecoverableScrollView';
 import React from 'react';
 import {useThemedStyles} from '../../theme/ThemeContext';
 import {Alert, FlatList, StyleSheet, Text, View} from 'react-native';
@@ -101,6 +102,9 @@ const CustomsetScreen = ({navigation}: any) => {
   return (
     <SafeAreaView style={styles.screen} edges={['left', 'right', 'bottom']}>
       <FlatList
+        renderScrollComponent={scrollProps => (
+          <RecoverableScrollView {...scrollProps} />
+        )}
         data={customSets}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.content}

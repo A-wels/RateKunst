@@ -1,14 +1,8 @@
+import ScrollView from '../../components/RecoverableScrollView';
 import React from 'react';
 import Button from '../../components/Button';
 import {useMonetization} from '../../monetization/MonetizationContext';
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import {Alert, Pressable, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {spacing, radii, ThemeColors} from '../../constants/theme';
 import {TranslationKey, useLocalization} from '../../i18n/LocalizationContext';
