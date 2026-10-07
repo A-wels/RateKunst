@@ -44,9 +44,6 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   private Promise purchasePromise;
   private int consentRevision;
   private int gameBreakRevision;
-  private String billingError = "", consentError = "", bannerError = "", interstitialError = "";
-  private String bannerState = "idle", interstitialState = "idle", bannerSize = "";
-  private String interstitialShowError = "", interstitialSkipReason = "";
 
   public MonetizationModule(ReactApplicationContext context) {
     super(context);
@@ -77,28 +74,6 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     value.putString("ageGroup", ageGroup);
     value.putBoolean("privacyOptionsRequired", consent.getPrivacyOptionsRequirementStatus()
         == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED);
-    WritableMap diagnostics = Arguments.createMap();
-    diagnostics.putString("version", BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")");
-    diagnostics.putString("bannerId", BuildConfig.ADMOB_BANNER_ID);
-    diagnostics.putString("interstitialId", BuildConfig.ADMOB_INTERSTITIAL_ID);
-    diagnostics.putString("adContentRating", maxAdContentRating(ageGroup, BuildConfig.ADMOB_MAX_AD_CONTENT_RATING));
-    diagnostics.putBoolean("ageProtected", needsAgeProtection(ageGroup));
-    diagnostics.putBoolean("consentBusy", consentBusy);
-    diagnostics.putInt("consentStatus", consent.getConsentStatus());
-    diagnostics.putBoolean("consentFormAvailable", consent.isConsentFormAvailable());
-    diagnostics.putString("billingError", billingError);
-    diagnostics.putString("productId", PRODUCT);
-    diagnostics.putString("purchaseOptionId", PURCHASE_OPTION);
-    diagnostics.putString("productError", productError);
-    diagnostics.putString("consentError", consentError);
-    diagnostics.putString("bannerState", bannerState);
-    diagnostics.putString("bannerSize", bannerSize);
-    diagnostics.putString("bannerError", bannerError);
-    diagnostics.putString("interstitialState", interstitialState);
-    diagnostics.putString("interstitialError", interstitialError);
-    diagnostics.putString("interstitialShowError", interstitialShowError);
-    diagnostics.putString("interstitialSkipReason", interstitialSkipReason);
-    value.putMap("diagnostics", diagnostics);
     return value;
   }
 
@@ -128,12 +103,10 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
           List<Promise> waiters = new ArrayList<>(connectionWaiters);
           connectionWaiters.clear();
           if (result.getResponseCode() == BillingClient.BillingResponseCode.OK) {
-            billingError = "";
             if (waiters.isEmpty()) queryOwned(null);
             else for (Promise waiter : waiters) queryOwned(waiter);
             queryProduct(null);
           } else {
-            billingError = "Connection " + result.getResponseCode() + ": " + result.getDebugMessage();
             publish();
             for (Promise waiter : waiters) waiter.reject("STORE_UNAVAILABLE", result.getDebugMessage());
           }
@@ -147,13 +120,11 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     billing.queryPurchasesAsync(QueryPurchasesParams.newBuilder()
         .setProductType(BillingClient.ProductType.INAPP).build(), (result, purchases) -> main.post(() -> {
       if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
-        billingError = "Ownership " + result.getResponseCode() + ": " + result.getDebugMessage();
         publish();
         if (promise != null) promise.reject("STORE_UNAVAILABLE", result.getDebugMessage());
         return; // Preserve verified offline entitlement; never mistake an error for a refund.
       }
       boolean owned = false;
-      billingError = "";
       boolean uncertain = false;
       for (Purchase purchase : purchases) {
         if (purchase.getProducts().contains(PRODUCT)
@@ -168,7 +139,6 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
       }
       if (uncertain) {
         purchaseChecked = false;
-        billingError = "Purchase signature verification failed.";
       }
       if (owned && purchasePromise != null) {
         purchasePromise.resolve(status());
@@ -372,26 +342,6 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
 
   @ReactMethod public void restore(Promise promise) { main.post(() -> connect(promise)); }
 
-  @ReactMethod public void retryAds(Promise promise) {
-    main.post(() -> {
-      if (destroyed || removed || gameActive || consentBusy || initializing || connecting) {
-        promise.resolve(status()); return;
-      }
-      consentGathered = false;
-      consentRevision++;
-      interstitial = null;
-      bannerState = "idle";
-      bannerError = "";
-      bannerSize = "";
-      interstitialError = "";
-      for (BannerView view : new ArrayList<>(banners)) view.destroyAd();
-      publish();
-      // Recheck ownership and UMP. Never reset a saved consent decision or
-      // enable ads by bypassing either gate merely to retry an ad request.
-      connect(promise);
-    });
-  }
-
   @ReactMethod public void setAgeGroup(String group, Promise promise) {
     main.post(() -> {
       if (!Arrays.asList("under16", "teen", "adult").contains(group)) {
@@ -424,7 +374,6 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     Activity activity = getCurrentActivity();
     if (activity == null || activity.isFinishing()) return;
     consentBusy = true;
-    consentError = "";
     publish();
     final int revision = ++consentRevision;
     MobileAds.setRequestConfiguration(new RequestConfiguration.Builder()
@@ -442,9 +391,8 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   private void finishConsent(int revision, FormError error) {
     if (revision != consentRevision || destroyed) return;
     consentBusy = false;
-    consentError = error == null ? "" : error.getErrorCode() + ": " + error.getMessage();
     // A valid previous UMP decision may still allow ads after a network error.
-    // Otherwise allow a later foreground/manual attempt instead of latching
+    // Otherwise allow a later foreground attempt instead of latching
     // an unsuccessful first consent request for the entire app session.
     consentGathered = error == null || consent.canRequestAds();
     if (removed || !consent.canRequestAds()) { publish(); return; }
@@ -466,7 +414,6 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
       if (activity == null || gameActive || removed) { promise.resolve(status()); return; }
       interstitial = null;
       UserMessagingPlatform.showPrivacyOptionsForm(activity, error -> main.post(() -> {
-        consentError = error == null ? "" : error.getErrorCode() + ": " + error.getMessage();
         refreshBanners(); loadInterstitial(); publish();
         if (error != null) promise.reject("CONSENT_FAILED", error.getMessage());
         else promise.resolve(status());
@@ -480,16 +427,6 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   }
   boolean canShowBanner() { return canLoadAds() && !gameActive && !interstitialShowing; }
   String bannerId() { return BuildConfig.ADMOB_BANNER_ID; }
-  static String adError(AdError error) {
-    return error.getDomain() + " / " + error.getCode() + ": " + error.getMessage();
-  }
-  void bannerResult(String state, String error) {
-    bannerState = state; bannerError = error; publish();
-  }
-  void bannerSize(int width, int height) {
-    String size = width + " × " + height + " px";
-    if (!size.equals(bannerSize)) { bannerSize = size; publish(); }
-  }
   void attach(BannerView view) { banners.add(view); view.refresh(); }
   void detach(BannerView view) { banners.remove(view); view.destroyAd(); }
   private void refreshBanners() { for (BannerView view : new ArrayList<>(banners)) view.refresh(); }
@@ -509,31 +446,24 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   private void loadInterstitial() {
     if (!canLoadAds() || interstitial != null || interstitialLoading || interstitialShowing) return;
     interstitialLoading = true;
-    interstitialState = "loading";
-    interstitialError = "";
-    publish();
     int revision = consentRevision;
     InterstitialAd.load(getReactApplicationContext(), BuildConfig.ADMOB_INTERSTITIAL_ID,
         new AdRequest.Builder().build(), new InterstitialAdLoadCallback() {
           @Override public void onAdLoaded(@NonNull InterstitialAd ad) {
             interstitialLoading = false;
             if (revision == consentRevision && canLoadAds()) {
-              interstitial = ad; interstitialState = "loaded"; publish();
+              interstitial = ad;
             } else loadInterstitial();
           }
           @Override public void onAdFailedToLoad(@NonNull LoadAdError error) {
             interstitialLoading = false;
-            if (revision == consentRevision) {
-              interstitialState = "failed"; interstitialError = adError(error); publish();
-            } else loadInterstitial();
+            if (revision != consentRevision) loadInterstitial();
           }
         });
   }
 
   @ReactMethod public void showInterstitial(Promise promise) {
     main.post(() -> {
-      interstitialShowError = "";
-      interstitialSkipReason = "";
       showInterstitialAtBreak(promise, new InterstitialBreak(gameBreakRevision,
           consentRevision, SystemClock.uptimeMillis() + 1000));
     });
@@ -552,9 +482,6 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
       return;
     }
     if (decision == InterstitialBreak.Decision.SKIP) {
-      interstitialSkipReason = !eligible ? "No eligible loaded ad at the completed-game break."
-          : "Game break cancelled or window focus was not restored within one second.";
-      publish();
       promise.resolve(false); loadInterstitial(); return;
     }
     InterstitialAd ad = interstitial;
@@ -564,14 +491,10 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     ad.setFullScreenContentCallback(new FullScreenContentCallback() {
       private void finished(boolean shown) {
         interstitialShowing = false;
-        interstitialState = "idle";
         refreshBanners(); loadInterstitial(); promise.resolve(shown);
       }
-      @Override public void onAdShowedFullScreenContent() { publish(); }
       @Override public void onAdDismissedFullScreenContent() { finished(true); }
       @Override public void onAdFailedToShowFullScreenContent(@NonNull AdError error) {
-        interstitialShowError = adError(error);
-        publish();
         finished(false);
       }
     });

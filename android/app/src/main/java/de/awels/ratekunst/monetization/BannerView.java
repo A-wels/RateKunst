@@ -2,7 +2,6 @@ package de.awels.ratekunst.monetization;
 
 import android.view.Gravity;
 import android.widget.FrameLayout;
-import androidx.annotation.NonNull;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.google.android.gms.ads.*;
 
@@ -18,7 +17,6 @@ public final class BannerView extends FrameLayout {
     measure(MeasureSpec.makeMeasureSpec(getWidth(), MeasureSpec.EXACTLY),
         MeasureSpec.makeMeasureSpec(getHeight(), MeasureSpec.EXACTLY));
     layout(getLeft(), getTop(), getRight(), getBottom());
-    if (module != null) module.bannerSize(ad.getWidth(), ad.getHeight());
   }
 
   public BannerView(ThemedReactContext context) {
@@ -55,15 +53,10 @@ public final class BannerView extends FrameLayout {
     ad.setAdListener(new AdListener() {
       @Override public void onAdLoaded() {
         if (ad != loadingAd) return;
-        module.bannerResult("loaded", "");
         requestLayout();
-      }
-      @Override public void onAdFailedToLoad(@NonNull LoadAdError error) {
-        if (ad == loadingAd) module.bannerResult("failed", MonetizationModule.adError(error));
       }
     });
     addView(ad, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-    module.bannerResult("loading", "");
     ad.loadAd(new AdRequest.Builder().build());
   }
   void destroyAd() {

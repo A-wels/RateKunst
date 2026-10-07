@@ -6,7 +6,7 @@ No additional React Native packages or billing server are required.
 
 ## Behavior
 
-- A labeled 320 × 50 bottom banner occupies its own layout area in the menu,
+- A 320 × 50 bottom banner occupies its own layout area in the menu,
   settings and custom-set editor/list. Picker/tutorial dialogs have their own
   footer; the underlying banner is destroyed when its native window loses focus.
 - The gameplay screen has no banner. The native bridge independently prevents
@@ -41,25 +41,13 @@ No additional React Native packages or billing server are required.
 
 ## Production configuration
 
-### Diagnosing missing ads without ADB
-
-Open Settings → Ad diagnostics. The panel reports the installed version, purchase
-check, UMP status/form availability, age treatment, content limit, banner ad-unit
-ID, banner state/measured size, interstitial ad-unit ID/state and SDK error codes/messages.
-Interstitial load errors, display errors and skipped display reasons are separate.
-It does not include purchase receipts, purchase tokens or device identifiers and
-is neither persisted nor uploaded. Share a screenshot of this panel when ads fail.
-The retry button rechecks ownership and UMP and creates a fresh banner request;
-it does not reset consent, change age, bypass gates or request ads during a game.
-An unsuccessful first UMP request can also be retried on a later foreground event.
-
 `BannerView` must measure/layout its Android children after asynchronous AdMob
 updates: React Native 0.72's `ReactViewGroup.requestLayout()` is intentionally a
 no-op. A posted, coalesced native measure/layout pass preserves the dimensions
-assigned by Yoga while laying out the ad's child tree. Banner callbacks report
-load success/failure; empty inventory and configuration errors are distinguished
-from layout failures. Actual ad inventory and consent messages still need device
-verification against the production AdMob configuration.
+assigned by Yoga while laying out the ad's child tree. Actual ad inventory and
+consent messages still need device verification against the production AdMob
+configuration. An unsuccessful first UMP request is retried on a later foreground
+event.
 
 The native bridge carries the `@ReactModule` registration required by React Native's
 class-based lookup when `BannerView` first resolves the module. Android unit tests
@@ -96,9 +84,8 @@ IDs, Android application ID or the Play public licensing key.
    An unnamed sole legacy default offer is supported for older Play responses.
    Product details refresh on foreground/restore even while Billing is already
    connected. Settings also offers **Reload purchase offer** when unavailable.
-   Diagnostic product errors include BillingResult and per-product unfetched
-   status codes; ownership errors remain separate. Tokens/details are fetched
-   fresh at checkout and never cached for a later purchase.
+   An unavailable offer shows a reload action rather than technical SDK errors.
+   Tokens/details are fetched fresh at checkout and never cached for a later purchase.
 3. Set any necessary overrides above and distribute a signed internal test build. Add
    license testers and test cancelled, pending, completed and restored purchases,
    reinstall/restoration, offline operation, refunds, the second-round boundary,

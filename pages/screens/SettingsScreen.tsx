@@ -27,19 +27,6 @@ const SettingsScreen = () => {
   const {colors, preference, setPreference} = useTheme();
   const styles = useThemedStyles(createStyles);
   const monetization = useMonetization();
-  const [diagnosticsOpen, setDiagnosticsOpen] = React.useState(false);
-  const diagnostics = monetization.diagnostics;
-  const yesNo = (value: boolean) => t(value ? 'adYes' : 'adNo');
-  const adState = (state: 'idle' | 'loading' | 'loaded' | 'failed') =>
-    t(
-      state === 'loaded'
-        ? 'adStateLoaded'
-        : state === 'loading'
-        ? 'adStateLoading'
-        : state === 'failed'
-        ? 'adStateFailed'
-        : 'adStateIdle',
-    );
   const purchase = async () => {
     try {
       await monetization.purchase();
@@ -235,103 +222,6 @@ const SettingsScreen = () => {
                 )}
               </>
             )}
-            {diagnostics && (
-              <>
-                <Button
-                  label={t(
-                    diagnosticsOpen ? 'hideAdDiagnostics' : 'adDiagnostics',
-                  )}
-                  onPress={() => setDiagnosticsOpen(open => !open)}
-                />
-                {diagnosticsOpen && (
-                  <View style={styles.diagnostics}>
-                    <Text style={styles.hint}>{t('adDiagnosticsHint')}</Text>
-                    <Text selectable style={styles.label}>
-                      {[
-                        `${t('adVersion')}: ${diagnostics.version}`,
-                        ...(diagnostics.productId
-                          ? [`${t('adProductId')}: ${diagnostics.productId}`]
-                          : []),
-                        ...(diagnostics.purchaseOptionId
-                          ? [
-                              `${t('adPurchaseOption')}: ${
-                                diagnostics.purchaseOptionId
-                              }`,
-                            ]
-                          : []),
-                        `${t('adOwnership')}: ${yesNo(
-                          monetization.purchaseChecked,
-                        )}`,
-                        `${t('adRequestsAllowed')}: ${yesNo(
-                          monetization.adsReady,
-                        )}`,
-                        `${t('adConsentStatus')}: ${t(
-                          diagnostics.consentBusy
-                            ? 'adConsentChecking'
-                            : diagnostics.consentStatus === 1
-                            ? 'adConsentNotRequired'
-                            : diagnostics.consentStatus === 2
-                            ? 'adConsentRequired'
-                            : diagnostics.consentStatus === 3
-                            ? 'adConsentObtained'
-                            : 'adConsentUnknown',
-                        )}`,
-                        `${t('adConsentForm')}: ${yesNo(
-                          diagnostics.consentFormAvailable,
-                        )}`,
-                        `${t('adAgeProtection')}: ${yesNo(
-                          diagnostics.ageProtected,
-                        )}`,
-                        `${t('adRating')}: ${diagnostics.adContentRating}`,
-                        `${t('adBanner')}: ${adState(diagnostics.bannerState)}`,
-                        `${t('adBannerSize')}: ${
-                          diagnostics.bannerSize || '—'
-                        }`,
-                        `${t('adInterstitial')}: ${adState(
-                          diagnostics.interstitialState,
-                        )}`,
-                        `${t('adBannerId')}: ${diagnostics.bannerId}`,
-                        `${t('adInterstitialId')}: ${
-                          diagnostics.interstitialId || '—'
-                        }`,
-                      ].join('\n')}
-                    </Text>
-                    {(
-                      [
-                        ['adBillingError', diagnostics.billingError],
-                        ['adProductError', diagnostics.productError || ''],
-                        ['adConsentError', diagnostics.consentError],
-                        ['adBannerError', diagnostics.bannerError],
-                        ['adInterstitialError', diagnostics.interstitialError],
-                        [
-                          'adInterstitialShowError',
-                          diagnostics.interstitialShowError || '',
-                        ],
-                        [
-                          'adInterstitialSkipReason',
-                          diagnostics.interstitialSkipReason || '',
-                        ],
-                      ] as [TranslationKey, string][]
-                    )
-                      .filter(([, message]) => message)
-                      .map(([label, message]) => (
-                        <Text key={label} selectable style={styles.hint}>
-                          {t(label)}: {message}
-                        </Text>
-                      ))}
-                    {!monetization.adsRemoved && (
-                      <Button
-                        label={t('retryAds')}
-                        disabled={monetization.busy || diagnostics.consentBusy}
-                        onPress={() => {
-                          monetization.retryAds().catch(() => {});
-                        }}
-                      />
-                    )}
-                  </View>
-                )}
-              </>
-            )}
           </>
         )}
       </ScrollView>
@@ -341,13 +231,6 @@ const SettingsScreen = () => {
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    diagnostics: {
-      gap: spacing.sm,
-      padding: spacing.md,
-      borderWidth: 1,
-      borderColor: colors.outlineVariant,
-      borderRadius: radii.control,
-    },
     screen: {flex: 1, backgroundColor: colors.background},
     content: {
       width: '100%',
