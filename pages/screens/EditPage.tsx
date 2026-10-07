@@ -1,243 +1,238 @@
-// Placeholder screen for the game
-
+import ScrollView from '../../components/RecoverableScrollView';
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import letters from '../../constants/letters';
-import { questionSet } from '../../constants/questions';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import {useTheme, useThemedStyles} from '../../theme/ThemeContext';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
-const EditPage = ({ navigation, route }) => {
+import {CUSTOM_SET_INDEX_KEY} from '../../utils/questionloader';
+import {useLocalization} from '../../i18n/LocalizationContext';
+import {ThemeColors, radii, spacing} from '../../constants/theme';
 
-    const [customSet, setCustomSet] = React.useState([{}]);
-    const [customSetTitle, setCustomSetTitle] = React.useState('');
-    const [setID, setSetID] = React.useState('');
+const EditPage = ({route}: any) => {
+  const {t} = useLocalization();
+  const {colors} = useTheme();
+  const styles = useThemedStyles(createStyles);
+  const [setId] = React.useState<string>(
+    () =>
+      route.params?.id ??
+      `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  );
+  const [title, setTitle] = React.useState('');
+  const [questionsText, setQuestionsText] = React.useState('');
+  const [hasLoaded, setHasLoaded] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+  const [saveFailed, setSaveFailed] = React.useState(false);
+  const dirty = React.useRef(false);
+  const active = React.useRef(true);
+  const revision = React.useRef(0);
+  const saveQueue = React.useRef<Promise<void>>(Promise.resolve());
 
-    // load custom set on mount
-    React.useEffect(() => {
-        // load custom set specified in route.params.id
-        const getCustomSet = () => {
-            const id = route.params.id;
+  React.useEffect(() => {
+    active.current = true;
+    return () => {
+      active.current = false;
+    };
+  }, []);
 
-            // check if id is 0: New set
-            if (id === 0) {
-                // generate new id based on current time
-                const id = Date.now().toString();
-                setSetID(id);
-                setCustomSet(['']);
-                return;
-            }
-
-            setSetID(id);
-
-            // get custom set from local storage
-            const getData = async () => {
-                try {
-                    const value = await AsyncStorage.getItem(id);
-                    if (value !== null) {
-                        // value previously stored
-                        // first line is title
-                        setCustomSetTitle(JSON.parse(value)[0]);
-                        // rest is set
-                        setCustomSet(JSON.parse(value).slice(1));
-
-                    }
-                } catch (e) {
-                    console.log(e);
-                }
-            }
-            getData();
-
+  React.useEffect(() => {
+    AsyncStorage.getItem(setId)
+      .then(value => {
+        if (!active.current) {
+          return;
         }
-        getCustomSet();
-    }, []);
-
-
-    React.useEffect(() => {
-        // Remove whitespace at start and end of each line and remove empty lines
-
-        const trimmedSet = customSet
-            .map((line) => {
-                if (typeof line === 'string') {
-                    return line.trim();
-                }
-                return line;
-            })
-            .filter((line) => typeof line === 'string' && line.length > 0);
-
-        let trimmedTitle = customSetTitle.trim();
-        if (trimmedTitle.length === 0) {
-            trimmedTitle = "Unbenanntes Set";
+        if (value) {
+          const [storedTitle, ...storedQuestions]: string[] = JSON.parse(value);
+          setTitle(storedTitle ?? '');
+          setQuestionsText(storedQuestions.join('\n'));
         }
-
-        // save custom set to local storage
-        // check if set is empty
-        if (trimmedSet.length === 0) {
-            // do not save
-            return;
+        setHasLoaded(true);
+      })
+      .catch(error => {
+        console.warn('Could not load custom pack', error);
+        if (active.current) {
+          setSaveFailed(true);
         }
+      });
+  }, [setId]);
 
-        // add title as first line
-        trimmedSet.unshift(trimmedTitle);
-        const saveSet = async () => {
-
-        try {
-           
-            await AsyncStorage.setItem(
-                setID,
-                JSON.stringify(trimmedSet)
-            );
-        } catch (error) {
-            console.log(error);
-        }
-    }
-        saveSet();
-        // add id to list of sets if it is not already there
-        const getData = async () => {
-            try {
-                const value = await AsyncStorage.getItem('@customSets');
-                console.log("@customSets: " + value)
-                if (value !== null) {
-                    // value previously stored
-                    // check if set is already in list
-                    const sets = JSON.parse(value);
-
-                    if (!sets.includes(setID)) {
-                        // add set to list
-                        sets.push(setID);
-                        await AsyncStorage.setItem(
-                            '@customSets',
-                            JSON.stringify(sets)
-                        );
-                    }
-                }
-                else {
-                    // create new list
-                    const sets = [setID];
-                    await AsyncStorage.setItem(
-                        '@customSets',
-                        JSON.stringify(sets)
-                    );
-                }
-            } catch (e) {
-                console.log(e);
-            }
-        }
-        getData();
-
-    }, [customSet, customSetTitle]);
-
-
-    const onChangeText = (text) => {
-        // split text into lines
-        const lines = text.split('\n');
-
-        // update custom set
-        setCustomSet(lines);
-    }
-    const onChangeTextTitle = (text) => {
-        // update custom title
-        setCustomSetTitle(text);
+  React.useEffect(() => {
+    if (!hasLoaded || !dirty.current) {
+      return;
     }
 
-    return (
-        <SafeAreaView style={[styles.container]}>
-            <View style={styles.textFieldTitle}>
-                <TextInput
-                    style={styles.text}
-                    placeholder="Titel des Sets "
-                    placeholderTextColor='#a9a9a9'
-                    onChangeText={text => onChangeTextTitle(text)}
-                    value={customSetTitle}>
-                </TextInput>
+    const questions = questionsText
+      .split('\n')
+      .map(line => line.trim())
+      .filter(Boolean);
+    const currentRevision = ++revision.current;
+    setIsSaving(true);
+    setSaveFailed(false);
+    // Serialize writes and do not cancel them on navigation. The last edit must
+    // reach storage even when the user immediately leaves the editor.
+    saveQueue.current = saveQueue.current.then(async () => {
+      try {
+        const finalTitle = title.trim() || t('untitledSet');
+        const storedIds = await AsyncStorage.getItem(CUSTOM_SET_INDEX_KEY);
+        const ids: string[] = storedIds ? JSON.parse(storedIds) : [];
+        await Promise.all([
+          AsyncStorage.setItem(
+            setId,
+            JSON.stringify([finalTitle, ...questions]),
+          ),
+          AsyncStorage.setItem(
+            CUSTOM_SET_INDEX_KEY,
+            JSON.stringify(ids.includes(setId) ? ids : [...ids, setId]),
+          ),
+        ]);
+      } catch (error) {
+        console.warn('Could not save custom pack', error);
+        if (active.current && revision.current === currentRevision) {
+          setSaveFailed(true);
+        }
+      } finally {
+        if (active.current && revision.current === currentRevision) {
+          setIsSaving(false);
+        }
+      }
+    });
+  }, [hasLoaded, questionsText, setId, t, title]);
+
+  const questionCount = questionsText
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean).length;
+
+  return (
+    <SafeAreaView style={styles.screen} edges={['left', 'right', 'bottom']}>
+      <KeyboardAvoidingView
+        style={styles.screen}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled">
+          <View style={styles.statusRow}>
+            <Text
+              accessibilityLiveRegion="polite"
+              style={[styles.statusText, saveFailed && styles.failedText]}>
+              {t(
+                saveFailed
+                  ? 'saveFailed'
+                  : !hasLoaded || isSaving
+                  ? 'saving'
+                  : 'saved',
+              )}
+            </Text>
+            <Text style={styles.countText}>
+              {t('questionCount', {count: questionCount})}
+            </Text>
+          </View>
+
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>{t('setTitle')}</Text>
+            <TextInput
+              selectionColor={colors.primary}
+              accessibilityLabel={t('setTitle')}
+              style={styles.titleInput}
+              value={title}
+              editable={hasLoaded}
+              onChangeText={value => {
+                dirty.current = true;
+                setTitle(value);
+              }}
+              placeholder={t('setTitlePlaceholder')}
+              placeholderTextColor={colors.onSurfaceVariant}
+              maxLength={60}
+            />
+          </View>
+
+          <View style={[styles.fieldGroup, styles.questionsGroup]}>
+            <View style={styles.questionLabelRow}>
+              <Text style={styles.label}>{t('questions')}</Text>
+              <Text style={styles.hint}>{t('questionsHint')}</Text>
             </View>
-            {/* Multiline textinput, each question on one line */}
-            <View style={styles.textField}>
-                <TextInput
-                    placeholder='Eine Kategorie pro Zeile. Änderungen werden automatisch gespeichert. '
-                    placeholderTextColor='#a9a9a9'
-                    style={styles.text}
-                    multiline={true}
-                    numberOfLines={10}
-                    onChangeText={text => onChangeText(text)}
-                    value={customSet.join('\n')}>
-
-                </TextInput>
-            </View>
-
-
-
-        </SafeAreaView>
-    );
+            <TextInput
+              selectionColor={colors.primary}
+              accessibilityLabel={t('questions')}
+              accessibilityHint={t('questionsHint')}
+              style={styles.questionsInput}
+              value={questionsText}
+              editable={hasLoaded}
+              onChangeText={value => {
+                dirty.current = true;
+                setQuestionsText(value);
+              }}
+              placeholder={t('questionsPlaceholder')}
+              placeholderTextColor={colors.onSurfaceVariant}
+              multiline
+              textAlignVertical="top"
+              autoCapitalize="sentences"
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#1f1f23',
-        alignItems: 'center',
-        justifyContent: 'center',
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    screen: {flex: 1, backgroundColor: colors.background},
+    content: {
+      flexGrow: 1,
+      width: '100%',
+      maxWidth: 640,
+      alignSelf: 'center',
+      padding: spacing.md,
     },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white'
+    statusRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.sm,
+      marginBottom: spacing.lg,
     },
-    button: {
-        backgroundColor: '#1f1f23',
-        borderRadius: 10,
-        padding: 10,
+    statusText: {color: colors.onSurfaceVariant, fontSize: 14},
+    failedText: {color: colors.error},
+    countText: {color: colors.onSurfaceVariant, fontSize: 14},
+    fieldGroup: {marginBottom: spacing.lg},
+    questionsGroup: {flex: 1},
+    questionLabelRow: {marginBottom: spacing.sm},
+    label: {
+      color: colors.onSurface,
+      fontSize: 16,
+      fontWeight: '500',
+      marginBottom: spacing.sm,
     },
-    row: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        marginTop: 20,
-        marginBottom: 20,
+    hint: {color: colors.onSurfaceVariant, fontSize: 14},
+    titleInput: {
+      minHeight: 48,
+      paddingHorizontal: 12,
+      borderRadius: radii.control,
+      borderWidth: 1,
+      borderColor: colors.outline,
+      color: colors.onSurface,
+      fontSize: 16,
     },
-    item: {
+    questionsInput: {
+      minHeight: 300,
+      flex: 1,
+      padding: 12,
+      borderRadius: radii.control,
+      borderWidth: 1,
+      borderColor: colors.outline,
+      color: colors.onSurface,
+      fontSize: 16,
+      lineHeight: 25,
     },
-
-    text: {
-        color: 'white',
-        fontSize: 18,
-        fontWeight: 'bold',
-        textAlign: 'left',
-    },
-    textField: {
-        flex: 1,
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        borderColor: 'white',
-        borderWidth: 2,
-        borderRadius: 10,
-        margin: 10,
-        padding: 10,
-        paddingLeft: 20,
-        width: '90%',
-    },
-    textFieldTitle: {
-        flex: 0.1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderColor: 'white',
-        borderWidth: 2,
-        borderRadius: 10,
-        margin: 10,
-        padding: 5,
-        width: '90%',
-    },
-    letter: {
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    smallTitle: {
-        color: '#1f1f23',
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'left'
-    },
-
-});
+  });
 
 export default EditPage;

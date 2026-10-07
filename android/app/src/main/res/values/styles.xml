@@ -2,7 +2,9 @@
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
-        <!-- Customize your theme here. -->
+        <!-- Match native dialogs, text selection and launch colors to the app. -->
+        <item name="colorAccent">@color/app_primary</item>
+        <item name="android:windowBackground">@color/app_background</item>
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
     </style>
 

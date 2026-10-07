@@ -1,459 +1,390 @@
-import React, {
-  useState,
-  useEffect,
-  JSXElementConstructor,
-  ReactElement,
-  ReactNode,
-  ReactPortal,
-} from 'react';
+import ScrollView from '../../components/RecoverableScrollView';
+import React from 'react';
+import AdAgePrompt from '../../components/AdAgePrompt';
+import {useTheme, useThemedStyles} from '../../theme/ThemeContext';
 import {
-  View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  Alert,
+  useWindowDimensions,
+  View,
 } from 'react-native';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import {MultiSelect} from 'react-native-element-dropdown';
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import Button from '../../components/Button';
+import DeleteButton from '../../components/DeleteButton';
+import Tutorial from '../../components/Tutorial';
+import {useTutorial} from '../../hooks/useTutorial';
+import PackPicker, {PackLabel} from '../../components/PackPicker';
+
 import {getQuestionLabels} from '../../utils/questionloader';
+import {loadGameSetup} from '../../utils/gameSetup';
+import {useLocalization} from '../../i18n/LocalizationContext';
+import {ThemeColors, radii, spacing} from '../../constants/theme';
 
-const StartScreen = ({navigation}) => {
-  const [name, setName] = useState('');
-  const [names, setNames] = useState([]);
-  const [questionsSets, setQuestionsSets] = useState([]);
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [pointsToWin, setPointsToWin] = useState(10);
-  const [pointsToWinDisplay, setPointsToWinDisplay] = useState('10');
+const StartScreen = ({navigation}: any) => {
+  const {language, t} = useLocalization();
+  const {colors} = useTheme();
+  const styles = useThemedStyles(createStyles);
+  const tutorial = useTutorial();
+  const {width, fontScale} = useWindowDimensions();
+  const stackPlayerInput = width < 360 || fontScale > 1.2;
+  const [isChoosingPacks, setIsChoosingPacks] = React.useState(false);
+  const [name, setName] = React.useState('');
+  const [names, setNames] = React.useState<string[]>([]);
+  const [questionPacks, setQuestionPacks] = React.useState<PackLabel[]>([]);
+  const [selectedItems, setSelectedItems] = React.useState<string[]>([]);
+  const [pointsToWinDisplay, setPointsToWinDisplay] = React.useState('10');
+  const [hasLoaded, setHasLoaded] = React.useState(false);
 
-  const renderDataItem = (item: {
-    label:
-      | string
-      | number
-      | boolean
-      | ReactElement<any, string | JSXElementConstructor<any>>
-      | Iterable<ReactNode>
-      | ReactPortal;
-  }) => {
-    return (
-      <View style={styles.item}>
-        <Text style={styles.selectedTextStyle}>{item.label}</Text>
-      </View>
+  React.useEffect(() => {
+    let active = true;
+    loadGameSetup()
+      .then(setup => {
+        if (!active) {
+          return;
+        }
+        setNames(setup.names);
+        setSelectedItems(setup.packIds);
+        setPointsToWinDisplay(setup.pointsToWin);
+        // Persist stable IDs immediately, before a custom pack can be deleted
+        // and change the meaning of an old numeric index on the next launch.
+        AsyncStorage.setItem('customSet', JSON.stringify(setup.packIds)).catch(
+          error => console.warn('Could not migrate selected packs', error),
+        );
+        setHasLoaded(true);
+      })
+      .catch(error => console.warn('Could not load game setup', error));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const loadPackLabels = React.useCallback(() => {
+    if (!hasLoaded) {
+      return;
+    }
+    getQuestionLabels(language).then(labels => {
+      setQuestionPacks(labels);
+      const availableIds = new Set(labels.map(label => label.value));
+      setSelectedItems(current => {
+        const validItems = current.filter(id => availableIds.has(id));
+        if (validItems.length !== current.length) {
+          AsyncStorage.setItem('customSet', JSON.stringify(validItems)).catch(
+            error => console.warn('Could not clean selected packs', error),
+          );
+        }
+        return validItems;
+      });
+    });
+  }, [hasLoaded, language]);
+
+  React.useEffect(() => {
+    loadPackLabels();
+    const unsubscribe = navigation.addListener('focus', loadPackLabels);
+    return unsubscribe;
+  }, [loadPackLabels, navigation]);
+
+  React.useEffect(() => {
+    if (!hasLoaded) {
+      return;
+    }
+    AsyncStorage.setItem('names', JSON.stringify(names)).catch(error =>
+      console.warn('Could not save players', error),
+    );
+  }, [hasLoaded, names]);
+
+  const updateSelectedItems = (items: string[]) => {
+    setSelectedItems(items);
+    AsyncStorage.setItem('customSet', JSON.stringify(items)).catch(error =>
+      console.warn('Could not save selected packs', error),
     );
   };
-  //save selected items
-  const saveSelectedItems = async item => {
-    try {
-      await AsyncStorage.setItem('customSet', JSON.stringify(item));
-    } catch (error) {
-      console.log('Error saving custom set:', error);
+
+  const addPlayer = () => {
+    if (!hasLoaded) {
+      return;
+    }
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      return;
+    }
+    if (trimmedName.length > 25) {
+      Alert.alert(t('nameTooLongTitle'), t('nameTooLongMessage'));
+      return;
+    }
+    if (names.length >= 12) {
+      Alert.alert(t('tooManyPlayersTitle'), t('tooManyPlayersMessage'));
+      return;
+    }
+    setNames(current => [...current, trimmedName]);
+    setName('');
+  };
+
+  const updatePoints = (value: string) => {
+    const digits = value.replace(/[^0-9]/g, '').slice(0, 3);
+    setPointsToWinDisplay(digits);
+    if (digits && Number(digits) > 0) {
+      AsyncStorage.setItem('pointsToWin', digits).catch(error =>
+        console.warn('Could not save target score', error),
+      );
     }
   };
 
-  useEffect(() => {
-    // Load the saved names when the component mounts
+  const startGame = () => {
+    if (!hasLoaded) {
+      return;
+    }
+    if (names.length === 0) {
+      Alert.alert(t('noPlayersTitle'), t('noPlayersMessage'));
+      return;
+    }
+    if (selectedItems.length === 0) {
+      Alert.alert(t('noPackTitle'), t('noPackMessage'));
+      return;
+    }
 
-    const loadNames = async () => {
-      try {
-        const savedNames = await AsyncStorage.getItem('names');
-        if (savedNames !== null) {
-          setNames(JSON.parse(savedNames));
-        }
-      } catch (error) {
-        console.log('Error loading names:', error);
-      }
-    };
-
-    loadNames();
-
-    const loadSelectedSets = async () => {
-      try {
-        const savedSelectedSets = await AsyncStorage.getItem('customSet');
-        if (savedSelectedSets !== null) {
-          setSelectedItems(JSON.parse(savedSelectedSets));
-        }
-      } catch (error) {
-        console.log('Error loading selected sets:', error);
-      }
-    };
-
-    loadSelectedSets();
-
-    const loadPointsToWin = async () => {
-      try {
-        const savedPointsToWin = await AsyncStorage.getItem('pointsToWin');
-        if (savedPointsToWin !== null) {
-          setPointsToWin(parseInt(savedPointsToWin));
-          setPointsToWinDisplay(savedPointsToWin);
-        }
-      } catch (error) {
-        console.log('Error loading points to win:', error);
-      }
-    };
-    loadPointsToWin();
-  }, []);
-
-  // Load the question set specified in route.params.id. First use the sets from constants/questions.ts, then use the custom sets from AsyncStorage
-  useEffect(() => {
-    const getCustomSet = async () => {
-      setQuestionsSets(await getQuestionLabels());
-    };
-
-    // copy the initial set from constants/questions.ts
-    const unsubscribe = navigation.addListener('focus', () => {
-      getCustomSet();
+    const pointsToWin = Math.max(1, Number(pointsToWinDisplay) || 10);
+    setPointsToWinDisplay(String(pointsToWin));
+    navigation.navigate('Game', {
+      names,
+      packIds: selectedItems,
+      pointsToWin,
+      language,
     });
-    getCustomSet();
-  }, []);
-
-  useEffect(() => {
-    // set navigation header button
-    navigation.setOptions({
-      headerRight: () => (
-        // View with width of 50 to make the button easier to press
-        <TouchableOpacity
-          style={{
-            width: 80,
-            height: 40,
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-          onPress={() => navigation.navigate('Eigene Sets')}>
-          <AntDesign name="edit" size={24} color="black" />
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation]);
-
-  useEffect(() => {
-    // Save the names whenever the names state changes
-    saveNames();
-  }, [names]);
-
-  useEffect(() => {
-    // Save the points to win whenever the pointsToWin state changes
-    savePointsToWin();
-  }, [pointsToWin]);
-
-  const setSelectedItemsHelper = item => {
-    setSelectedItems(item);
-    saveSelectedItems(item);
   };
 
-  const saveNames = async () => {
-    try {
-      const namesToSave = JSON.stringify(names);
-      await AsyncStorage.setItem('names', namesToSave);
-    } catch (error) {
-      console.log('Error saving names:', error);
-    }
-  };
-
-  const savePointsToWin = async () => {
-    try {
-      await AsyncStorage.setItem('pointsToWin', pointsToWin.toString());
-    } catch (error) {
-      console.log('Error saving points to win:', error);
-    }
-  };
-
-  const handleAddName = () => {
-    if (name.trim() !== '') {
-      if (name.trim().length > 25) {
-        Alert.alert('Name zu lang!', 'Maximal 25 Zeichen pro Spieler!');
-      } else {
-        if (names.length < 12) {
-          setNames([...names, name]);
-          setName('');
-        } else {
-          Alert.alert('Zu viele Spieler', 'Maximal 12 Spieler möglich!');
-        }
-      }
-    }
-  };
-
-  const handlePointsToWinText = (points: string) => {
-    if (points.trim() == '') {
-      setPointsToWinDisplay('');
-    } else {
-      // remove chars that are not numbers
-      const pointsToWinDisplay = points.replace(/[^0-9]/g, '');
-      setPointsToWinDisplay(pointsToWinDisplay);
-      setPointsToWin(parseInt(pointsToWinDisplay));
-    }
-  };
-
-  const handleStartButton = () => {
-    if (names.length == 0) {
-      Alert.alert('Keine Spieler', 'Bitte mindestens einen Namen eingeben!');
-    } else if (selectedItems.length == 0) {
-      Alert.alert('Kein Set ausgewählt', 'Bitte wähle ein Set aus!');
-    } else {
-      var chosenPointsToWin = pointsToWin;
-      if (pointsToWinDisplay == '' || pointsToWinDisplay == '0') {
-        chosenPointsToWin = 10;
-        setPointsToWin(10);
-      }
-      navigation.navigate('RateKunst', {
-        names: names,
-        setID: selectedItems,
-        pointsToWin: chosenPointsToWin,
-      });
-    }
-  };
-
-  const handleRemoveName = (index: number) => {
-    const updatedNames = [...names];
-    updatedNames.splice(index, 1);
-    setNames(updatedNames);
-  };
+  const selectedLabels = questionPacks
+    .filter(pack => selectedItems.includes(pack.value))
+    .map(pack => pack.label);
 
   return (
-    <View style={[styles.container]}>
-      {/* Picker for question set */}
-      <View style={styles.pickercontainer}>
-        <MultiSelect
-          style={styles.dropdown}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={styles.selectedTextStyle}
-          inputSearchStyle={styles.inputSearchStyle}
-          activeColor="tomato"
-          iconStyle={styles.iconStyle}
-          data={questionsSets}
-          labelField="label"
-          valueField="value"
-          placeholder="Themensets auswählen"
-          value={selectedItems}
-          search
-          searchPlaceholder="Suchen..."
-          onChange={item => {
-            setSelectedItemsHelper(item);
-          }}
-          renderLeftIcon={() => (
-            <AntDesign
-              style={styles.icon}
-              color="black"
-              name="folderopen"
-              size={20}
-            />
-          )}
-          renderItem={renderDataItem}
-          renderSelectedItem={(item, unSelect) => (
-            <TouchableOpacity onPress={() => unSelect && unSelect(item)}>
-              <View style={styles.selectedStyle}>
-                <Text style={styles.textSelectedStyle}>{item.label}</Text>
-                <AntDesign color="black" name="delete" size={17} />
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
-      {/* List of names */}
-      <Text style={styles.title}>Namen</Text>
-      <FlatList
-        data={names}
-        renderItem={({item, index}) => (
-          <View style={styles.nameContainer}>
-            <Text style={styles.names}>{item}</Text>
-            <TouchableOpacity onPress={() => handleRemoveName(index)}>
-              <AntDesign name="delete" size={24} color="white" />
-            </TouchableOpacity>
-          </View>
-        )}
-        keyExtractor={(item, index) => index.toString()}
-      />
-      <View style={styles.inputContainerNumber}>
-        <Text style={styles.textPointsToWin}>Punkte um zu gewinnen:</Text>
-        <TextInput
-          style={styles.inputNumber}
-          placeholder="10"
-          placeholderTextColor={'#a9a9a9'}
-          value={pointsToWinDisplay}
-          onChangeText={text => {
-            handlePointsToWinText(text);
-          }}
-          keyboardType="numeric"
-        />
-      </View>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Name eingeben"
-          placeholderTextColor={'#a9a9a9'}
-          value={name}
-          onChangeText={text => setName(text)}
-        />
-        <TouchableOpacity style={styles.addButton} onPress={handleAddName}>
-          <AntDesign name="plussquareo" size={24} color="black" />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.screen} edges={['left', 'right', 'bottom']}>
+      <KeyboardAvoidingView
+        style={styles.screen}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled">
+          <Text accessibilityRole="header" style={styles.title}>
+            {t('startMenu')}
+          </Text>
 
-      {/* Button to start the game */}
-      <TouchableOpacity
-        style={styles.startButton}
-        onPress={() => handleStartButton()}>
-        <Text style={styles.startButtonText}>Start</Text>
-      </TouchableOpacity>
-    </View>
+          <View style={[styles.section, styles.playersSection]}>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>
+              {t('players')}
+            </Text>
+            <View
+              style={[
+                styles.playerInputRow,
+                stackPlayerInput && styles.playerInputColumn,
+              ]}>
+              <TextInput
+                selectionColor={colors.primary}
+                accessibilityLabel={t('playerName')}
+                style={[
+                  styles.textInput,
+                  stackPlayerInput && styles.fullWidthInput,
+                ]}
+                placeholder={t('playerName')}
+                placeholderTextColor={colors.onSurfaceVariant}
+                value={name}
+                editable={hasLoaded}
+                maxLength={26}
+                returnKeyType="done"
+                onSubmitEditing={addPlayer}
+                onChangeText={setName}
+              />
+              <Button
+                label={t('add')}
+                accessibilityLabel={t('addPlayer')}
+                onPress={addPlayer}
+                disabled={!hasLoaded || !name.trim()}
+              />
+            </View>
+            {names.length === 0 ? (
+              <Text style={styles.helper}>{t('noPlayers')}</Text>
+            ) : (
+              <View style={styles.playerList}>
+                {names.map((player, index) => (
+                  <View key={`${player}-${index}`} style={styles.playerRow}>
+                    <Text style={styles.playerName}>{player}</Text>
+                    <DeleteButton
+                      accessibilityLabel={`${t('remove')} ${player}`}
+                      onPress={() =>
+                        setNames(current =>
+                          current.filter((_, i) => i !== index),
+                        )
+                      }
+                    />
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+
+          <View style={[styles.section, styles.packsSection]}>
+            <Text accessibilityRole="header" style={styles.sectionTitle}>
+              {t('packs')}
+            </Text>
+            <Text style={styles.helper}>
+              {selectedLabels.length > 0
+                ? selectedLabels.join(', ')
+                : t('noPacksSelected')}
+            </Text>
+            <Button
+              label={t('choosePacks')}
+              disabled={!hasLoaded}
+              onPress={() => setIsChoosingPacks(true)}
+            />
+          </View>
+
+          <View style={styles.pointsRow}>
+            <Text style={styles.pointsLabel}>{t('pointsToWin')}</Text>
+            <TextInput
+              selectionColor={colors.primary}
+              accessibilityLabel={t('pointsToWin')}
+              style={styles.pointsInput}
+              value={pointsToWinDisplay}
+              editable={hasLoaded}
+              placeholder="10"
+              placeholderTextColor={colors.onSurfaceVariant}
+              keyboardType="number-pad"
+              selectTextOnFocus
+              onChangeText={updatePoints}
+            />
+          </View>
+
+          <Button
+            label={t('start')}
+            variant="primary"
+            disabled={!hasLoaded}
+            onPress={startGame}
+          />
+          <Button
+            label={t('editCustomSets')}
+            variant="text"
+            onPress={() => navigation.navigate('CustomSets')}
+          />
+          <Button
+            label={t('settings')}
+            variant="text"
+            onPress={() => navigation.navigate('Settings')}
+          />
+          <Button
+            label={t('tutorial')}
+            variant="text"
+            onPress={tutorial.open}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
+      <AdAgePrompt defer={tutorial.visible || isChoosingPacks || !hasLoaded} />
+      <Tutorial visible={tutorial.visible} onClose={tutorial.close} />
+      <PackPicker
+        visible={isChoosingPacks}
+        packs={questionPacks}
+        selectedIds={selectedItems}
+        onChange={updateSelectedItems}
+        onClose={() => setIsChoosingPacks(false)}
+      />
+    </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    // dark gray background
-    backgroundColor: '#1f1f23',
-  },
-  textPointsToWin: {
-    fontSize: 18,
-    marginBottom: 32,
-    color: 'white',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: 'white',
-  },
-  names: {
-    fontSize: 18,
-    marginBottom: 8,
-    color: 'white',
-  },
-  nameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  inputContainerNumber: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    // algin everything in the middle
-    justifyContent: 'center',
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: 'white',
-    borderRadius: 5,
-    padding: 10,
-    marginRight: 10,
-    backgroundColor: 'white',
-    color: 'black',
-  },
-  inputNumber: {
-    borderWidth: 1,
-    borderColor: 'white',
-    borderRadius: 5,
-    padding: 10,
-    marginRight: 10,
-    backgroundColor: 'white',
-    color: 'black',
-    width: 50,
-    marginBottom: 32,
-    textAlignVertical: 'center',
-    marginLeft: 10,
-    textAlign: 'center',
-  },
-  addButton: {
-    backgroundColor: 'cadetblue',
-    padding: 10,
-    borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  startButton: {
-    backgroundColor: 'tomato',
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  startButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  // picker stuff
-  pickercontainer: {
-    paddingBottom: 10,
-  },
-  dropdown: {
-    height: 50,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    screen: {flex: 1, backgroundColor: colors.background},
+    content: {
+      width: '100%',
+      maxWidth: 640,
+      alignSelf: 'center',
+      padding: spacing.md,
+      paddingBottom: spacing.lg,
+      gap: spacing.md,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
-  },
-  placeholderStyle: {
-    fontSize: 16,
-    color: 'black',
-  },
-  selectedTextStyle: {
-    fontSize: 14,
-    color: 'black',
-  },
-  iconStyle: {
-    width: 20,
-    height: 20,
-  },
-  inputSearchStyle: {
-    height: 40,
-    fontSize: 16,
-    color: 'black',
-  },
-  icon: {
-    marginRight: 5,
-  },
-  item: {
-    padding: 17,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    color: 'black',
-  },
-  selectedStyle: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 14,
-    backgroundColor: 'white',
-    shadowColor: '#000',
-    marginTop: 8,
-    marginRight: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    shadowOffset: {
-      width: 0,
-      height: 1,
+    title: {
+      color: colors.onSurface,
+      fontSize: 24,
+      fontWeight: '500',
+      marginVertical: spacing.sm,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
-  },
-  textSelectedStyle: {
-    marginRight: 5,
-    fontSize: 16,
-    color: 'black',
-  },
-});
+    section: {
+      paddingVertical: spacing.sm,
+      paddingLeft: 12,
+      borderLeftWidth: 3,
+      gap: spacing.sm,
+    },
+    playersSection: {borderLeftColor: colors.secondary},
+    packsSection: {borderLeftColor: colors.primary},
+    sectionTitle: {color: colors.onSurface, fontSize: 18, fontWeight: '500'},
+    helper: {
+      color: colors.onSurfaceVariant,
+      fontSize: 15,
+      lineHeight: 22,
+      marginBottom: spacing.sm,
+    },
+    playerInputRow: {
+      flexDirection: 'row',
+      gap: spacing.sm,
+      alignItems: 'center',
+    },
+    playerInputColumn: {flexDirection: 'column', alignItems: 'stretch'},
+    fullWidthInput: {flex: 0, width: '100%'},
+    textInput: {
+      flex: 1,
+      minWidth: 0,
+      minHeight: 48,
+      paddingHorizontal: 12,
+      borderRadius: radii.control,
+      borderWidth: 1,
+      backgroundColor: colors.surfaceContainerLow,
+      borderColor: colors.outline,
+      color: colors.onSurface,
+      fontSize: 16,
+    },
+    playerList: {marginTop: spacing.sm},
+    playerRow: {
+      borderLeftColor: colors.secondary,
+      borderLeftWidth: 3,
+      paddingLeft: spacing.sm,
+      marginBottom: spacing.xs,
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: colors.outlineVariant,
+    },
+    playerName: {
+      flex: 1,
+      color: colors.onSurface,
+      fontSize: 16,
+      lineHeight: 23,
+      paddingVertical: spacing.sm,
+    },
+    pointsRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: spacing.md,
+      paddingVertical: spacing.md,
+      backgroundColor: colors.primaryContainer,
+      paddingHorizontal: 12,
+      borderRadius: radii.control,
+    },
+    pointsLabel: {flex: 1, color: colors.onSurface, fontSize: 16},
+    pointsInput: {
+      width: 80,
+      minHeight: 48,
+      borderWidth: 1,
+      backgroundColor: colors.surfaceContainerLow,
+      borderColor: colors.outline,
+      borderRadius: radii.control,
+      color: colors.onSurface,
+      fontSize: 18,
+      textAlign: 'center',
+    },
+  });
 
 export default StartScreen;

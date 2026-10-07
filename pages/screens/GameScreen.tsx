@@ -1,292 +1,395 @@
-// Placeholder screen for the game
-
+import ScrollView from '../../components/RecoverableScrollView';
 import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, Alert} from 'react-native';
+import {useMonetization} from '../../monetization/MonetizationContext';
+import {useTheme, useThemedStyles} from '../../theme/ThemeContext';
+import {
+  Alert,
+  StatusBar,
+  StyleSheet,
+  Text,
+  Pressable,
+  View,
+} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import Button from '../../components/Button';
+import FittedText from '../../components/FittedText';
+
 import letters from '../../constants/letters';
-import {questionSet as initialSet} from '../../constants/questions';
 import {getQuestions} from '../../utils/questionloader';
+import {useLocalization} from '../../i18n/LocalizationContext';
+import type {Language} from '../../i18n/LocalizationContext';
+import {ThemeColors, radii, spacing} from '../../constants/theme';
 
-const GameScreen = ({navigation, route}) => {
-  // players in rote.params.names
-  // keep track of player scores
-  const [firstLoad, setFirstLoad] = React.useState(true);
+type RoundQuestion = {text: string; setTitle: string};
 
-  const [playerScores, setPlayerScores] = React.useState({});
-  // State that has a boolean for each player, indicating if their score has increased
-  const [hasPlayerScoreIncreased, setHasPlayerScoreIncreased] = React.useState(
-    {},
+type GameParams = {
+  names: string[];
+  packIds: string[];
+  pointsToWin: number;
+  language: Language;
+};
+
+const delay = (milliseconds: number) =>
+  new Promise(resolve => setTimeout(resolve, milliseconds));
+
+const GameScreen = ({navigation, route}: any) => {
+  const {t} = useLocalization();
+  const {completeRound, restartRound} = useMonetization();
+  const finished = React.useRef(false);
+  const mounted = React.useRef(true);
+  const roundEnded = React.useRef(false);
+  const {colors, mode} = useTheme();
+  const styles = useThemedStyles(createStyles);
+  const params = route.params as GameParams;
+  const [scores, setScores] = React.useState<number[]>(() =>
+    params.names.map(() => 0),
   );
+  const [scoredThisTurn, setScoredThisTurn] = React.useState<number[]>([]);
+  const [questionPool, setQuestionPool] = React.useState<RoundQuestion[]>([]);
   const [question, setQuestion] = React.useState('');
-  const [questionSet, setQuestionsSets] = React.useState(initialSet);
+  const [setTitle, setSetTitle] = React.useState('');
   const [letter, setLetter] = React.useState('');
-  const [canLoadNextQuestion, setCanLoadNextQuestion] = React.useState(true);
-  const [lastTwentyQuestions, setLastTwentyQuestions] = React.useState([]);
-  const [pointsToWin, setPointsToWin] = React.useState(10);
-  const boxWidth = `${90 / route.params.names.length}%`;
-  // when questionSet changes, load first question and set title
-  React.useEffect(() => {
-    if (!firstLoad) {
-      loadNextQuestion();
-    }
-  }, [questionSet]);
+  const [isCountingDown, setIsCountingDown] = React.useState(true);
+  const recentQuestions = React.useRef<string[]>([]);
+  const sequence = React.useRef(0);
 
-  // Load the question set specified in route.params.id. First use the sets from constants/questions.ts, then use the custom sets from AsyncStorage
   React.useEffect(() => {
-    // copy the initial set from constants/questions.ts
-
-    const getCustomSet = async () => {
-      setQuestionsSets(await getQuestions());
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
     };
-    getCustomSet();
-    setFirstLoad(false);
   }, []);
 
   React.useEffect(() => {
-    // initialize player scores
-    const scores = {};
-    const hasPlayerScoreIncreased = {};
-    route.params.names.forEach(name => {
-      scores[name] = 0;
-      hasPlayerScoreIncreased[name] = false;
+    getQuestions(params.language).then(packs => {
+      const selected = packs
+        .filter(pack => params.packIds.includes(pack.id))
+        .flatMap(pack =>
+          pack.questions
+            .filter(Boolean)
+            .map(text => ({text, setTitle: pack.title})),
+        );
+      setQuestionPool(selected);
     });
-    setPlayerScores(scores);
-    setPointsToWin(parseInt(route.params.pointsToWin));
-  }, []);
+    return () => {
+      sequence.current += 1;
+    };
+  }, [params.language, params.packIds]);
 
-  // increment score for player
-  const incrementScore = name => {
-    const updatedScores = {...playerScores};
-    const updatedHasPlayerScoreIncreased = {...hasPlayerScoreIncreased};
-    if (updatedHasPlayerScoreIncreased[name]) {
+  const loadNextQuestion = React.useCallback(async () => {
+    if (questionPool.length === 0 || isCountingDown) {
       return;
     }
-    updatedScores[name] += 1;
-    updatedHasPlayerScoreIncreased[name] = true;
-    setPlayerScores(updatedScores);
-    setHasPlayerScoreIncreased(updatedHasPlayerScoreIncreased);
-    if (updatedScores[name] == pointsToWin) {
-      // Display alert and Navigate back to StartScreen on dismiss
+
+    const currentSequence = ++sequence.current;
+    setIsCountingDown(true);
+    setLetter('');
+    setSetTitle('');
+    setScoredThisTurn([]);
+
+    for (const count of ['3', '2', '1']) {
+      setQuestion(count);
+      await delay(520);
+      if (sequence.current !== currentSequence) {
+        return;
+      }
+    }
+
+    const recent = recentQuestions.current;
+    const available = questionPool.filter(item => !recent.includes(item.text));
+    const candidates = available.length > 0 ? available : questionPool;
+    const nextQuestion =
+      candidates[Math.floor(Math.random() * candidates.length)];
+    const nextLetter = letters[Math.floor(Math.random() * letters.length)];
+
+    recentQuestions.current = [...recent, nextQuestion.text].slice(
+      -Math.min(20, Math.max(1, questionPool.length - 1)),
+    );
+    setQuestion(nextQuestion.text);
+    setSetTitle(nextQuestion.setTitle);
+    setLetter(nextLetter);
+    setIsCountingDown(false);
+  }, [isCountingDown, questionPool]);
+
+  React.useEffect(() => {
+    if (questionPool.length > 0) {
+      setIsCountingDown(false);
+    }
+  }, [questionPool]);
+
+  React.useEffect(() => {
+    if (!isCountingDown && question === '' && questionPool.length > 0) {
+      loadNextQuestion();
+    }
+  }, [isCountingDown, loadNextQuestion, question, questionPool.length]);
+
+  const removePoint = (index: number) => {
+    if (roundEnded.current) {
+      return;
+    }
+    setScores(current =>
+      current.map((score, scoreIndex) =>
+        scoreIndex === index ? Math.max(0, score - 1) : score,
+      ),
+    );
+    setScoredThisTurn(current => current.filter(player => player !== index));
+  };
+
+  const awardPoint = (index: number) => {
+    if (
+      roundEnded.current ||
+      isCountingDown ||
+      scoredThisTurn.includes(index)
+    ) {
+      return;
+    }
+
+    const updatedScores = scores.map((score, scoreIndex) =>
+      scoreIndex === index ? score + 1 : score,
+    );
+    setScores(updatedScores);
+    setScoredThisTurn(current => [...current, index]);
+
+    if (updatedScores[index] >= params.pointsToWin) {
+      roundEnded.current = true;
       Alert.alert(
-        'Gewonnen!',
-        `${name} hat gewonnen!`,
+        t('winnerTitle'),
+        t('winnerMessage', {name: params.names[index]}),
         [
           {
-            text: 'OK',
-            onPress: () => navigation.navigate('Startmenü'),
+            text: t('backToMenu'),
+            onPress: () => {
+              if (finished.current) {
+                return;
+              }
+              finished.current = true;
+              completeRound();
+              navigation.popToTop();
+            },
+          },
+          {
+            text: t('restart'),
+            onPress: async () => {
+              if (finished.current) {
+                return;
+              }
+              finished.current = true;
+              await restartRound();
+              if (mounted.current) {
+                navigation.replace('Game', params);
+              }
+            },
           },
         ],
         {cancelable: false},
       );
     } else {
+      setIsCountingDown(false);
       loadNextQuestion();
     }
   };
 
-  // load next question. For now: Random words
-  async function loadNextQuestion() {
-    if (!canLoadNextQuestion) {
-      return;
-    }
-    setCanLoadNextQuestion(false);
-    // for all Ids, load the questions
-    let questions: string[] = [];
-
-    for (const id of route.params.setID) {
-      questions = questions.concat(questionSet[id].questions);
-    }
-
-    // temp variable: copy of lastTwentyQuestions
-    // Reset last questions if all available questions are already used
-    if (lastTwentyQuestions.length == questions.length) {
-      setLastTwentyQuestions([]);
-    }
-
-    let indexQuestion = Math.floor(Math.random() * questions.length);
-
-    // while an already used question is chosen, choose another one
-    while (lastTwentyQuestions.includes(indexQuestion)) {
-      indexQuestion = Math.floor(Math.random() * questions.length);
-    }
-    // When 20 questions are used, remove the oldest one
-    if (lastTwentyQuestions.length > 20) {
-      // remove the oldest question and add the new one
-      const temp = [...lastTwentyQuestions];
-      temp.shift();
-      temp.push(indexQuestion);
-      setLastTwentyQuestions(temp);
-    } else {
-      // add the chosen question to the list of last questions
-      setLastTwentyQuestions([...lastTwentyQuestions, indexQuestion]);
-    }
-
-    const indexLetters = Math.floor(Math.random() * letters.length);
-    // clear letter field
-    setLetter('');
-    // count down from 3 in the question field
-    setQuestion('3');
-    await new Promise(r => setTimeout(r, 750));
-    setQuestion('2');
-    await new Promise(r => setTimeout(r, 750));
-    setQuestion('1');
-    await new Promise(r => setTimeout(r, 750));
-
-    // set new question and letter
-    setQuestion(questions[indexQuestion]);
-    setLetter(letters[indexLetters]);
-    setCanLoadNextQuestion(true);
-    setHasPlayerScoreIncreased({});
-  }
+  const leaveGame = () =>
+    Alert.alert(t('leaveGameTitle'), t('leaveGameMessage'), [
+      {text: t('stay'), style: 'cancel'},
+      {
+        text: t('leave'),
+        style: 'destructive',
+        onPress: () => navigation.popToTop(),
+      },
+    ]);
 
   return (
-    <SafeAreaView style={[styles.container]}>
-      {/* Show different title when only one point is necessary to win*/}
-      {pointsToWin == 1 ? (
-        <Text style={styles.title}>
-          RateKunst: Sieg mit {pointsToWin} Punkt. WIESO!?
-        </Text>
-      ) : (
-        <Text style={styles.title}>
-          RateKunst: Sieg mit {pointsToWin} Punkten
-        </Text>
-      )}
-
-      <View style={styles.gamefield}>
-        <View style={styles.questionBox}>
-          <View style={styles.row}>
-            <Text style={styles.smallTitle}> Frage</Text>
-            <View style={{flex: 1}} />
-            <TouchableOpacity
-              style={styles.boxSkip}
-              onPress={() => loadNextQuestion()}>
-              <Text style={styles.text}>Überspringen</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.textField}>
-            <Text style={styles.question}> {question}</Text>
-          </View>
+    <SafeAreaView
+      style={styles.screen}
+      edges={['top', 'left', 'right', 'bottom']}>
+      <StatusBar
+        barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
+      />
+      <View style={styles.topBar}>
+        <Button label={t('leave')} variant="text" onPress={leaveGame} />
+        <View style={styles.roundTitle}>
+          <Text style={styles.target}>
+            {t('scoreTarget', {count: params.pointsToWin})}
+          </Text>
         </View>
-        <View style={styles.letterBox}>
-          <Text style={styles.smallTitle}> Buchstabe</Text>
-          <View style={styles.textField}>
-            <Text style={styles.letter}> {letter}</Text>
-          </View>
+        <Button
+          label={t('skip')}
+          disabled={isCountingDown}
+          onPress={loadNextQuestion}
+        />
+      </View>
+
+      <View style={styles.gameArea}>
+        <View style={styles.questionPanel}>
+          <Text style={styles.label} numberOfLines={2}>
+            {setTitle}
+          </Text>
+          <FittedText fontSize={38}>{question}</FittedText>
+        </View>
+        <View style={styles.letterPanel}>
+          <Text style={styles.label}>{t('letter')}</Text>
+          <FittedText
+            fontSize={72}
+            color={colors.onPrimaryContainer}
+            singleLine>
+            {letter}
+          </FittedText>
         </View>
       </View>
-      {/* Bottom row with player names, score and skip button */}
-      <View style={styles.row}>
-        {route.params.names.map((name, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[styles.box, {width: boxWidth}]}
-            onPress={() => incrementScore(name)}>
-            <Text style={styles.text}>{name}</Text>
-            <Text style={styles.score}>{playerScores[name]}</Text>
-          </TouchableOpacity>
-        ))}
+
+      <View style={styles.scoreArea}>
+        <Text style={styles.scoreHint}>{t('tapScore')}</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scoreRow}>
+          {params.names.map((name, index) => {
+            const alreadyScored = scoredThisTurn.includes(index);
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('playerScore', {
+                  name,
+                  score: scores[index],
+                  target: params.pointsToWin,
+                })}
+                accessibilityHint={t('scoreActionsHint')}
+                accessibilityState={{disabled: roundEnded.current}}
+                accessibilityActions={
+                  scores[index] > 0 && !roundEnded.current
+                    ? [{name: 'decrement', label: t('removePoint')}]
+                    : []
+                }
+                onAccessibilityAction={event => {
+                  if (event.nativeEvent.actionName === 'decrement') {
+                    removePoint(index);
+                  }
+                }}
+                android_ripple={{color: colors.outlineVariant}}
+                key={`${name}-${index}`}
+                disabled={roundEnded.current}
+                onPress={() => awardPoint(index)}
+                onLongPress={() => removePoint(index)}
+                style={({pressed}) => [
+                  styles.playerButton,
+                  alreadyScored && styles.playerButtonScored,
+                  pressed && styles.playerButtonPressed,
+                ]}>
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.playerName,
+                    alreadyScored && {color: colors.onPrimaryContainer},
+                  ]}>
+                  {name}
+                </Text>
+                <Text
+                  style={[
+                    styles.score,
+                    alreadyScored && {color: colors.onPrimaryContainer},
+                  ]}>
+                  {scores[index]}
+                  <Text
+                    style={[
+                      styles.scoreGoal,
+                      alreadyScored && {color: colors.onPrimaryContainer},
+                    ]}>
+                    {' '}
+                    / {params.pointsToWin}
+                  </Text>
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
       </View>
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1f1f23',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 10,
-    marginBottom: 10,
-  },
-  gamefield: {
-    flex: 1, // Take up remaining space
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    gap: 50,
-  },
-  box: {
-    padding: 5,
-    backgroundColor: 'lightgreen',
-    borderRadius: 8,
-    marginHorizontal: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  boxSkip: {
-    width: 'fit-content',
-    padding: 10,
-    backgroundColor: 'orange',
-    borderRadius: 8,
-    marginHorizontal: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    color: '#1f1f23',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  score: {
-    color: '#1f1f23',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  textField: {
-    flex: 0.75,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  letter: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 32,
-    color: '#1f1f23',
-    fontWeight: 'bold',
-  },
-  question: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: 32,
-    color: '#1f1f23',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    padding: 8,
-  },
-  smallTitle: {
-    color: '#1f1f23',
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'left',
-  },
-  questionBox: {
-    color: '#1f1f23',
-    width: '60%',
-    height: 150,
-    backgroundColor: 'lightgreen',
-    borderRadius: 8,
-    marginHorizontal: 5,
-  },
-  letterBox: {
-    color: '#1f1f23',
-    fontSize: 24,
-    fontWeight: 'bold',
-    width: '20%',
-    height: 150,
-    backgroundColor: 'lightgreen',
-    borderRadius: 8,
-    marginHorizontal: 5,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    screen: {flex: 1, backgroundColor: colors.background, padding: spacing.sm},
+    topBar: {
+      minHeight: 48,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: spacing.sm,
+    },
+    roundTitle: {flex: 1, alignItems: 'center'},
+    target: {color: colors.onSurfaceVariant, fontSize: 14, textAlign: 'center'},
+    gameArea: {
+      flex: 1,
+      flexDirection: 'row',
+      gap: spacing.sm,
+      paddingVertical: spacing.sm,
+    },
+    questionPanel: {
+      flex: 3,
+      backgroundColor: colors.surfaceContainerLow,
+      borderRadius: radii.control,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    letterPanel: {
+      flex: 1,
+      backgroundColor: colors.primaryContainer,
+      borderRadius: radii.control,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.sm,
+    },
+    label: {
+      color: colors.onSurfaceVariant,
+      fontSize: 14,
+      marginBottom: spacing.xs,
+      textAlign: 'center',
+    },
+    scoreArea: {
+      borderTopWidth: 1,
+      borderTopColor: colors.outlineVariant,
+      paddingTop: spacing.sm,
+    },
+    scoreHint: {
+      color: colors.onSurfaceVariant,
+      fontSize: 13,
+      marginBottom: spacing.sm,
+    },
+    scoreRow: {gap: spacing.sm, paddingRight: spacing.sm},
+    playerButton: {
+      backgroundColor: colors.secondaryContainer,
+      borderTopColor: colors.secondary,
+      width: 152,
+      minHeight: 72,
+      padding: spacing.sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: radii.control,
+      borderTopWidth: 3,
+      overflow: 'hidden',
+    },
+    playerButtonScored: {
+      backgroundColor: colors.primaryContainer,
+      borderTopColor: colors.primary,
+    },
+    playerButtonPressed: {backgroundColor: colors.outlineVariant},
+    playerName: {
+      maxWidth: '100%',
+      color: colors.onSecondaryContainer,
+      fontSize: 16,
+    },
+    score: {
+      color: colors.onSecondaryContainer,
+      fontSize: 24,
+      fontWeight: '500',
+      marginTop: spacing.xs,
+    },
+    scoreGoal: {
+      color: colors.onSecondaryContainer,
+      fontSize: 14,
+      fontWeight: '400',
+    },
+  });
 
 export default GameScreen;
