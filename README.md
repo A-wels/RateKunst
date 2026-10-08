@@ -104,7 +104,7 @@ vorhanden sind. Offene Einrichtungsschritte werden in [`TODO.md`](TODO.md) gepfl
 
 ### Current Android release toolchain
 
-React Native 0.87.1 / React 19.2.3, Node 24, JDK 17, Android compile SDK 37
+React Native 0.87.1 / React 19.2.3, Node 24, JDK 17, Android compile SDK 36
 (target 36), NDK 27.1.12297006 and Gradle 9.4.1. CI checks the actual AAB's
 64-bit ELF LOAD segment alignment for 16 KB devices and the merged manifest's
 ad-free startup configuration. The legacy Gradle patch and Flipper were removed.

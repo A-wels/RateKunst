@@ -50,7 +50,7 @@ Update it in the same commit whenever an item changes state.
 - [x] Keep manually selected language when a delayed storage read completes.
 - [x] Remove the retired Android SDK `tools` package from CI and publishing setup.
 - [x] Increase the release-build heap and bound Gradle workers for clean Hermes AAR transforms.
-- [x] Target Android API 36 and compile API 37 using React Native 0.87.1, Gradle 9.4.1 and its upstream Android toolchain.
+- [x] Target Android API 36 and compile API 36 using React Native 0.87.1, Gradle 9.4.1 and its upstream Android toolchain.
 - [x] Remove unused icon fonts, dropdown packages and their obsolete Android Gradle wiring.
 - [x] Verify the API 36 release bundle after the `de.awels.ratekunst` package migration: https://github.com/A-wels/RateKunst/actions/runs/37273223445 (type-check, lint, all 11 tests and bundleRelease passed with development signing).
 - [ ] Smoke-test layout, scoring, navigation, and language switching on an Android device.
@@ -58,7 +58,8 @@ Update it in the same commit whenever an item changes state.
 ## Maintenance
 
 - [x] Upgrade React Native to 0.87.1 / React 19.2.3 and remove the legacy Android compatibility patch.
-- [ ] Review remaining transitive dependency advisories before production rollout.
+- [x] Review current dependency advisories: the remaining high findings cascade from unpatched braces <=3.0.3 in CLI/Metro/Jest glob matching; question/player input does not reach this build tooling. Do not apply npm's suggested framework downgrade.
+- [ ] Update the glob tooling once an upstream security fix is available.
 - [x] Require ELF64 16 KB alignment and a disabled AdMob startup provider in every release pipeline.
 - [ ] Smoke-test the built bundle on a real or emulated 16 KB device.
 

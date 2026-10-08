@@ -33,7 +33,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   private final SharedPreferences preferences;
   private ConsentInformation consent;
   private final AdSdkSession adSession = new AdSdkSession();
-  private boolean restartScheduled;
+  private boolean restartScheduled, receiptPersisted;
   private final BillingClient billing;
   private final Set<BannerView> banners = new HashSet<>();
   private boolean removed, purchaseChecked, gameActive, initialized, initializing, consentBusy;
@@ -54,6 +54,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     preferences = context.getSharedPreferences("ratekunst_monetization", 0);
     ageGroup = preferences.getString("ageGroup", "");
     removed = verify(preferences.getString("receipt", ""), preferences.getString("signature", ""));
+    receiptPersisted = removed;
     billing = BillingClient.newBuilder(context)
         .setListener((result, purchases) -> main.post(() -> onPurchasesUpdated(result, purchases)))
         .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
@@ -157,6 +158,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
         purchaseChecked = true;
         if (!owned) {
           preferences.edit().remove("receipt").remove("signature").apply();
+          receiptPersisted = false;
           adSession.revoke();
         }
       }
@@ -195,6 +197,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     consentGathered = false;
     boolean persisted = preferences.edit().putString("receipt", purchase.getOriginalJson())
         .putString("signature", purchase.getSignature()).commit();
+    receiptPersisted = persisted;
     interstitial = null;
     refreshBanners();
     publish();
@@ -213,7 +216,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   }
 
   private void restartAdFree() {
-    if (destroyed || !removed || restartScheduled) return;
+    if (destroyed || !removed || !receiptPersisted || restartScheduled) return;
     Activity activity = getReactApplicationContext().getCurrentActivity();
     if (activity == null || activity.isFinishing() || gameActive) return;
     restartScheduled = true;
