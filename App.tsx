@@ -35,6 +35,7 @@ import {
 import {ThemeColors} from './constants/theme';
 import {ThemeProvider, useTheme, useThemedStyles} from './theme/ThemeContext';
 import SettingsScreen from './pages/screens/SettingsScreen';
+import PrivacyPolicyScreen from './pages/screens/PrivacyPolicyScreen';
 import {InputRecoveryProvider} from './hooks/useInputRecovery';
 
 // Avoid the old Android Fragment/CoordinatorLayout input path. Ordinary React
@@ -112,7 +113,6 @@ const AppNavigator = () => {
         onStateChange={syncGame}>
         <StatusBar
           barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
-          backgroundColor={colors.primaryContainer}
         />
         <Stack.Navigator
           {...(Platform.OS === 'android' ? {detachInactiveScreens: false} : {})}
@@ -128,7 +128,7 @@ const AppNavigator = () => {
             headerTitleStyle: {fontSize: 20, fontWeight: '500'},
             ...(Platform.OS === 'android'
               ? {
-                  animationEnabled: false,
+                  animation: 'none' as const,
                   gestureEnabled: false,
                   cardOverlayEnabled: false,
                   cardShadowEnabled: false,
@@ -152,6 +152,11 @@ const AppNavigator = () => {
             options={{
               title: t('settings'),
             }}
+          />
+          <Stack.Screen
+            name="PrivacyPolicy"
+            component={PrivacyPolicyScreen}
+            options={{title: t('privacyPolicy')}}
           />
           <Stack.Screen
             name="Game"
@@ -184,7 +189,7 @@ const AppNavigator = () => {
   );
 };
 
-const App = (): JSX.Element => (
+const App = (): React.JSX.Element => (
   <GestureHandlerRootView style={layoutStyles.app}>
     <SafeAreaProvider>
       <ThemeProvider>

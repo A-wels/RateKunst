@@ -45,7 +45,7 @@ public final class DisplayPackage implements ReactPackage {
     }
 
     private void applyOrientation() {
-      Activity activity = getCurrentActivity();
+      Activity activity = getReactApplicationContext().getCurrentActivity();
       if (activity == null || activity.isFinishing() || activity.isDestroyed()) return;
       int orientation = gameActive ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
           : ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;

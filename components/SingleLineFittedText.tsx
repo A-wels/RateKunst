@@ -2,8 +2,7 @@ import React from 'react';
 import {StyleSheet, Text, useWindowDimensions, View} from 'react-native';
 import type {
   LayoutChangeEvent,
-  NativeSyntheticEvent,
-  TextLayoutEventData,
+  TextLayoutEvent,
 } from 'react-native';
 
 type Props = {children: string; fontSize: number; color: string};
@@ -42,7 +41,7 @@ const SingleLineFittedText = ({children, fontSize, color}: Props) => {
   };
   const onMeasure = ({
     nativeEvent: {lines},
-  }: NativeSyntheticEvent<TextLayoutEventData>) => {
+  }: TextLayoutEvent) => {
     if (latestKey.current !== measurementKey) {
       return;
     }

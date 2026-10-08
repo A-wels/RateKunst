@@ -27,12 +27,14 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '24'
           cache: npm
       - name: Install dependencies
         run: npm ci
       - name: Type-check
         run: npm run typecheck
+      - name: Check bundled privacy policy
+        run: python3 scripts/generate-privacy-policy.py --check
       - name: Lint
         run: npm run lint
       - name: Test
@@ -48,7 +50,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '24'
           cache: npm
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -62,12 +64,10 @@ jobs:
         with:
           packages: platform-tools
           log-accepted-android-sdk-licenses: false
-      - name: Install Android SDK 36
-        run: sdkmanager "platforms;android-36" "build-tools;35.0.0"
+      - name: Install Android SDK 37
+        run: sdkmanager "platforms;android-37" "build-tools;37.0.0"
       - name: Install dependencies
         run: npm ci
-      - name: Patch legacy React Native Android toolchain
-        run: node scripts/patch-react-native-gradle-plugin.js
       - name: Validate signing and Google Play secrets
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
@@ -117,6 +117,8 @@ jobs:
           ./gradlew testReleaseUnitTest bundleRelease \
             -PversionCode="$version_code" \
             -PversionName="$version_name"
+      - name: Verify 16 KB libraries and ad-free startup
+        run: python3 scripts/verify-android-release.py android/app/build/outputs/bundle/release/app-release.aab
       - name: Upload signed bundle artifact
         uses: actions/upload-artifact@v4
         with:

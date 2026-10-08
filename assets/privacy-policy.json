@@ -1,0 +1,313 @@
+{
+  "updated": "2026-10-08",
+  "sections": {
+    "de": [
+      {
+        "kind": "p",
+        "text": "RateKunst ist ein lokales Mehrspieler-Fragespiel. Spielerangaben und eigene Fragen bleiben auf Ihrem Gerät. Die kostenlose App verwendet Google AdMob für Werbung und Google Play Billing für den einmaligen Kauf zur dauerhaften Werbeentfernung. Dadurch können technische Daten an Google übermittelt werden."
+      },
+      {
+        "kind": "h2",
+        "text": "1. Verantwortlicher und Kontakt"
+      },
+      {
+        "kind": "address",
+        "text": "Alexander Welsing\nGrevener Straße 140\n48159 Münster, Deutschland\nE-Mail: kontakt@a-wels.de\nWebsite: a-wels.de (https://a-wels.de/)"
+      },
+      {
+        "kind": "p",
+        "text": "Diese Erklärung gilt für die Android-App RateKunst einschließlich ihrer werbefreien Nutzung nach einem In-App-Kauf."
+      },
+      {
+        "kind": "h2",
+        "text": "2. Lokale Spieldaten"
+      },
+      {
+        "kind": "p",
+        "text": "Die App benötigt kein eigenes Benutzerkonto und betreibt keine Cloud-Synchronisation. Auf Ihrem Gerät werden insbesondere folgende Angaben verarbeitet oder gespeichert:"
+      },
+      {
+        "kind": "li",
+        "text": "eingegebene Spielernamen, ausgewählte Fragensets und die zum Gewinnen benötigte Punktzahl;"
+      },
+      {
+        "kind": "li",
+        "text": "selbst erstellte Fragensets einschließlich ihrer Namen und Texte;"
+      },
+      {
+        "kind": "li",
+        "text": "Sprache, Darstellung (hell, dunkel oder System), Tutorialstatus sowie die Anzahl abgeschlossener Spiele zur Steuerung der Werbehäufigkeit;"
+      },
+      {
+        "kind": "li",
+        "text": "eine gegebenenfalls gewählte Altersgruppe, Einwilligungsinformationen und der Nachweis eines Kaufs zur Werbeentfernung."
+      },
+      {
+        "kind": "p",
+        "text": "Punkte und laufende Spielabläufe werden während des Spiels im Arbeitsspeicher verarbeitet. RateKunst übermittelt Spielernamen, eigene Fragentexte, Antworten oder einzelne Spielergebnisse weder an einen eigenen Server noch gezielt an Google als Werbeinformationen. Die nachfolgend beschriebenen technischen Daten der Google-Dienste sind davon zu unterscheiden."
+      },
+      {
+        "kind": "p",
+        "text": "Die App fordert keinen Zugriff auf Kontakte, Kamera, Mikrofon oder den präzisen Gerätestandort an. Die Speicherung dient den von Ihnen verwendeten Spielfunktionen und Einstellungen. Soweit personenbezogene Daten betroffen sind, erfolgt sie zur Bereitstellung der App nach Art. 6 Abs. 1 lit. b DSGVO. Für hierfür unbedingt erforderliche Gerätespeicherungen gilt § 25 Abs. 2 Nr. 2 TDDDG."
+      },
+      {
+        "kind": "h2",
+        "text": "3. Werbung mit Google AdMob"
+      },
+      {
+        "kind": "p",
+        "text": "Die kostenlose App verwendet das Google Mobile Ads SDK (AdMob). Banner erscheinen außerhalb eines aktiven Spiels. Nach jeweils zwei abgeschlossenen Spielen kann beim Übergang zurück ins Menü eine Vollbildanzeige erscheinen, sofern eine Anzeige verfügbar ist."
+      },
+      {
+        "kind": "p",
+        "text": "Abhängig von Einwilligung, Altersbehandlung, Geräteeinstellungen und Anzeigenart kann das SDK IP-Adresse und daraus abgeleiteten ungefähren Standort, Geräte- und App-Kennungen (etwa Werbe-ID oder App-Set-ID), Informationen über App- und Anzeigeninteraktionen sowie technische Diagnose- und Leistungsdaten verarbeiten. Zwecke sind Anzeigenauslieferung, Messung, Analyse und Betrugsabwehr. Google gibt für dieses SDK eine TLS-Verschlüsselung der übertragenen Nutzerdaten an."
+      },
+      {
+        "kind": "p",
+        "text": "Google und die bei der jeweiligen Anzeigenauslieferung beteiligten Werbepartner können Empfänger sein. Die Partner und ihre Zwecke werden, soweit ein Einwilligungsdialog angezeigt wird, dort näher erläutert. Auch nicht personalisierte oder eingeschränkte Werbung kann technische Datenverarbeitung erfordern. Die Einstufung einer Anzeige als „G“ beschreibt ihre Inhaltseignung und bedeutet keine Datenfreiheit."
+      },
+      {
+        "kind": "p",
+        "text": "Für Nutzer im Europäischen Wirtschaftsraum ist bei Google grundsätzlich Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland, zuständig, soweit die Hinweise des jeweiligen Dienstes nichts anderes vorsehen. Weitere Informationen: Google-Datenschutzerklärung (https://policies.google.com/privacy?hl=de), Google-Dienste in Apps anderer Anbieter (https://policies.google.com/technologies/partner-sites?hl=de) und Datenverarbeitung des AdMob-SDK (https://developers.google.com/admob/android/privacy/play-data-disclosure)."
+      },
+      {
+        "kind": "h2",
+        "text": "4. Einwilligung und Ihre Werbeentscheidungen"
+      },
+      {
+        "kind": "p",
+        "text": "RateKunst verwendet Googles User Messaging Platform (UMP), um den erforderlichen Einwilligungsstatus zu prüfen und gegebenenfalls einen Datenschutzdialog anzuzeigen. Dabei können technische Verbindungsdaten und Ihre Datenschutzentscheidungen verarbeitet werden; Entscheidungen werden zur Beachtung Ihrer Auswahl auf dem Gerät gespeichert. Anzeigen werden erst angefordert, wenn die Kaufprüfung abgeschlossen ist und UMP Anzeigenanfragen zulässt."
+      },
+      {
+        "kind": "p",
+        "text": "Soweit eine Einwilligung erforderlich ist, insbesondere für Werbepersonalisierung oder nicht unbedingt erforderlichen Gerätezugriff, ist die Rechtsgrundlage Art. 6 Abs. 1 lit. a DSGVO beziehungsweise § 25 Abs. 1 TDDDG. Einwilligungen können über „Einstellungen“ → „Datenschutz für Werbung“ geändert oder widerrufen werden, wenn diese Option für Ihre Region erforderlich und verfügbar ist. Der Widerruf wirkt für die Zukunft. Soweit rechtlich zulässige, unbedingt erforderliche technische Verarbeitung ohne Einwilligung erfolgt, dient sie der sicheren Bereitstellung des Dienstes und Betrugsabwehr (Art. 6 Abs. 1 lit. f DSGVO); ein berechtigtes Interesse ersetzt keine erforderliche Einwilligung zum Gerätezugriff."
+      },
+      {
+        "kind": "p",
+        "text": "Sie können außerdem die Werbe-ID in den Android-Einstellungen verwalten oder löschen. Die genaue Bezeichnung hängt vom Gerät ab. Eine abgelehnte Personalisierung führt nicht zwingend zur vollständigen Abschaltung von Werbung."
+      },
+      {
+        "kind": "h2",
+        "text": "5. Altersgruppen und Jugendschutz"
+      },
+      {
+        "kind": "p",
+        "text": "Die freiwillige Auswahl umfasst „Unter 16“, „16–17“ und „18 oder älter“. Es wird kein Geburtsdatum verlangt. Die Gruppe wird lokal gespeichert; daraus werden Schutzsignale für die Werbe- und Einwilligungsdienste abgeleitet."
+      },
+      {
+        "kind": "p",
+        "text": "Ohne Altersangabe oder bei „Unter 16“ fordert die App nur G-Werbung mit konservativer Behandlung für Kinder und Personen unter dem Einwilligungsalter an. Bei „16–17“ wird eine Behandlung für Jugendliche verwendet. Für Erwachsene gelten die jeweiligen Einwilligungsentscheidungen und die konfigurierte Werbeinhaltsgrenze. Eine Auswahl von „18 oder älter“ ist keine Einwilligung in personalisierte Werbung. Die Altersgruppe kann in den Einstellungen geändert werden."
+      },
+      {
+        "kind": "h2",
+        "text": "6. Einmaliger Kauf zur Werbeentfernung"
+      },
+      {
+        "kind": "p",
+        "text": "Der Kauf „Werbung entfernen“ wird über Google Play Billing abgewickelt. Es handelt sich um einen einmaligen, nicht verbrauchbaren Kauf, nicht um ein Abonnement. Nach erfolgreicher Prüfung des Kaufs werden Banner, Vollbildanzeigen und die Werbe- und Einwilligungs-SDKs (Google Mobile Ads und UMP) deaktiviert. Wenn diese Dienste in der laufenden Sitzung bereits verwendet wurden, startet die App nach Speicherung des Kaufnachweises einmal neu, um auch den bisherigen SDK-Prozess zu beenden. Bei späteren Starts mit einem gültigen lokal gespeicherten Kaufnachweis werden diese SDKs nicht initialisiert oder aufgerufen; es werden keine Werbe- oder UMP-Anfragen ausgelöst. Google Play Billing bleibt für die Kaufprüfung aktiv. Der Kauf kann über das verwendete Google-Play-Konto wiederhergestellt werden. Nach einer bestätigten Erstattung oder einem Widerruf des Kaufs kann die kostenlose Nutzung mit Werbung wieder gelten; ein Netzwerkfehler allein hebt einen bereits verifizierten Kauf nicht auf."
+      },
+      {
+        "kind": "p",
+        "text": "Google verarbeitet für den Kauf Konto-, Transaktions- und Zahlungsinformationen. Die App erhält Kaufstatus und Kaufbeleg, einschließlich Produktkennung, Kauf-Token, Signatur sowie gegebenenfalls Bestellkennung und Kaufzeit. Der signierte Beleg wird lokal gespeichert und geprüft, um den Werbefreistatus auch offline zu erkennen. Kaufberechtigungen werden über Google Play abgefragt und bestätigte Käufe dort bestätigt. RateKunst verwendet hierfür keinen eigenen Kaufprüfungsserver."
+      },
+      {
+        "kind": "p",
+        "text": "Wir erhalten keine vollständigen Kreditkarten- oder Bankdaten, die Sie bei Google Play eingeben. Google kann uns Verkaufs- und Abrechnungsberichte bereitstellen. Die Verarbeitung zur Abwicklung und Wiederherstellung des Kaufs beruht auf Art. 6 Abs. 1 lit. b DSGVO, erforderliche gesetzliche Aufbewahrung auf lit. c und die Abwehr von Kaufmissbrauch auf lit. f."
+      },
+      {
+        "kind": "p",
+        "text": "Die Werbeentfernung löscht keine zuvor bei Google verarbeiteten Daten. Google Play bleibt für Kaufprüfung, Wiederherstellung, Installation und Updates beteiligt."
+      },
+      {
+        "kind": "h2",
+        "text": "7. Speicherdauer und Löschung"
+      },
+      {
+        "kind": "p",
+        "text": "Lokale Einstellungen und Fragensets bleiben gespeichert, bis Sie sie ändern, ein Set löschen oder den App-Speicher löschen. Unter Android können Sie „Einstellungen“ → „Apps“ → „RateKunst“ → „Speicher“ → „Daten löschen“ verwenden. Die Deinstallation entfernt normalerweise den lokalen App-Speicher. Automatische Android-App-Sicherungen sind in RateKunst deaktiviert; zusätzliche Sicherungen oder Geräteübertragungen Ihres Geräteanbieters verwalten Sie separat."
+      },
+      {
+        "kind": "p",
+        "text": "Das Löschen lokaler Daten entfernt nicht den Kauf aus Ihrem Google-Play-Konto. Bei erneuter Kaufprüfung kann die Werbeentfernung wiederhergestellt werden. Für Daten bei Google und Werbepartnern gelten deren Speicher- und Löschregeln. Informationen dazu enthält insbesondere Googles Erläuterung zur Datenaufbewahrung (https://policies.google.com/technologies/retention?hl=de). Wir können Daten, die ausschließlich auf Ihrem Gerät liegen, nicht aus der Ferne löschen."
+      },
+      {
+        "kind": "p",
+        "text": "Wenn Sie uns kontaktieren, verarbeiten wir Ihre E-Mail-Adresse und Ihre Nachricht zur Bearbeitung des Anliegens. Grundlage ist Art. 6 Abs. 1 lit. b DSGVO bei Vertragsfragen, ansonsten lit. f (Beantwortung Ihrer Anfrage). Zur Bereitstellung der E-Mail-Kommunikation können unsere E-Mail-Dienstleister Empfänger sein. Wir löschen die Korrespondenz, wenn sie nicht mehr benötigt wird, soweit keine gesetzlichen Aufbewahrungspflichten oder noch offene Ansprüche entgegenstehen."
+      },
+      {
+        "kind": "h2",
+        "text": "8. Internationale Verarbeitung"
+      },
+      {
+        "kind": "p",
+        "text": "Bei Google-Diensten kann eine Verarbeitung außerhalb des EWR, insbesondere in den USA, stattfinden. Google beschreibt hierfür Angemessenheitsmechanismen, darunter den EU-US Data Privacy Framework für entsprechend zertifizierte Unternehmen, sowie Standardvertragsklauseln für andere erforderliche Übermittlungen. Einzelheiten und Informationen zu den Garantien finden Sie in Googles Hinweisen zu internationalen Datenübermittlungen (https://policies.google.com/privacy/frameworks?hl=de)."
+      },
+      {
+        "kind": "h2",
+        "text": "9. Ihre Rechte"
+      },
+      {
+        "kind": "p",
+        "text": "Nach Maßgabe der DSGVO haben Sie Rechte auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung und Datenübertragbarkeit. Sie können erteilte Einwilligungen jederzeit für die Zukunft widerrufen und Verarbeitungen auf Grundlage berechtigter Interessen aus Gründen Ihrer besonderen Situation widersprechen; gegen Direktwerbung können Sie jederzeit widersprechen. Sie dürfen sich bei einer Datenschutzaufsichtsbehörde beschweren, insbesondere am Ort Ihres gewöhnlichen Aufenthalts oder Arbeitsplatzes."
+      },
+      {
+        "kind": "p",
+        "text": "Für Anliegen zu unserer Verarbeitung nutzen Sie den Kontakt in Abschnitt 1. Für die eigenständige Verarbeitung durch Google stehen zusätzlich die Datenschutzkontakte und Steuerungsmöglichkeiten in Googles Datenschutzerklärung zur Verfügung. RateKunst trifft selbst keine automatisierten Entscheidungen mit rechtlicher oder ähnlich erheblicher Wirkung über Sie."
+      },
+      {
+        "kind": "h2",
+        "text": "10. Änderungen und Aufruf dieser Seite"
+      },
+      {
+        "kind": "p",
+        "text": "Diese Erklärung ist in der App unter „Einstellungen“ → „Datenschutzerklärung“ auch offline und bei werbefreier Nutzung erreichbar. Sie wird bei Änderungen der App oder ihrer Datenverarbeitung aktualisiert. Das Datum oben bezeichnet die aktuelle Fassung. Die HTML-Datei selbst enthält keine eingebundenen Tracker, externen Schriftarten oder Werbeskripte. Beim Online-Aufruf erhält der Webserver technisch bedingt Verbindungsdaten wie Ihre IP-Adresse; hierfür gilt ergänzend die Datenschutzerklärung der Website (https://a-wels.de/privacy-policies/datenschutz.html). Externe Links verbinden Sie erst beim Öffnen mit der jeweiligen Website."
+      }
+    ],
+    "en": [
+      {
+        "kind": "h1",
+        "text": "RateKunst – Privacy Policy"
+      },
+      {
+        "kind": "p",
+        "text": "RateKunst is a local multiplayer question game. Player details and custom questions stay on your device. The free Android app uses Google AdMob for advertising and Google Play Billing for a one-time purchase that permanently removes ads. These services may transmit technical data to Google."
+      },
+      {
+        "kind": "h2",
+        "text": "1. Controller and contact"
+      },
+      {
+        "kind": "address",
+        "text": "Alexander Welsing\nGrevener Straße 140\n48159 Münster, Germany\nEmail: kontakt@a-wels.de\nWebsite: a-wels.de (https://a-wels.de/)"
+      },
+      {
+        "kind": "p",
+        "text": "This policy covers the Android app RateKunst, package de.awels.ratekunst, including its ad-free use after an in-app purchase."
+      },
+      {
+        "kind": "h2",
+        "text": "2. Local game data"
+      },
+      {
+        "kind": "p",
+        "text": "RateKunst has no separate user account or cloud synchronisation. It processes or stores player names, selected question sets, the points needed to win, custom question sets and their text, language and appearance preferences, tutorial status, and a completed-game count used to control ad frequency. A selected age group, consent information and an ad-removal purchase receipt are also stored locally. Scores and active gameplay are processed in memory."
+      },
+      {
+        "kind": "p",
+        "text": "The app does not send player names, custom questions, answers or individual game results to our own server or deliberately pass them to Google as advertising information. Technical data processed by Google services is described below. The app requests no access to contacts, camera, microphone or precise device location."
+      },
+      {
+        "kind": "p",
+        "text": "Local processing provides the game and preferences you use (Article 6(1)(b) GDPR where personal data is involved). Strictly necessary device storage falls under section 25(2)(2) of Germany's TDDDG."
+      },
+      {
+        "kind": "h2",
+        "text": "3. Google AdMob advertising"
+      },
+      {
+        "kind": "p",
+        "text": "Banner ads appear outside active games. After every two completed games, an available interstitial may appear when returning to the menu."
+      },
+      {
+        "kind": "p",
+        "text": "Depending on consent, age treatment, device settings and ad type, the Google Mobile Ads SDK may process an IP address and approximate location inferred from it, device/app identifiers such as advertising ID or app set ID, app/ad interaction data and technical diagnostic or performance information. Purposes include ad delivery, measurement, analytics and fraud prevention. Google states that SDK user data is encrypted in transit using TLS."
+      },
+      {
+        "kind": "p",
+        "text": "Recipients can include Google and partners involved in serving an ad. Where a consent form is shown, it provides further information about partners and purposes. Non-personalised or limited ads can still involve technical processing. A G content rating is an ad-content restriction, not a guarantee that no data is processed."
+      },
+      {
+        "kind": "p",
+        "text": "For EEA users, Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Ireland, is generally Google's responsible entity unless a service-specific notice provides otherwise. See Google's Privacy Policy (https://policies.google.com/privacy?hl=en), Google services in partner apps (https://policies.google.com/technologies/partner-sites?hl=en) and AdMob SDK data disclosures (https://developers.google.com/admob/android/privacy/play-data-disclosure)."
+      },
+      {
+        "kind": "h2",
+        "text": "4. Consent and advertising choices"
+      },
+      {
+        "kind": "p",
+        "text": "Google's User Messaging Platform (UMP) checks consent requirements and shows a privacy form when required. Technical connection data and privacy decisions may be processed; decisions are stored on the device to respect your choices. Ad requests require a completed purchase check and UMP permission to request ads."
+      },
+      {
+        "kind": "p",
+        "text": "Where consent is required for personalisation or non-essential device access, the basis is Article 6(1)(a) GDPR and/or section 25(1) TDDDG. Change or withdraw consent through Settings → Ad privacy settings when this option is required and available in your region. Withdrawal applies to future processing. Lawfully permitted, strictly necessary technical processing may rely on Article 6(1)(f) GDPR for secure service delivery and fraud prevention; legitimate interests do not replace consent required for device access."
+      },
+      {
+        "kind": "p",
+        "text": "You can also manage or delete your advertising ID in Android settings. Refusing personalisation does not necessarily disable all ads."
+      },
+      {
+        "kind": "h2",
+        "text": "5. Age groups"
+      },
+      {
+        "kind": "p",
+        "text": "The optional choices are Under 16, 16–17 and 18 or older. No date of birth is requested. The group is stored locally and determines protective signals sent to advertising and consent services."
+      },
+      {
+        "kind": "p",
+        "text": "With no age selected, or Under 16, the app requests G-rated ads with conservative child and under-age-of-consent treatment. Ages 16–17 use teen treatment. Adults use their consent choices and the configured ad-content limit. Selecting 18 or older does not itself consent to personalised ads. You can change the group in Settings."
+      },
+      {
+        "kind": "h2",
+        "text": "6. Permanent ad-removal purchase"
+      },
+      {
+        "kind": "p",
+        "text": "Remove ads is a one-time, non-consumable purchase through Google Play Billing, not a subscription. Once the purchase is verified, banners, interstitials and the advertising and consent SDKs (Google Mobile Ads and UMP) are disabled. If these services have already been used during the current session, the app restarts once after saving the purchase receipt to terminate the previous SDK process as well. On later launches with a valid locally stored purchase receipt, these SDKs are not initialised or called and no advertising or UMP requests are made. Google Play Billing remains active for purchase verification. Purchases can be restored using the Google Play account used to buy them. A confirmed refund or revocation can return the app to its free, ad-supported mode; a network error alone does not remove a previously verified entitlement."
+      },
+      {
+        "kind": "p",
+        "text": "Google handles account, transaction and payment data. The app receives purchase status and a receipt containing a product ID, purchase token, signature and, where provided, order ID and purchase time. It verifies and stores the signed receipt locally for offline recognition, queries entitlements and acknowledges purchases through Google Play. There is no developer-operated purchase verification server."
+      },
+      {
+        "kind": "p",
+        "text": "We do not receive your full payment-card or bank details entered in Google Play. Google may provide developer sales and accounting reports. Purchase fulfilment and restoration rely on Article 6(1)(b) GDPR, statutory retention on (c), and prevention of purchase abuse on (f). Removing ads does not erase data previously processed by Google. Play remains involved in purchase checks, restoration, installation and updates."
+      },
+      {
+        "kind": "h2",
+        "text": "7. Retention and deletion"
+      },
+      {
+        "kind": "p",
+        "text": "Local data remains until changed, deleted in the app or removed through Android Settings → Apps → RateKunst → Storage → Clear data. Uninstalling normally removes local app storage. Automatic Android app backups are disabled for RateKunst; manage any additional manufacturer backups or device transfers separately."
+      },
+      {
+        "kind": "p",
+        "text": "Clearing local storage does not cancel the purchase in your Play account, and a later purchase check can restore ad removal. Google and ad partners apply their own retention and deletion rules; see Google's retention information (https://policies.google.com/technologies/retention?hl=en). We cannot remotely delete data held only on your device."
+      },
+      {
+        "kind": "p",
+        "text": "If you contact us, we process your email address and message to resolve your request: Article 6(1)(b) GDPR for contractual matters, otherwise (f), our interest in answering enquiries. Our email service providers may receive data to provide this communication. Correspondence is deleted when no longer needed, unless legal retention requirements or unresolved claims require continued storage."
+      },
+      {
+        "kind": "h2",
+        "text": "8. International processing"
+      },
+      {
+        "kind": "p",
+        "text": "Google services may process data outside the EEA, including in the USA. Google describes adequacy mechanisms, including the EU-US Data Privacy Framework for certified entities, and standard contractual clauses for other necessary transfers. Details and safeguards are available in Google's international transfer notice (https://policies.google.com/privacy/frameworks?hl=en)."
+      },
+      {
+        "kind": "h2",
+        "text": "9. Your rights"
+      },
+      {
+        "kind": "p",
+        "text": "Subject to GDPR conditions, you have rights of access, rectification, erasure, restriction and data portability. You can withdraw consent for future processing and object to legitimate-interest processing based on your particular situation; you may object to direct marketing at any time. You may complain to a data protection authority, particularly where you live or work."
+      },
+      {
+        "kind": "p",
+        "text": "Contact us using section 1 about our processing. Google's independent processing can also be addressed through its privacy contacts and account controls. RateKunst itself makes no automated decisions about you with legal or similarly significant effects."
+      },
+      {
+        "kind": "h2",
+        "text": "10. Updates and this page"
+      },
+      {
+        "kind": "p",
+        "text": "This policy is accessible in the app under Settings → Privacy policy, including offline and during ad-free use. We update it when the app or processing changes. The date at the top identifies this version. This HTML file embeds no trackers, external fonts or advertising scripts. When hosted online, the web server necessarily receives connection data such as your IP address; the website privacy notice (https://a-wels.de/privacy-policies/datenschutz.html) also applies. External links connect to their respective websites only when opened."
+      }
+    ]
+  }
+}

@@ -22,7 +22,7 @@ const themeOptions: {
   {value: 'dark', label: 'themeDark', hint: 'themeDarkHint'},
 ];
 
-const SettingsScreen = () => {
+const SettingsScreen = ({navigation}: any) => {
   const {t, language, setLanguage} = useLocalization();
   const {colors, preference, setPreference} = useTheme();
   const styles = useThemedStyles(createStyles);
@@ -122,6 +122,10 @@ const SettingsScreen = () => {
             ),
           )}
         </View>
+        <Button
+          label={t('privacyPolicy')}
+          onPress={() => navigation.navigate('PrivacyPolicy')}
+        />
         {monetization.available && (
           <>
             <Text accessibilityRole="header" style={styles.heading}>

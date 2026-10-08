@@ -15,6 +15,7 @@ import com.google.android.gms.ads.*;
 import com.google.android.gms.ads.interstitial.*;
 import com.google.android.ump.*;
 import de.awels.ratekunst.BuildConfig;
+import de.awels.ratekunst.AdFreeRestartActivity;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.Signature;
@@ -30,7 +31,9 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   static final String PURCHASE_OPTION = "standard";
   private final Handler main = new Handler(Looper.getMainLooper());
   private final SharedPreferences preferences;
-  private final ConsentInformation consent;
+  private ConsentInformation consent;
+  private final AdSdkSession adSession = new AdSdkSession();
+  private boolean restartScheduled;
   private final BillingClient billing;
   private final Set<BannerView> banners = new HashSet<>();
   private boolean removed, purchaseChecked, gameActive, initialized, initializing, consentBusy;
@@ -43,6 +46,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   private InterstitialAd interstitial;
   private Promise purchasePromise;
   private int consentRevision;
+  private int ownershipRevision;
   private int gameBreakRevision;
 
   public MonetizationModule(ReactApplicationContext context) {
@@ -50,7 +54,6 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     preferences = context.getSharedPreferences("ratekunst_monetization", 0);
     ageGroup = preferences.getString("ageGroup", "");
     removed = verify(preferences.getString("receipt", ""), preferences.getString("signature", ""));
-    consent = UserMessagingPlatform.getConsentInformation(context);
     billing = BillingClient.newBuilder(context)
         .setListener((result, purchases) -> main.post(() -> onPurchasesUpdated(result, purchases)))
         .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
@@ -72,13 +75,13 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     value.putBoolean("productLoading", productLoading);
     value.putString("productError", productError);
     value.putString("ageGroup", ageGroup);
-    value.putBoolean("privacyOptionsRequired", consent.getPrivacyOptionsRequirementStatus()
+    value.putBoolean("privacyOptionsRequired", !removed && consent != null && consent.getPrivacyOptionsRequirementStatus()
         == ConsentInformation.PrivacyOptionsRequirementStatus.REQUIRED);
     return value;
   }
 
   private void publish() {
-    if (!destroyed && getReactApplicationContext().hasActiveCatalystInstance()) {
+    if (!destroyed && getReactApplicationContext().hasActiveReactInstance()) {
       getReactApplicationContext().getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
           .emit("RateKunstMonetizationChanged", status());
     }
@@ -117,8 +120,13 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   }
 
   private void queryOwned(Promise promise) {
+    final int revision = ownershipRevision;
     billing.queryPurchasesAsync(QueryPurchasesParams.newBuilder()
         .setProductType(BillingClient.ProductType.INAPP).build(), (result, purchases) -> main.post(() -> {
+      if (destroyed || revision != ownershipRevision) {
+        if (promise != null) promise.resolve(status());
+        return;
+      }
       if (result.getResponseCode() != BillingClient.BillingResponseCode.OK) {
         publish();
         if (promise != null) promise.reject("STORE_UNAVAILABLE", result.getDebugMessage());
@@ -147,7 +155,10 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
       if (!uncertain) {
         removed = owned;
         purchaseChecked = true;
-        if (!owned) preferences.edit().remove("receipt").remove("signature").apply();
+        if (!owned) {
+          preferences.edit().remove("receipt").remove("signature").apply();
+          adSession.revoke();
+        }
       }
       refreshBanners();
       publish();
@@ -175,19 +186,38 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   }
 
   private void savePurchase(Purchase purchase) {
+    ownershipRevision++; // Older empty store queries must not undo a newly verified purchase.
     removed = true;
     purchaseChecked = true;
-    preferences.edit().putString("receipt", purchase.getOriginalJson())
-        .putString("signature", purchase.getSignature()).apply();
+    boolean needsRestart = adSession.disable();
+    consentRevision++; // Invalidate every pending consent, initialization and ad callback.
+    consentBusy = false;
+    consentGathered = false;
+    boolean persisted = preferences.edit().putString("receipt", purchase.getOriginalJson())
+        .putString("signature", purchase.getSignature()).commit();
     interstitial = null;
     refreshBanners();
     publish();
     if (!purchase.isAcknowledged()) {
       billing.acknowledgePurchase(AcknowledgePurchaseParams.newBuilder()
           .setPurchaseToken(purchase.getPurchaseToken()).build(), result -> {
-        // Failed acknowledgements are retried by queryOwned on the next foreground/restore.
+        // Failed acknowledgements are retried by queryOwned in the fresh process.
+        if (needsRestart && persisted) main.post(this::restartAdFree);
       });
     }
+    if (needsRestart && persisted) main.postDelayed(this::restartAdFree, 1500);
+    if (needsRestart && !persisted) {
+      // Keep ads blocked and retry storage; never restart with an unpersisted entitlement.
+      main.postDelayed(() -> { if (!destroyed) savePurchase(purchase); }, 1000);
+    }
+  }
+
+  private void restartAdFree() {
+    if (destroyed || !removed || restartScheduled) return;
+    Activity activity = getReactApplicationContext().getCurrentActivity();
+    if (activity == null || activity.isFinishing() || gameActive) return;
+    restartScheduled = true;
+    AdFreeRestartActivity.restart(activity);
   }
 
   // Prefer the configured regular buy option; never select a different named
@@ -282,7 +312,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
           publish();
           if (refreshPromise != null) refreshPromise.resolve(status());
           if (launchPromise == null) return;
-          Activity activity = getCurrentActivity();
+          Activity activity = getReactApplicationContext().getCurrentActivity();
           if (activity == null || activity.isFinishing()) {
             finishPurchaseError("NO_ACTIVITY", "No foreground activity."); return;
           }
@@ -371,8 +401,10 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
 
   private void gatherConsent() {
     if (destroyed || removed || !purchaseChecked || consentBusy || consentGathered || gameActive) return;
-    Activity activity = getCurrentActivity();
+    Activity activity = getReactApplicationContext().getCurrentActivity();
     if (activity == null || activity.isFinishing()) return;
+    if (!adSession.begin(purchaseChecked, removed)) return;
+    if (consent == null) consent = UserMessagingPlatform.getConsentInformation(getReactApplicationContext());
     consentBusy = true;
     publish();
     final int revision = ++consentRevision;
@@ -389,7 +421,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   }
 
   private void finishConsent(int revision, FormError error) {
-    if (revision != consentRevision || destroyed) return;
+    if (revision != consentRevision || destroyed || removed) return;
     consentBusy = false;
     // A valid previous UMP decision may still allow ads after a network error.
     // Otherwise allow a later foreground attempt instead of latching
@@ -401,6 +433,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
     initializing = true;
     MobileAds.initialize(getReactApplicationContext(), result -> main.post(() -> {
       initializing = false;
+      if (destroyed || removed || adSession.isDisabled()) return;
       initialized = true;
       refreshBanners();
       loadInterstitial();
@@ -410,8 +443,8 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
 
   @ReactMethod public void privacyOptions(Promise promise) {
     main.post(() -> {
-      Activity activity = getCurrentActivity();
-      if (activity == null || gameActive || removed) { promise.resolve(status()); return; }
+      Activity activity = getReactApplicationContext().getCurrentActivity();
+      if (activity == null || gameActive || removed || consent == null) { promise.resolve(status()); return; }
       interstitial = null;
       UserMessagingPlatform.showPrivacyOptionsForm(activity, error -> main.post(() -> {
         refreshBanners(); loadInterstitial(); publish();
@@ -422,8 +455,8 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   }
 
   boolean canLoadAds() {
-    return !destroyed && initialized && purchaseChecked && !removed
-        && consentGathered && !consentBusy && consent.canRequestAds();
+    return !destroyed && !adSession.isDisabled() && initialized && purchaseChecked && !removed
+        && consent != null && consentGathered && !consentBusy && consent.canRequestAds();
   }
   boolean canShowBanner() { return canLoadAds() && !gameActive && !interstitialShowing; }
   String bannerId() { return BuildConfig.ADMOB_BANNER_ID; }
@@ -436,7 +469,10 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
       if (active) gameBreakRevision++;
       gameActive = active;
       refreshBanners();
-      if (!active) gatherConsent();
+      if (!active) {
+        gatherConsent();
+        if (removed && adSession.disable()) restartAdFree();
+      }
       // Retry a failed preload at game start as well as at the menu. Loading
       // during a game is allowed; display is still restricted to game breaks.
       loadInterstitial();
@@ -470,7 +506,7 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   }
 
   private void showInterstitialAtBreak(Promise promise, InterstitialBreak gameBreak) {
-    Activity activity = getCurrentActivity();
+    Activity activity = getReactApplicationContext().getCurrentActivity();
     boolean eligible = canLoadAds() && !gameActive && !interstitialShowing && interstitial != null
         && activity != null && !activity.isFinishing() && !activity.isDestroyed();
     InterstitialBreak.Decision decision = gameBreak.decide(SystemClock.uptimeMillis(),
@@ -502,7 +538,13 @@ public final class MonetizationModule extends ReactContextBaseJavaModule
   }
 
   @Override public void onHostResume() {
-    main.post(() -> { if (!destroyed) { connect(null); for (BannerView view : banners) view.resumeAd(); } });
+    main.post(() -> {
+      if (!destroyed) {
+        if (removed && adSession.disable()) restartAdFree();
+        connect(null);
+        for (BannerView view : banners) view.resumeAd();
+      }
+    });
   }
   @Override public void onHostPause() {
     gameBreakRevision++;

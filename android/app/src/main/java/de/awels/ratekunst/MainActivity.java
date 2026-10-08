@@ -4,33 +4,17 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
-import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactActivityDelegate;
 
 public class MainActivity extends ReactActivity {
 
   private MotionEvent pendingTouch;
-  private ReactBackCallback reactBackCallback;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     // react-native-screens must rebuild its fragments from React state rather
     // than restore native fragments with stale React view references.
     super.onCreate(null);
-    // Android 16+ with target SDK 36 no longer dispatches legacy Activity
-    // onBackPressed automatically. Forward AndroidX back events to RN so
-    // React Navigation can pop Settings/EditSet/etc before the Activity exits.
-    reactBackCallback = new ReactBackCallback(super::onBackPressed);
-    getOnBackPressedDispatcher().addCallback(this, reactBackCallback);
-  }
-
-  @Override
-  public void invokeDefaultOnBackPressed() {
-    if (reactBackCallback == null) {
-      super.invokeDefaultOnBackPressed();
-    } else {
-      reactBackCallback.withoutCallback(super::invokeDefaultOnBackPressed);
-    }
   }
 
   @Override
@@ -96,10 +80,6 @@ public class MainActivity extends ReactActivity {
    */
   @Override
   protected ReactActivityDelegate createReactActivityDelegate() {
-    return new DefaultReactActivityDelegate(
-        this,
-        getMainComponentName(),
-        // If you opted-in for the New Architecture, we enable the Fabric Renderer.
-        DefaultNewArchitectureEntryPoint.getFabricEnabled());
+    return new DefaultReactActivityDelegate(this, getMainComponentName());
   }
 }

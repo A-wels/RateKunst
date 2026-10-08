@@ -43,31 +43,45 @@ Update it in the same commit whenever an item changes state.
 
 - [x] Pass TypeScript checking.
 - [x] Pass ESLint.
-- [x] Pass Jest tests (5 suites, 18 tests, including persistence, selection and tutorial regressions).
+- [x] Pass Jest regressions for game state, storage, navigation, themes, localization and monetization.
 - [x] Prevent setup hydration from overwriting saved players.
 - [x] Migrate legacy numeric selections, including custom packs, to stable IDs.
 - [x] Preserve the last custom-pack edit when leaving the editor; serialize writes.
 - [x] Keep manually selected language when a delayed storage read completes.
 - [x] Remove the retired Android SDK `tools` package from CI and publishing setup.
 - [x] Increase the release-build heap and bound Gradle workers for clean Hermes AAR transforms.
-- [x] Target and compile Android API 36 with AGP 8.9.2, Gradle 8.11.1 and the matching Kotlin plugin patch.
-- [x] Replace the legacy plugin's removed Gradle `serviceOf` helper with an equivalent service lookup.
+- [x] Target Android API 36 and compile API 37 using React Native 0.87.1, Gradle 9.4.1 and its upstream Android toolchain.
 - [x] Remove unused icon fonts, dropdown packages and their obsolete Android Gradle wiring.
 - [x] Verify the API 36 release bundle after the `de.awels.ratekunst` package migration: https://github.com/A-wels/RateKunst/actions/runs/37273223445 (type-check, lint, all 11 tests and bundleRelease passed with development signing).
 - [ ] Smoke-test layout, scoring, navigation, and language switching on an Android device.
 
 ## Maintenance
 
-- [ ] Upgrade React Native 0.72 and review dependency security findings; remove the Android compatibility patch when supported upstream.
-- [ ] Verify native-library 16 KB page-size compatibility and upgrade incompatible dependencies before rollout to 16 KB devices. See https://developer.android.com/guide/practices/page-sizes.
+- [x] Upgrade React Native to 0.87.1 / React 19.2.3 and remove the legacy Android compatibility patch.
+- [ ] Review remaining transitive dependency advisories before production rollout.
+- [x] Require ELF64 16 KB alignment and a disabled AdMob startup provider in every release pipeline.
+- [ ] Smoke-test the built bundle on a real or emulated 16 KB device.
 
 ## One-time owner actions
 
-- [ ] Create a new Play Console app and register `de.awels.ratekunst` through the first manual AAB upload with Play App Signing.
+- [x] Create a new Play Console app and register `de.awels.ratekunst` through the first manual AAB upload with Play App Signing.
 - [x] Add the new RateKunst upload key as `ANDROID_UPLOAD_KEYSTORE_BASE64` (owner confirmed repository secrets configured).
 - [x] Add `ANDROID_UPLOAD_KEY_ALIAS`, `ANDROID_UPLOAD_KEY_PASSWORD`, and `ANDROID_UPLOAD_STORE_PASSWORD` (owner confirmed).
 - [x] Add the Play service account JSON as `PLAY_SERVICE_ACCOUNT_JSON` (owner confirmed).
-- [ ] Grant that service account permission to publish internal test releases for `de.awels.ratekunst`.
+- [x] Grant that service account permission to publish internal test releases for `de.awels.ratekunst`.
 - [ ] Complete the Play Console requirements, configure testers and roll out the first internal test manually.
-- [ ] Merge the modernization PR into `main`.
-- [ ] Confirm a subsequent push to `main` automatically publishes the internal test.
+- [x] Merge the modernization PR into `main`.
+- [x] Confirm a subsequent push to `main` automatically publishes the internal test.
+
+## Production readiness
+
+- [x] Always offer the bilingual privacy policy in Settings, including offline/ad-free use.
+- [x] Recover from setup/editor read errors through Retry without replacing saved data.
+- [x] Gate Mobile Ads and UMP behind purchase verification; retain verified offline entitlement.
+- [x] Persist ownership and restart an already-used advertising process after purchase/restore.
+- [ ] Verify a real Play purchase, acknowledgement, restore, pending payment and refund on the internal track.
+- [ ] Verify zero AdMob/UMP network traffic after purchase and after an offline cold launch.
+- [ ] Repeat device input/navigation/landscape smoke tests after the framework upgrade.
+- [ ] Publish docs/RateKunst-privacy-policy.html at the privacy URL configured in Play and AdMob.
+- [ ] Confirm Play Data safety, target audience, content rating, ads/IAP declarations and store listing.
+- [ ] Promote the tested internal release to production in Play Console.

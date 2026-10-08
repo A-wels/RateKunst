@@ -80,7 +80,7 @@ it('follows the system by default and persists manual overrides', async () => {
   emitScheme('dark');
   expect(theme.mode).toBe('light');
   await act(async () => theme.setPreference('system'));
-  expect(Appearance.setColorScheme).toHaveBeenLastCalledWith(null);
+  expect(Appearance.setColorScheme).toHaveBeenLastCalledWith('unspecified');
   expect(theme.mode).toBe('dark');
   emitScheme('light');
   expect(theme.mode).toBe('light');

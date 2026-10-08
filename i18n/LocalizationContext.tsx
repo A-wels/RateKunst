@@ -113,6 +113,11 @@ const translations = {
     refreshProducts: 'Kaufangebot erneut laden',
     productUnavailableHint:
       'Google Play stellt das Kaufangebot derzeit nicht bereit. Du kannst es erneut laden.',
+    privacyPolicy: 'Datenschutzerklärung',
+    privacyOpenFailed: 'Die Datenschutzerklärung konnte nicht geöffnet werden.',
+    loadFailed:
+      'Daten konnten nicht geladen werden. Deine gespeicherten Daten bleiben erhalten.',
+    retry: 'Erneut versuchen',
     privacyOptions: 'Datenschutz für Werbung',
     adAgeTitle: 'Altersgruppe für Werbung',
     adAgeHint:
@@ -237,6 +242,10 @@ const translations = {
     refreshProducts: 'Reload purchase offer',
     productUnavailableHint:
       'Google Play is not providing the purchase offer right now. You can reload it.',
+    privacyPolicy: 'Privacy policy',
+    privacyOpenFailed: 'The privacy policy could not be opened.',
+    loadFailed: 'Could not load data. Your saved data has been preserved.',
+    retry: 'Try again',
     privacyOptions: 'Ad privacy settings',
     adAgeTitle: 'Age group for ads',
     adAgeHint:

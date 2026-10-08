@@ -38,8 +38,7 @@ const Tutorial = ({visible, onClose}: Props) => {
         {visible && (
           <StatusBar
             barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
-            backgroundColor={colors.background}
-          />
+              />
         )}
         <View style={styles.content}>
           <View style={styles.topBar}>

@@ -39,9 +39,12 @@ const StartScreen = ({navigation}: any) => {
   const [selectedItems, setSelectedItems] = React.useState<string[]>([]);
   const [pointsToWinDisplay, setPointsToWinDisplay] = React.useState('10');
   const [hasLoaded, setHasLoaded] = React.useState(false);
+  const [loadFailed, setLoadFailed] = React.useState(false);
+  const [loadAttempt, setLoadAttempt] = React.useState(0);
 
   React.useEffect(() => {
     let active = true;
+    setLoadFailed(false);
     loadGameSetup()
       .then(setup => {
         if (!active) {
@@ -57,11 +60,14 @@ const StartScreen = ({navigation}: any) => {
         );
         setHasLoaded(true);
       })
-      .catch(error => console.warn('Could not load game setup', error));
+      .catch(error => {
+        console.warn('Could not load game setup', error);
+        if (active) setLoadFailed(true);
+      });
     return () => {
       active = false;
     };
-  }, []);
+  }, [loadAttempt]);
 
   const loadPackLabels = React.useCallback(() => {
     if (!hasLoaded) {
@@ -173,6 +179,15 @@ const StartScreen = ({navigation}: any) => {
             {t('startMenu')}
           </Text>
 
+          {loadFailed && (
+            <View accessibilityLiveRegion="polite">
+              <Text style={styles.helper}>{t('loadFailed')}</Text>
+              <Button
+                label={t('retry')}
+                onPress={() => setLoadAttempt(value => value + 1)}
+              />
+            </View>
+          )}
           <View style={[styles.section, styles.playersSection]}>
             <Text accessibilityRole="header" style={styles.sectionTitle}>
               {t('players')}

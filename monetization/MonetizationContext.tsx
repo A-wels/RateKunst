@@ -70,7 +70,8 @@ export const MonetizationProvider = ({children}: React.PropsWithChildren) => {
     let eventReceived = false;
     const subscription = new NativeEventEmitter(native).addListener(
       'RateKunstMonetizationChanged',
-      (next: MonetizationStatus) => {
+      (event: object) => {
+        const next = event as MonetizationStatus;
         eventReceived = true;
         if (mounted.current) {
           statusRef.current = next;

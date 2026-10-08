@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import renderer, {act} from 'react-test-renderer';
 import {afterEach, beforeEach, describe, expect, it, jest} from '@jest/globals';
 import {loadGameSetup, migrateSelectedPacks} from '../utils/gameSetup';
+import Button from '../components/Button';
 import StartScreen from '../pages/screens/StartScreen';
 import EditPage from '../pages/screens/EditPage';
 import {LocalizationProvider} from '../i18n/LocalizationContext';
@@ -129,4 +130,78 @@ describe('storage compatibility', () => {
     );
     expect(await AsyncStorage.getItem('a')).toBe('["Original"]');
   });
+});
+
+it('retries setup hydration without overwriting stored players after a read failure', async () => {
+  await AsyncStorage.setItem('names', '["Ada"]');
+  const warning = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  jest
+    .mocked(AsyncStorage.getItem)
+    .mockImplementation(key =>
+      key === 'names'
+        ? Promise.reject(new Error('storage unavailable'))
+        : getItemImplementation(key),
+    );
+  try {
+    await act(async () => {
+      tree = renderer.create(
+        <LocalizationProvider>
+          <StartScreen navigation={navigation} />
+        </LocalizationProvider>,
+      );
+    });
+    expect(tree!.root.findAllByType(TextInput)[0].props.editable).toBe(false);
+    expect(
+      jest
+        .mocked(AsyncStorage.setItem)
+        .mock.calls.filter(([key]) => key === 'names'),
+    ).toEqual([['names', '["Ada"]']]);
+    jest.mocked(AsyncStorage.getItem).mockImplementation(getItemImplementation);
+    await act(async () =>
+      tree!.root
+        .findAllByType(Button)
+        .find(node => node.props.label === 'Erneut versuchen')!
+        .props.onPress(),
+    );
+    expect(tree!.root.findAllByType(TextInput)[0].props.editable).toBe(true);
+    expect(await AsyncStorage.getItem('names')).toBe('["Ada"]');
+  } finally {
+    warning.mockRestore();
+  }
+});
+
+it('retries an editor read failure and preserves the original pack before editing', async () => {
+  await AsyncStorage.setItem('a', '["Original","Old category"]');
+  const warning = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  jest
+    .mocked(AsyncStorage.getItem)
+    .mockImplementation(key =>
+      key === 'a'
+        ? Promise.reject(new Error('storage unavailable'))
+        : getItemImplementation(key),
+    );
+  try {
+    await act(async () => {
+      tree = renderer.create(
+        <LocalizationProvider>
+          <EditPage route={{params: {id: 'a'}}} />
+        </LocalizationProvider>,
+      );
+    });
+    expect(tree!.root.findAllByType(TextInput)[0].props.editable).toBe(false);
+    jest.mocked(AsyncStorage.getItem).mockImplementation(getItemImplementation);
+    await act(async () =>
+      tree!.root
+        .findAllByType(Button)
+        .find(node => node.props.label === 'Erneut versuchen')!
+        .props.onPress(),
+    );
+    expect(tree!.root.findAllByType(TextInput)[0].props.value).toBe('Original');
+    expect(tree!.root.findAllByType(TextInput)[1].props.value).toBe(
+      'Old category',
+    );
+    expect(await AsyncStorage.getItem('a')).toBe('["Original","Old category"]');
+  } finally {
+    warning.mockRestore();
+  }
 });

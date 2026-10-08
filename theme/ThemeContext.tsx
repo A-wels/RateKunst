@@ -49,7 +49,9 @@ export const ThemeProvider = ({children}: React.PropsWithChildren) => {
   React.useEffect(() => {
     // Native alerts and keyboard appearance follow the same preference.
     // null restores real OS tracking after a manual override.
-    Appearance.setColorScheme(preference === 'system' ? null : preference);
+    Appearance.setColorScheme(
+      preference === 'system' ? 'unspecified' : preference,
+    );
   }, [preference]);
 
   const setPreference = React.useCallback((next: ThemePreference) => {

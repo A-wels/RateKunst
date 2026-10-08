@@ -59,8 +59,7 @@ const PackPicker = ({
         {visible && (
           <StatusBar
             barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
-            backgroundColor={colors.background}
-          />
+              />
         )}
         <View style={styles.content}>
           <Text accessibilityRole="header" style={styles.title}>

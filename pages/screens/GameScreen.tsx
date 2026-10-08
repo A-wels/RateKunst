@@ -205,7 +205,6 @@ const GameScreen = ({navigation, route}: any) => {
       edges={['top', 'left', 'right', 'bottom']}>
       <StatusBar
         barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
-        backgroundColor={colors.background}
       />
       <View style={styles.topBar}>
         <Button label={t('leave')} variant="text" onPress={leaveGame} />

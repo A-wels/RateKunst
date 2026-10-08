@@ -1,3 +1,4 @@
+import Button from '../../components/Button';
 import ScrollView from '../../components/RecoverableScrollView';
 import React from 'react';
 import {useTheme, useThemedStyles} from '../../theme/ThemeContext';
@@ -28,6 +29,8 @@ const EditPage = ({route}: any) => {
   const [title, setTitle] = React.useState('');
   const [questionsText, setQuestionsText] = React.useState('');
   const [hasLoaded, setHasLoaded] = React.useState(false);
+  const [loadFailed, setLoadFailed] = React.useState(false);
+  const [loadAttempt, setLoadAttempt] = React.useState(0);
   const [isSaving, setIsSaving] = React.useState(false);
   const [saveFailed, setSaveFailed] = React.useState(false);
   const dirty = React.useRef(false);
@@ -43,13 +46,22 @@ const EditPage = ({route}: any) => {
   }, []);
 
   React.useEffect(() => {
+    let loading = true;
+    setLoadFailed(false);
     AsyncStorage.getItem(setId)
       .then(value => {
-        if (!active.current) {
+        if (!active.current || !loading) {
           return;
         }
         if (value) {
-          const [storedTitle, ...storedQuestions]: string[] = JSON.parse(value);
+          const stored = JSON.parse(value);
+          if (
+            !Array.isArray(stored) ||
+            !stored.every(item => typeof item === 'string')
+          ) {
+            throw new Error('Invalid custom pack');
+          }
+          const [storedTitle, ...storedQuestions]: string[] = stored;
           setTitle(storedTitle ?? '');
           setQuestionsText(storedQuestions.join('\n'));
         }
@@ -57,11 +69,12 @@ const EditPage = ({route}: any) => {
       })
       .catch(error => {
         console.warn('Could not load custom pack', error);
-        if (active.current) {
-          setSaveFailed(true);
-        }
+        if (active.current && loading) setLoadFailed(true);
       });
-  }, [setId]);
+    return () => {
+      loading = false;
+    };
+  }, [setId, loadAttempt]);
 
   React.useEffect(() => {
     if (!hasLoaded || !dirty.current) {
@@ -118,12 +131,23 @@ const EditPage = ({route}: any) => {
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled">
+          {loadFailed && (
+            <View accessibilityLiveRegion="polite">
+              <Text style={styles.failedText}>{t('loadFailed')}</Text>
+              <Button
+                label={t('retry')}
+                onPress={() => setLoadAttempt(value => value + 1)}
+              />
+            </View>
+          )}
           <View style={styles.statusRow}>
             <Text
               accessibilityLiveRegion="polite"
               style={[styles.statusText, saveFailed && styles.failedText]}>
               {t(
-                saveFailed
+                loadFailed
+                  ? 'loadFailed'
+                  : saveFailed
                   ? 'saveFailed'
                   : !hasLoaded || isSaving
                   ? 'saving'

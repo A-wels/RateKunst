@@ -1,18 +1,15 @@
 const {jest} = require('@jest/globals');
-
-// GH 2.16 wraps UIManager's responder methods, but its supplied Jest mock
-// omits these two native methods. Keep lifecycle recovery testable.
-jest.mock(
-  'react-native-gesture-handler/lib/commonjs/RNGestureHandlerModule',
-  () => ({
-    __esModule: true,
-    default: {
-      ...require('react-native-gesture-handler/lib/commonjs/mocks').default,
-      handleClearJSResponder: jest.fn(),
-      handleSetJSResponder: jest.fn(),
-    },
-  }),
-);
+global.IS_REACT_ACT_ENVIRONMENT = true;
+jest.unmock('react-native/Libraries/Utilities/useColorScheme');
+// React 19's renderer exposes the inner type of React.memo components.
+// Keep Pressable's real implementation while making existing interaction tests address it.
+jest.mock('react-native/Libraries/Components/Pressable/Pressable', () => {
+  const actual = jest.requireActual(
+    'react-native/Libraries/Components/Pressable/Pressable',
+  );
+  return {...actual, default: actual.default.type};
+});
+require('react-native').AppState.currentState = 'active';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),

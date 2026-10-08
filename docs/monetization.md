@@ -135,3 +135,23 @@ code does not fix this website record.
 - [Sexual content and profanity](https://support.google.com/googleplay/android-developer/answer/9878810)
 - [UMP consent integration](https://developers.google.com/admob/android/privacy)
 - [Billing integration](https://developer.android.com/google/play/billing/integrate)
+
+## Ad-free SDK lifecycle
+
+Google Mobile Ads has no process-wide shutdown/unload API. RateKunst removes its
+startup ContentProvider and does not obtain UMP consent information before Play
+has verified that the app is not owned. A signed cached `remove_ads` receipt
+keeps both SDKs untouched on cold/offline launch. Billing remains available.
+
+A newly verified purchase/restore invalidates advertising callbacks, destroys
+banners and discards the interstitial immediately. The receipt is committed
+synchronously before a private restart Activity in a separate process terminates
+the advertising process and relaunches the app. Acknowledgement is attempted
+before restart, with a bounded delay; failed acknowledgements are retried by
+Play queries after relaunch. A read/network error never revokes a cached purchase.
+A confirmed refund can re-enable advertising. Purchases/restores normally run
+from Settings; if ownership is discovered during a game, restart waits for the
+menu so the active round is preserved.
+
+Before production, verify new purchase, restore, offline launch, pending payment,
+refund, and a network trace showing no Mobile Ads/UMP calls in ad-free use.

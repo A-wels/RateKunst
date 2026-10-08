@@ -1,5 +1,5 @@
 import React from 'react';
-import {AppState, Platform, UIManager} from 'react-native';
+import {AppState, Platform} from 'react-native';
 
 const InputRecoveryContext = React.createContext(0);
 
@@ -20,11 +20,6 @@ export const useInputRecovery = () => {
         return;
       }
       interrupted = false;
-      // Exported by RN 0.72's legacy UIManager, but omitted from its TS types.
-      const manager = UIManager as typeof UIManager & {
-        clearJSResponder?: () => void;
-      };
-      manager.clearJSResponder?.();
       setGeneration(current => current + 1);
     };
     const subscriptions = [

@@ -31,12 +31,15 @@ it('retains setup and game state over repeated resumes, back navigation and a wi
   });
   const handlers = new Map<string, Set<(state: any) => void>>();
   const originalAppState = AppState.addEventListener;
-  AppState.addEventListener = jest.fn((event, listener) => {
-    const list = handlers.get(event) ?? new Set();
-    list.add(listener);
-    handlers.set(event, list);
-    return {remove: () => list.delete(listener)};
-  });
+  AppState.addEventListener = jest.fn<typeof AppState.addEventListener>(
+    (event, listener) => {
+      const list = handlers.get(event) ?? new Set();
+      const notify = listener as (state: any) => void;
+      list.add(notify);
+      handlers.set(event, list);
+      return {remove: () => list.delete(notify)};
+    },
+  );
   const display = NativeModules.RateKunstDisplay;
   NativeModules.RateKunstDisplay = {setGameActive: jest.fn()};
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
@@ -202,16 +205,22 @@ it('system back pops one screen at a time and only falls through on Home', async
         .routes.map((route: {name: string}) => route.name);
     await press('Einstellungen');
     expect(routes()).toEqual(['Home', 'Settings']);
-    await act(async () => expect(back()).toBe(true));
+    await act(async () =>
+      expect(back({type: 'hardwareBackPress', timeStamp: 0})).toBe(true),
+    );
     expect(routes()).toEqual(['Home']);
     await press('Eigene Sets verwalten');
     await press('Neues Set');
     expect(routes()).toEqual(['Home', 'CustomSets', 'EditSet']);
-    await act(async () => expect(back()).toBe(true));
+    await act(async () =>
+      expect(back({type: 'hardwareBackPress', timeStamp: 0})).toBe(true),
+    );
     expect(routes()).toEqual(['Home', 'CustomSets']);
-    await act(async () => expect(back()).toBe(true));
+    await act(async () =>
+      expect(back({type: 'hardwareBackPress', timeStamp: 0})).toBe(true),
+    );
     expect(routes()).toEqual(['Home']);
-    expect(back()).toBe(false);
+    expect(back({type: 'hardwareBackPress', timeStamp: 0})).toBe(false);
   } finally {
     registration.mockRestore();
   }

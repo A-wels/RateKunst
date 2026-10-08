@@ -52,7 +52,6 @@ Alternativ kann man sich die App selbst mit dem hier verfügbaren Code erstellen
 
 ```bash
 npm ci
-node scripts/patch-react-native-gradle-plugin.js
 npm run typecheck
 npm run lint
 npm test -- --runInBand
@@ -102,3 +101,16 @@ Diese Repository-Secrets unter **Settings → Secrets and variables → Actions*
 Ein Push auf `main` vor Abschluss der Einrichtung kann beim Play-Upload fehlschlagen.
 Der signierte Build bleibt als Artefakt verfügbar, sofern die erforderlichen Secrets
 vorhanden sind. Offene Einrichtungsschritte werden in [`TODO.md`](TODO.md) gepflegt.
+
+### Current Android release toolchain
+
+React Native 0.87.1 / React 19.2.3, Node 24, JDK 17, Android compile SDK 37
+(target 36), NDK 27.1.12297006 and Gradle 9.4.1. CI checks the actual AAB's
+64-bit ELF LOAD segment alignment for 16 KB devices and the merged manifest's
+ad-free startup configuration. The legacy Gradle patch and Flipper were removed.
+
+The single bilingual privacy source is `docs/RateKunst-privacy-policy.html`.
+Run `python3 scripts/generate-privacy-policy.py` after editing it; CI verifies the
+offline app copy is in sync. The in-app policy is always reachable from Settings.
+Publishing the HTML at the configured Play/AdMob privacy URL remains a website
+owner action. See TODO.md for the device and Play Console production checks.

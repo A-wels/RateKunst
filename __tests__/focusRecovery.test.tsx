@@ -7,7 +7,6 @@ import {
   Platform,
   Text,
   TextInput,
-  UIManager,
 } from 'react-native';
 import renderer, {act} from 'react-test-renderer';
 import {afterEach, beforeEach, expect, it, jest} from '@jest/globals';
@@ -27,8 +26,6 @@ let tree: renderer.ReactTestRenderer | undefined;
 let listeners: Map<string, Set<(state: any) => void>>;
 const emit = (event: string, state?: string) =>
   act(() => listeners.get(event)?.forEach(listener => listener(state)));
-const manager = UIManager as typeof UIManager & {clearJSResponder: () => void};
-const originalClearResponder = manager.clearJSResponder;
 let restoreAppState: () => void;
 let restorePlatform: () => void;
 
@@ -47,33 +44,32 @@ beforeEach(async () => {
       return {remove: () => handlers.delete(listener)};
     });
   restoreAppState = () => appState.mockRestore();
-  manager.clearJSResponder = jest.fn();
 });
 afterEach(() => {
   act(() => tree?.unmount());
   tree = undefined;
-  manager.clearJSResponder = originalClearResponder;
   restoreAppState();
   restorePlatform();
 });
 
 it('releases the content responder after a notification shade or background interruption', () => {
+  let generation = -1;
   const Harness = () => {
-    useInputRecovery();
+    generation = useInputRecovery();
     return null;
   };
   act(() => {
     tree = renderer.create(<Harness />);
   });
   emit('focus');
-  expect(manager.clearJSResponder).not.toHaveBeenCalled();
+  expect(generation).toBe(0);
   emit('blur');
   emit('focus');
-  expect(manager.clearJSResponder).toHaveBeenCalledTimes(1);
+  expect(generation).toBe(1);
   emit('change', 'background');
   emit('change', 'active');
   emit('focus');
-  expect(manager.clearJSResponder).toHaveBeenCalledTimes(2);
+  expect(generation).toBe(2);
   act(() => tree!.unmount());
   expect([...listeners.values()].every(handlers => handlers.size === 0)).toBe(
     true,
