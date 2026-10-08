@@ -407,3 +407,33 @@ it('reloads an unavailable purchase offer and enables the purchase at the return
   expect(native.purchase).not.toHaveBeenCalled();
   expect(native.setAgeGroup).not.toHaveBeenCalled();
 });
+
+it.each([false, true])(
+  'opens the offline policy independently of advertising ownership (%s)',
+  async owned => {
+    native.initialize.mockResolvedValue({
+      ...ready,
+      adsRemoved: owned,
+      adsReady: !owned,
+    });
+    const navigation = {navigate: jest.fn()};
+    await act(async () => {
+      tree = renderer.create(
+        <LocalizationProvider>
+          <MonetizationProvider>
+            <SettingsScreen navigation={navigation} />
+          </MonetizationProvider>
+        </LocalizationProvider>,
+      );
+    });
+    await act(async () =>
+      tree!.root
+        .findAllByType(Pressable)
+        .find(node => node.props.accessibilityLabel === 'Datenschutzerklärung')!
+        .props.onPress(),
+    );
+    expect(navigation.navigate).toHaveBeenCalledWith('PrivacyPolicy');
+    expect(native.privacyOptions).not.toHaveBeenCalled();
+    expect(native.purchase).not.toHaveBeenCalled();
+  },
+);

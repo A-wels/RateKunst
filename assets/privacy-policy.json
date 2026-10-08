@@ -56,7 +56,7 @@
       },
       {
         "kind": "p",
-        "text": "Die kostenlose App verwendet das Google Mobile Ads SDK (AdMob). Banner erscheinen außerhalb eines aktiven Spiels. Nach jeweils zwei abgeschlossenen Spielen kann beim Übergang zurück ins Menü eine Vollbildanzeige erscheinen, sofern eine Anzeige verfügbar ist."
+        "text": "Die kostenlose App verwendet das Google Mobile Ads SDK (AdMob). Banner erscheinen außerhalb eines aktiven Spiels. Nach jeweils zwei abgeschlossenen Spielen kann beim Übergang zur nächsten Runde oder zurück ins Menü eine Vollbildanzeige erscheinen, sofern eine Anzeige verfügbar ist."
       },
       {
         "kind": "p",
@@ -206,7 +206,7 @@
       },
       {
         "kind": "p",
-        "text": "Banner ads appear outside active games. After every two completed games, an available interstitial may appear when returning to the menu."
+        "text": "Banner ads appear outside active games. After every two completed games, an available interstitial may appear between rounds or when returning to the menu."
       },
       {
         "kind": "p",
