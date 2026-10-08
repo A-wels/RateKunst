@@ -114,7 +114,7 @@ jobs:
           echo "VERSION_CODE=$version_code" >> "$GITHUB_ENV"
           echo "VERSION_NAME=$version_name" >> "$GITHUB_ENV"
           cd android
-          ./gradlew testReleaseUnitTest bundleRelease \
+          ./gradlew :app:testReleaseUnitTest :app:bundleRelease \
             -PversionCode="$version_code" \
             -PversionName="$version_name"
       - name: Verify 16 KB libraries and ad-free startup
